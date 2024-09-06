@@ -1,0 +1,1585 @@
+{
+    "target_schema": "xlsx",
+    "sheets": [
+        {
+            "serialization_kind": "list",
+            "serialize_unique": false,
+            "name": "EntityType",
+            "source": "entity_types",
+            "columns": [
+                { "column_kind": "type", "name": "index" },
+                { 
+                    "column_kind": "simple", 
+                    "name": "label", 
+                    "indexing_strategy": ["label"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "identification", 
+                    "indexing_strategy" : ["identification"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "external_identifications", 
+                    "indexing_strategy": ["external_identifications"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "name", 
+                    "indexing_strategy": ["name"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "super_entity_type", 
+                    "indexing_strategy": ["super_entity_type"]
+                }
+            ]
+        },
+        {
+            "serialization_kind": "single_value",
+            "serialize_unique": false,
+            "name": "Plant",
+            "source": "plant",
+            "columns": [
+                { "column_kind": "type", "name": "index" },
+                { 
+                    "column_kind": "simple", 
+                    "name": "label", 
+                    "indexing_strategy": ["label"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "identification", 
+                    "indexing_strategy" : ["identification"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "external_identifications", 
+                    "indexing_strategy": ["external_identifications"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "name", 
+                    "indexing_strategy": ["name"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "corners", 
+                    "indexing_strategy": ["corners"]
+                }
+            ]
+        },
+        {
+            "serialization_kind": "dict_flatten",
+            "serialize_unique": true,
+            "name": "StationaryResource",
+            "source": "stationary_resources",
+            "filter": "filter_stationary_resource_sheet",
+            "columns": [
+                { "column_kind": "type", "name": "index" },
+                { 
+                    "column_kind": "simple", 
+                    "name": "label", 
+                    "indexing_strategy": ["label"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "identification", 
+                    "indexing_strategy" : ["identification"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "external_identifications", 
+                    "indexing_strategy": ["external_identifications"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "name", 
+                    "indexing_strategy": ["name"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "entity_type", 
+                    "indexing_strategy": ["_entity_type", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "process_execution_plan", 
+                    "indexing_strategy": ["_process_execution_plan", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "plant", 
+                    "indexing_strategy": ["plant", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "costs_per_second", 
+                    "indexing_strategy": ["costs_per_second"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "position", 
+                    "indexing_strategy": ["_physical_body", "_position"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "length", 
+                    "indexing_strategy": ["_physical_body", "length"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "width", 
+                    "indexing_strategy": ["_physical_body", "width"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "entry_edge", 
+                    "indexing_strategy": ["entry_edge"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "exit_edge", 
+                    "indexing_strategy": ["exit_edge"]
+                },
+                { 
+                    "column_kind": "complex", 
+                    "name": "efficiency", 
+                    "function": "efficiency",
+                    "indexing_strategy": ["_efficiency"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "situated_in", 
+                    "indexing_strategy": ["_situated_in", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "quality", 
+                    "indexing_strategy": ["_quality"]
+                }
+            ]
+        },
+        {
+            "serialization_kind": "dict_flatten",
+            "serialize_unique": true,
+            "name": "Storage",
+            "source": "stationary_resources",
+            "filter": "filter_type_storage",
+            "columns": [
+                { "column_kind": "type", "name": "index" },
+                { 
+                    "column_kind": "simple", 
+                    "name": "label", 
+                    "indexing_strategy": ["label"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "identification", 
+                    "indexing_strategy" : ["identification"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "external_identifications", 
+                    "indexing_strategy": ["external_identifications"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "name", 
+                    "indexing_strategy": ["name"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "entity_type", 
+                    "indexing_strategy": ["_entity_type", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "process_execution_plan", 
+                    "indexing_strategy": ["_process_execution_plan", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "plant", 
+                    "indexing_strategy": ["plant", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "costs_per_second", 
+                    "indexing_strategy": ["costs_per_second"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "position", 
+                    "indexing_strategy": ["_physical_body", "_position"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "length", 
+                    "indexing_strategy": ["_physical_body", "length"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "width", 
+                    "indexing_strategy": ["_physical_body", "width"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "entry_edge", 
+                    "indexing_strategy": ["entry_edge"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "exit_edge", 
+                    "indexing_strategy": ["exit_edge"]
+                },
+                { 
+                    "column_kind": "complex", 
+                    "name": "efficiency", 
+                    "function": "efficiency",
+                    "indexing_strategy": ["_efficiency"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "situated_in", 
+                    "indexing_strategy": ["_situated_in", "label"]
+                },
+                {
+                    "column_kind": "simple",
+                    "name": "capacity",
+                    "indexing_strategy": ["capacity"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "quality", 
+                    "indexing_strategy": ["_quality"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "current_time", 
+                    "indexing_strategy": ["dynamic_attributes", "time_stamps"]
+                },
+                { 
+                    "column_kind": "fixed_value", 
+                    "name": "process_execution", 
+                    "value": "" 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "allowed_entity_type", 
+                    "indexing_strategy": ["allowed_entity_type", "label"]
+                },
+                { 
+                    "column_kind": "simple",
+                    "name": "stored_entities",
+                    "indexing_strategy": ["stored_entities"]
+                }
+            ]
+        },
+        {
+            "serialization_kind": "dict_flatten",
+            "serialize_unique": true,
+            "name": "Warehouse",
+            "source": "stationary_resources",
+            "filter": "filter_type_warehouse",
+            "columns": [
+                { "column_kind": "type", "name": "index" },
+                { 
+                    "column_kind": "simple", 
+                    "name": "label", 
+                    "indexing_strategy": ["label"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "identification", 
+                    "indexing_strategy" : ["identification"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "external_identifications", 
+                    "indexing_strategy": ["external_identifications"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "name", 
+                    "indexing_strategy": ["name"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "entity_type", 
+                    "indexing_strategy": ["_entity_type", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "process_execution_plan", 
+                    "indexing_strategy": ["_process_execution_plan", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "plant", 
+                    "indexing_strategy": ["plant", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "costs_per_second", 
+                    "indexing_strategy": ["costs_per_second"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "position", 
+                    "indexing_strategy": ["_physical_body", "_position"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "length", 
+                    "indexing_strategy": ["_physical_body", "length"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "width", 
+                    "indexing_strategy": ["_physical_body", "width"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "entry_edge", 
+                    "indexing_strategy": ["entry_edge"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "exit_edge", 
+                    "indexing_strategy": ["exit_edge"]
+                },
+                { 
+                    "column_kind": "complex", 
+                    "name": "efficiency", 
+                    "function": "efficiency",
+                    "indexing_strategy": ["_efficiency"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "situated_in", 
+                    "indexing_strategy": ["_situated_in", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "quality", 
+                    "indexing_strategy": ["_quality"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "current_time", 
+                    "indexing_strategy": ["dynamic_attributes", "time_stamps"]
+                },
+                { 
+                    "column_kind": "fixed_value", 
+                    "name": "process_execution", 
+                    "value": "" 
+                },
+                { 
+                    "column_kind": "complex", 
+                    "name": "storage_places", 
+                    "function": "label_dict",
+                    "indexing_strategy": ["_storage_places", "_storage_places"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "capacity", 
+                    "indexing_strategy": ["capacity"]
+                }
+            ]
+        },
+        {
+            "serialization_kind": "dict_flatten",
+            "serialize_unique": true,
+            "name": "WorkStation",
+            "source": "stationary_resources",
+            "filter": "filter_type_work_station",
+            "columns": [
+                { "column_kind": "type", "name": "index" },
+                { 
+                    "column_kind": "simple", 
+                    "name": "label", 
+                    "indexing_strategy": ["label"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "identification", 
+                    "indexing_strategy" : ["identification"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "external_identifications", 
+                    "indexing_strategy": ["external_identifications"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "name", 
+                    "indexing_strategy": ["name"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "entity_type", 
+                    "indexing_strategy": ["_entity_type", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "process_execution_plan", 
+                    "indexing_strategy": ["_process_execution_plan", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "plant", 
+                    "indexing_strategy": ["plant", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "costs_per_second", 
+                    "indexing_strategy": ["costs_per_second"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "position", 
+                    "indexing_strategy": ["_physical_body", "_position"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "length", 
+                    "indexing_strategy": ["_physical_body", "length"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "width", 
+                    "indexing_strategy": ["_physical_body", "width"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "entry_edge", 
+                    "indexing_strategy": ["entry_edge"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "exit_edge", 
+                    "indexing_strategy": ["exit_edge"]
+                },
+                { 
+                    "column_kind": "complex", 
+                    "name": "efficiency", 
+                    "function": "efficiency",
+                    "indexing_strategy": ["_efficiency"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "situated_in", 
+                    "indexing_strategy": ["_situated_in", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "quality", 
+                    "indexing_strategy": ["_quality"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "current_time", 
+                    "indexing_strategy": ["dynamic_attributes", "time_stamps"]
+                },
+                { 
+                    "column_kind": "fixed_value", 
+                    "name": "process_execution", 
+                    "value": "" 
+                },
+                { 
+                    "column_kind": "complex", 
+                    "name": "buffer_stations", 
+                    "function": "label_dict",
+                    "indexing_strategy": ["_buffer_stations", "_storage_places"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "capacity", 
+                    "indexing_strategy": ["capacity"]
+                }
+            ]
+        },
+        {
+            "serialization_kind": "dict_flatten",
+            "serialize_unique": true,
+            "name": "ConveyorBelt",
+            "source": "stationary_resources",
+            "filter": "filter_type_conveyor_belt",
+            "columns": [
+                { "column_kind": "type", "name": "index" },
+                { 
+                    "column_kind": "simple", 
+                    "name": "label", 
+                    "indexing_strategy": ["label"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "identification", 
+                    "indexing_strategy" : ["identification"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "external_identifications", 
+                    "indexing_strategy": ["external_identifications"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "name", 
+                    "indexing_strategy": ["name"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "entity_type", 
+                    "indexing_strategy": ["_entity_type", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "process_execution_plan", 
+                    "indexing_strategy": ["_process_execution_plan", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "plant", 
+                    "indexing_strategy": ["plant", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "costs_per_second", 
+                    "indexing_strategy": ["costs_per_second"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "position", 
+                    "indexing_strategy": ["_physical_body", "_position"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "length", 
+                    "indexing_strategy": ["_physical_body", "length"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "width", 
+                    "indexing_strategy": ["_physical_body", "width"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "entry_edge", 
+                    "indexing_strategy": ["entry_edge"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "exit_edge", 
+                    "indexing_strategy": ["exit_edge"]
+                },
+                { 
+                    "column_kind": "complex", 
+                    "name": "efficiency", 
+                    "function": "efficiency",
+                    "indexing_strategy": ["_efficiency"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "situated_in", 
+                    "indexing_strategy": ["_situated_in", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "quality", 
+                    "indexing_strategy": ["_quality"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "current_time", 
+                    "indexing_strategy": ["dynamic_attributes", "time_stamps"]
+                },
+                { 
+                    "column_kind": "fixed_value", 
+                    "name": "process_execution", 
+                    "value": "" 
+                },
+                { 
+                    "column_kind": "complex", 
+                    "name": "allowed_entity_types", 
+                    "function": "label_list",
+                    "indexing_strategy": ["allowed_entity_types"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "capacity_per_entity_type", 
+                    "indexing_strategy": ["capacity"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "flow_direction", 
+                    "indexing_strategy": ["flow_direction"]
+                },
+                { 
+                    "column_kind": "complex", 
+                    "name": "entities_on_transport", 
+                    "function": "label_list",
+                    "indexing_strategy": ["entities_on_transport"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "origin", 
+                    "indexing_strategy": ["origin", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "destination", 
+                    "indexing_strategy": ["destination", "label"]
+                },
+                {
+                    "column_kind": "simple",
+                    "name": "conveyor_length",
+                    "indexing_strategy": ["conveyor_length"]
+                },
+                {
+                    "column_kind": "simple",
+                    "name": "pitch",
+                    "indexing_strategy": ["conveyor_length"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "capacity", 
+                    "indexing_strategy": ["capacity"]
+                }
+            ]
+        },
+        {
+            "serialization_kind": "dict_flatten",
+            "serialize_unique": true,
+            "name": "NonStationaryResource",
+            "source": ["active_moving_resources", "passive_moving_resources"],
+            "filter": "filter_non_stationary_resource_sheet",
+            "columns": [
+                { "column_kind": "type", "name": "index" },
+                { 
+                    "column_kind": "simple", 
+                    "name": "label", 
+                    "indexing_strategy": ["label"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "identification", 
+                    "indexing_strategy" : ["identification"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "external_identifications", 
+                    "indexing_strategy": ["external_identifications"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "name", 
+                    "indexing_strategy": ["name"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "entity_type", 
+                    "indexing_strategy": ["_entity_type", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "process_execution_plan", 
+                    "indexing_strategy": ["_process_execution_plan", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "plant", 
+                    "indexing_strategy": ["plant", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "costs_per_second", 
+                    "indexing_strategy": ["costs_per_second"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "position", 
+                    "indexing_strategy": ["_physical_body", "_position"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "length", 
+                    "indexing_strategy": ["_physical_body", "length"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "width", 
+                    "indexing_strategy": ["_physical_body", "width"]
+                },
+                { 
+                    "column_kind": "complex", 
+                    "name": "storage_places", 
+                    "function": "label_dict",
+                    "indexing_strategy": ["_storage_places", "_storage_places"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "current_time", 
+                    "indexing_strategy": ["dynamic_attributes", "time_stamps"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "situated_in", 
+                    "indexing_strategy": ["_situated_in", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "situated_in", 
+                    "indexing_strategy": ["_situated_in", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "orientation", 
+                    "indexing_strategy": ["_orientation"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "quality", 
+                    "indexing_strategy": ["_quality"]
+                }
+            ]
+        },
+        {
+            "serialization_kind": "dict_flatten",
+            "serialize_unique": true,
+            "name": "ActiveMovingResource",
+            "source": "active_moving_resources",
+            "columns": [
+                { "column_kind": "type", "name": "index" },
+                { 
+                    "column_kind": "simple", 
+                    "name": "label", 
+                    "indexing_strategy": ["label"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "identification", 
+                    "indexing_strategy" : ["identification"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "external_identifications", 
+                    "indexing_strategy": ["external_identifications"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "name", 
+                    "indexing_strategy": ["name"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "entity_type", 
+                    "indexing_strategy": ["_entity_type", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "process_execution_plan", 
+                    "indexing_strategy": ["_process_execution_plan", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "plant", 
+                    "indexing_strategy": ["plant", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "costs_per_second", 
+                    "indexing_strategy": ["costs_per_second"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "position", 
+                    "indexing_strategy": ["_physical_body", "_position"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "length", 
+                    "indexing_strategy": ["_physical_body", "length"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "width", 
+                    "indexing_strategy": ["_physical_body", "width"]
+                },
+                { 
+                    "column_kind": "complex", 
+                    "name": "storage_places", 
+                    "function": "label_dict",
+                    "indexing_strategy": ["_storage_places", "_storage_places"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "current_time", 
+                    "indexing_strategy": ["dynamic_attributes", "time_stamps"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "situated_in", 
+                    "indexing_strategy": ["_situated_in", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "situated_in", 
+                    "indexing_strategy": ["_situated_in", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "orientation", 
+                    "indexing_strategy": ["_orientation"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "quality", 
+                    "indexing_strategy": ["_quality"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "speed", 
+                    "indexing_strategy": ["speed"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "energy_level", 
+                    "indexing_strategy": ["_energy_level"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "energy_consumption", 
+                    "indexing_strategy": ["energy_consumption"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "energy_capacity", 
+                    "indexing_strategy": ["energy_capacity"]
+                }
+            ]
+        },
+        {
+            "serialization_kind": "dict_flatten",
+            "serialize_unique": true,
+            "name": "PassiveMovingResource",
+            "source": "passive_moving_resources",
+            "columns": [
+                { "column_kind": "type", "name": "index" },
+                { 
+                    "column_kind": "simple", 
+                    "name": "label", 
+                    "indexing_strategy": ["label"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "identification", 
+                    "indexing_strategy" : ["identification"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "external_identifications", 
+                    "indexing_strategy": ["external_identifications"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "name", 
+                    "indexing_strategy": ["name"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "entity_type", 
+                    "indexing_strategy": ["_entity_type", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "process_execution_plan", 
+                    "indexing_strategy": ["_process_execution_plan", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "plant", 
+                    "indexing_strategy": ["plant", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "costs_per_second", 
+                    "indexing_strategy": ["costs_per_second"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "position", 
+                    "indexing_strategy": ["_physical_body", "_position"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "length", 
+                    "indexing_strategy": ["_physical_body", "length"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "width", 
+                    "indexing_strategy": ["_physical_body", "width"]
+                },
+                { 
+                    "column_kind": "complex", 
+                    "name": "storage_places", 
+                    "function": "label_dict",
+                    "indexing_strategy": ["_storage_places", "_storage_places"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "current_time", 
+                    "indexing_strategy": ["dynamic_attributes", "time_stamps"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "situated_in", 
+                    "indexing_strategy": ["_situated_in", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "situated_in", 
+                    "indexing_strategy": ["_situated_in", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "orientation", 
+                    "indexing_strategy": ["_orientation"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "quality", 
+                    "indexing_strategy": ["_quality"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "service_life", 
+                    "indexing_strategy": ["service_life"]
+                }
+            ]
+        },
+        {
+            "serialization_kind": "dict_flatten",
+            "serialize_unique": true,
+            "name": "Part",
+            "source": "parts",
+            "columns": [
+                { "column_kind": "type", "name": "index" },
+                { 
+                    "column_kind": "simple", 
+                    "name": "label", 
+                    "indexing_strategy": ["label"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "identification", 
+                    "indexing_strategy" : ["identification"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "external_identifications", 
+                    "indexing_strategy": ["external_identifications"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "name", 
+                    "indexing_strategy": ["name"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "entity_type", 
+                    "indexing_strategy": ["_entity_type", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "situated_in", 
+                    "indexing_strategy": ["_situated_in", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "part_of", 
+                    "indexing_strategy": ["part_of", "label"]
+                },
+                { 
+                    "column_kind": "complex", 
+                    "name": "parts", 
+                    "function": "label_list",
+                    "indexing_strategy": ["parts"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "part_removable", 
+                    "indexing_strategy": ["part_removable"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "current_time", 
+                    "indexing_strategy": ["dynamic_attributes", "time_stamps"]
+                },
+                { 
+                    "column_kind": "fixed_value", 
+                    "name": "process_execution", 
+                    "value": "" 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "quality", 
+                    "indexing_strategy": ["_quality"]
+                }
+            ]
+        },
+        {
+            "serialization_kind": "dict_flatten",
+            "serialize_unique": true,
+            "name": "Process",
+            "source": "processes",
+            "start_row": 1,
+            "columns": [
+                { "column_kind": "type", "name": "index" },
+                { 
+                    "column_kind": "simple", 
+                    "name": "label", 
+                    "indexing_strategy": ["label"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "identification", 
+                    "indexing_strategy" : ["identification"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "external_identifications", 
+                    "indexing_strategy": ["external_identifications"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "name", 
+                    "indexing_strategy": ["name"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "lead_time_controller", 
+                    "indexing_strategy": ["_lead_time_controller", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "transition_controller", 
+                    "indexing_strategy": ["_transition_controller", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "quality_controller", 
+                    "indexing_strategy": ["_quality_controller", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "transformation_controller", 
+                    "indexing_strategy": ["_transformation_controller", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "resource_controller", 
+                    "indexing_strategy": ["_resource_controller", "label"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "group", 
+                    "indexing_strategy": ["group"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "feature", 
+                    "indexing_strategy": ["feature"]
+                },
+                { 
+                    "column_kind": "complex", 
+                    "name": "predecessors", 
+                    "function": "list_tuple",
+                    "indexing_strategy": ["predecessors"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "successors", 
+                    "indexing_strategy": ["successors"]
+                }
+            ]
+        },
+        {
+            "serialization_kind": "dict_flatten",
+            "serialize_unique": true,
+            "name": "ProcessController",
+            "source": "processes",
+            "source_function": "process_controllers",
+            "start_row": 1,
+            "columns": [
+                { "column_kind": "type", "name": "index" },
+                { 
+                    "column_kind": "simple", 
+                    "name": "label", 
+                    "indexing_strategy": ["label"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "identification", 
+                    "indexing_strategy" : ["identification"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "external_identifications", 
+                    "indexing_strategy": ["external_identifications"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "resource_model", 
+                    "indexing_strategy": ["_resource_model", "label"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "process_time_model", 
+                    "indexing_strategy": ["_process_time_model", "label"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "transition_model", 
+                    "indexing_strategy": ["_transition_model", "label"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "transformation_model", 
+                    "indexing_strategy": ["_transformation_model", "label"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "quality_model", 
+                    "indexing_strategy": ["_quality_model", "label"] 
+                }
+            ]
+        },
+        {
+            "serialization_kind": "dict_flatten",
+            "serialize_unique": true,
+            "name": "ProcessTimeModel",
+            "source": "processes",
+            "source_function": "process_time_models",
+            "start_row": 1,
+            "columns": [
+                { "column_kind": "type", "name": "index" },
+                { 
+                    "column_kind": "simple", 
+                    "name": "label", 
+                    "indexing_strategy": ["label"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "identification", 
+                    "indexing_strategy" : ["identification"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "external_identifications", 
+                    "indexing_strategy": ["external_identifications"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "value", 
+                    "indexing_strategy": ["value"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "mue", 
+                    "indexing_strategy": ["mue"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "sigma", 
+                    "indexing_strategy": ["sigma"] 
+                }
+            ]
+        },
+        {
+            "serialization_kind": "dict_flatten",
+            "serialize_unique": true,
+            "name": "QualityModel",
+            "source": "processes",
+            "source_function": "quality_models",
+            "start_row": 1,
+            "columns": [
+                { "column_kind": "type", "name": "index" },
+                { 
+                    "column_kind": "simple", 
+                    "name": "label", 
+                    "indexing_strategy": ["label"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "identification", 
+                    "indexing_strategy" : ["identification"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "external_identifications", 
+                    "indexing_strategy": ["external_identifications"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "probability", 
+                    "indexing_strategy": ["probability"] 
+                }
+            ]
+        },
+        {
+            "serialization_kind": "dict_flatten",
+            "serialize_unique": true,
+            "name": "ResourceModel",
+            "source": "processes",
+            "source_function": "joined_resource_models",
+            "start_row": 1,
+            "columns": [
+                { "column_kind": "type", "name": "index" },
+                { 
+                    "column_kind": "simple", 
+                    "name": "label", 
+                    "indexing_strategy": ["label"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "identification", 
+                    "indexing_strategy" : ["identification"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "external_identifications", 
+                    "indexing_strategy": ["external_identifications"] 
+                },
+                { 
+                    "column_kind": "complex", 
+                    "name": "resource_groups", 
+                    "function": "label_list",
+                    "indexing_strategy": ["_resource_groups"] 
+                },
+                { 
+                    "column_kind": "complex", 
+                    "name": "resources", 
+                    "function": "label_list",
+                    "indexing_strategy": ["resources"] 
+                },
+                { 
+                    "column_kind": "complex", 
+                    "name": "main_resources", 
+                    "function": "label_list",
+                    "indexing_strategy": ["main_resources"] 
+                }
+            ]
+        },
+        {
+            "serialization_kind": "dict_flatten",
+            "serialize_unique": true,
+            "name": "TransitionModel",
+            "source": "processes",
+            "source_function": "transition_models",
+            "start_row": 1,
+            "columns": [
+                { "column_kind": "type", "name": "index" },
+                { 
+                    "column_kind": "simple", 
+                    "name": "label", 
+                    "indexing_strategy": ["label"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "identification", 
+                    "indexing_strategy" : ["identification"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "external_identifications", 
+                    "indexing_strategy": ["external_identifications"] 
+                },
+                { 
+                    "column_kind": "complex", 
+                    "name": "possible_origins", 
+                    "function": "label_list",
+                    "indexing_strategy": ["_possible_origins"] 
+                },
+                { 
+                    "column_kind": "complex", 
+                    "name": "possible_destinations", 
+                    "function": "label_list",
+                    "indexing_strategy": ["_possible_destinations"] 
+                }
+            ]
+        },
+        {
+            "serialization_kind": "mixed",
+            "serialize_unique": true,
+            "name": "TransformationModel",
+            "source": ["processes", "entity_transformation_nodes"],
+            "source_function": "joined_transformation_models",
+            "start_row": 1,
+            "columns": [
+                { "column_kind": "type", "name": "index" },
+                { 
+                    "column_kind": "simple", 
+                    "name": "label", 
+                    "indexing_strategy": ["label"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "identification", 
+                    "indexing_strategy" : ["identification"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "external_identifications", 
+                    "indexing_strategy": ["external_identifications"] 
+                },
+                { 
+                    "column_kind": "complex",
+                    "name": "root_nodes",
+                    "function": "label_list",
+                    "indexing_strategy": ["_root_nodes"] 
+                },
+                { 
+                    "column_kind": "simple",
+                    "name": "parents", 
+                    "function": "label_list",
+                    "indexing_strategy": ["parents"] 
+                },
+                { 
+                    "column_kind": "simple",
+                    "name": "children", 
+                    "function": "label_list",
+                    "indexing_strategy": ["children"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "entity_type", 
+                    "indexing_strategy": ["entity_type", "label"] 
+                },
+                {
+                    "column_kind": "simple",
+                    "name": "quality",
+                    "indexing_strategy": ["quality"]
+                },
+                {
+                    "column_kind": "simple",
+                    "name": "transformation_type",
+                    "indexing_strategy": ["transformation_type"]
+                },
+                {
+                    "column_kind": "simple",
+                    "name": "io_behaviour",
+                    "indexing_strategy": ["io_behaviour"]
+                }
+            ]
+        },
+        {
+            "serialization_kind": "dict_flatten",
+            "serialize_unique": true,
+            "name": "Time",
+            "source": ["stationary_resources", "active_moving_resources", "passive_moving_resources"],
+            "source_function": "process_execution_plans",
+            "start_row": 1,
+            "columns": [
+                { "column_kind": "type", "name": "index" },
+                { 
+                    "column_kind": "simple", 
+                    "name": "label", 
+                    "indexing_strategy": ["label"] 
+                }, 
+                { 
+                    "column_kind": "simple", 
+                    "name": "identification", 
+                    "indexing_strategy" : ["identification"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "external_identifications", 
+                    "indexing_strategy": ["external_identifications"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "name", 
+                    "indexing_strategy": ["name"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "base_unit_freq", 
+                    "indexing_strategy": ["work_calendar", "base_unit_freq"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "work_calendar_parameters", 
+                    "indexing_strategy": ["work_calendar", "work_calendar_parameter"] 
+                },
+                {
+                    "column_kind": "simple",
+                    "name": "company_vacation",
+                    "indexing_strategy": ["work_calendar", "company_vacation"]
+                },
+                {
+                    "column_kind": "simple",
+                    "name": "work_calendar",
+                    "indexing_strategy": ["work_calendar", "label"]
+                }
+            ]
+        },
+        {
+            "serialization_kind": "mixed",
+            "serialize_unique": true,
+            "name": "Sales",
+            "source": ["feature_clusters", "features"],
+            "start_row": 1,
+            "columns": [
+                { "column_kind": "type", "name": "index" },
+                { 
+                    "column_kind": "simple", 
+                    "name": "label", 
+                    "indexing_strategy": ["label"] 
+                }, 
+                { 
+                    "column_kind": "simple", 
+                    "name": "identification", 
+                    "indexing_strategy" : ["identification"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "external_identifications", 
+                    "indexing_strategy": ["external_identifications"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "name", 
+                    "indexing_strategy": ["name"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "product_class", 
+                    "indexing_strategy": ["product_class", "label"] 
+                },
+                { 
+                    "column_kind": "complex", 
+                    "name": "selection_probability_distribution", 
+                    "function": "efficiency",
+                    "indexing_strategy": ["selection_probability_distribution"] 
+                },
+                {
+                    "column_kind": "simple", 
+                    "name": "feature_cluster", 
+                    "indexing_strategy": ["feature_cluster", "label"]
+                },
+                {
+                    "column_kind": "simple", 
+                    "name": "is_not_chosen_option", 
+                    "indexing_strategy": ["is_not_chosen_option"]
+                },
+                {
+                    "column_kind": "simple", 
+                    "name": "price", 
+                    "indexing_strategy": ["price"]
+                }
+            ]
+        },
+        {
+            "serialization_kind": "list",
+            "serialize_unique": true,
+            "name": "Customer",
+            "source": "customer_base",
+            "columns": [
+                { "column_kind": "type", "name": "index" },
+                { 
+                    "column_kind": "simple", 
+                    "name": "label", 
+                    "indexing_strategy": ["label"] 
+                }, 
+                { 
+                    "column_kind": "simple", 
+                    "name": "identification", 
+                    "indexing_strategy" : ["identification"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "external_identifications", 
+                    "indexing_strategy": ["external_identifications"] 
+                },
+                { 
+                    "column_kind": "complex",
+                    "name": "pre_name", 
+                    "indexing_strategy": ["name"],
+                    "function": "name_to_pre_name"
+                },
+                { 
+                    "column_kind": "complex",
+                    "name": "last_name",
+                    "indexing_strategy": ["name"],
+                    "function": "name_to_last_name"
+                },
+                {
+                    "column_kind": "simple", 
+                    "name": "location", 
+                    "indexing_strategy": ["location"]
+                },
+                {
+                    "column_kind": "complex", 
+                    "name": "providers", 
+                    "function": "provider",
+                    "indexing_strategy": ["e_mail_address"]
+                }
+            ]
+        },
+        {
+            "serialization_kind": "list",
+            "serialize_unique": false,
+            "name": "Orders",
+            "source": "order_pool",
+            "index": 3,
+            "columns": [
+                { "column_kind": "type", "name": "index" },
+                { 
+                    "column_kind": "simple", 
+                    "name": "label", 
+                    "indexing_strategy": ["label"] 
+                }, 
+                { 
+                    "column_kind": "simple", 
+                    "name": "identification", 
+                    "indexing_strategy" : ["identification"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "external_identifications", 
+                    "indexing_strategy": ["external_identifications"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "product_class", 
+                    "indexing_strategy": ["product_class", "label"]
+                },
+                { 
+                    "column_kind": "complex", 
+                    "name": "order_date", 
+                    "function": "time",
+                    "indexing_strategy": ["order_date"] 
+                },
+                {
+                    "column_kind": "complex", 
+                    "name": "delivery_date_planned", 
+                    "function": "time",
+                    "indexing_strategy": ["delivery_date_planned"]
+                },
+                {
+                    "column_kind": "simple",
+                    "name": "customer",
+                    "indexing_strategy": ["customer", "label"]
+                },
+                {
+                    "column_kind": "generate",
+                    "header": "features_requested",
+                    "name": "",
+                    "indexing_strategy": ["features_requested"]
+                }
+            ]
+        }
+    ]
+} 

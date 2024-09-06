@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "dt"
+version = "0.1.0"
+description = ""
+authors = ["AFr <adrian.freiter@isst.fraunhofer.de>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+
+# #### base packages - digital twin model ##############################################################################
+python = "^3.10"
+numpy = "^1.26.4"
+pandas = "^2.2.0"
+dill = "^0.3.8"
+openpyxl = "^3.1.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
