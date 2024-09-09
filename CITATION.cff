@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Schwede"
+  given-names: "Christian"
+  orcid: "https://orcid.org/0009-0003-0431-6547"
+- family-names: "Freiter"
+  given-names: "Adrian"
+  orcid: "https://orcid.org/0009-0004-3815-0562"
+title: "OpenFactoryTwin (OFacT): Initial Release"
+version: 0.1.0
+doi: 10.5281/zenodo.13734211
+date-released: 2024-09-09
+url: "https://github.com/OpenFactoryTwin/ofact"
