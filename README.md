@@ -5,6 +5,7 @@
    <h4>Open source Digital Twin Framework for Production and Logistics</h4>
 
   [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+  [![DOI](https://zenodo.org/badge/853263652.svg)](https://zenodo.org/doi/10.5281/zenodo.13734210)
 </div>
 
 ***
