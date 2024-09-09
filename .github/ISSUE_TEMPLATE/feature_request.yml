@@ -1,0 +1,72 @@
+name: Feature Request
+description: Suggest an idea for open factory twin
+title: "🚀 ENH: "
+labels: [Enhancement, Needs Triage]
+
+body:
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Feature Type
+      description: Please check what type of feature request you would like to propose.
+      options:
+        - label: >
+            Adding new functionality to the open factory twin
+        - label: >
+            Changing existing functionality in the open factory twin
+        - label: >
+            Removing existing functionality in the open factory twin
+  - type: textarea
+    id: description
+    attributes:
+      label: Problem Description
+      description: >
+        Please describe what problem the feature would solve, e.g. "I wish I could use the open factory twin to ..."
+      placeholder: >
+        I wish I could use open factory twin to learn the state model itself when possible.
+    validations:
+      required: true
+  - type: textarea
+    id: feature
+    attributes:
+      label: Feature Description
+      description: >
+        Please describe how the new feature would be implemented, using pseudocode if relevant.
+      placeholder: >
+        Add a new parameter to Order, to_dict, to return a dict if possible.
+
+        def __init__(self, ..., to_dict: bool=False):
+            """
+            Parameters
+            ----------
+            ...
+
+            to_dict : bool, default False
+                Return a dict if possible
+            """
+            if to_dict:
+                return self.to_dict()
+    validations:
+      required: true
+  - type: textarea
+    id: alternative
+    attributes:
+      label: Alternative Solutions
+      description: >
+        Please describe any alternative solution (existing functionality, 3rd party package, etc.)
+        that would satisfy the feature request.
+      placeholder: >
+        Write a custom function to return a dict when possible.
+
+        def to_dict(...)
+           result = {"customer": self.customer, ...}
+           ...
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: >
+        Please provide any relevant GitHub issues, code examples or references that help describe and support
+        the feature request.

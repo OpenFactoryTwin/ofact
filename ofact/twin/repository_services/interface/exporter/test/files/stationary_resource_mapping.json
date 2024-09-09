@@ -1,0 +1,39 @@
+{
+    "target_schema": "xlsx",
+    "sheets": [
+        {
+            "serialization_kind": "dict_flatten",
+            "serialize_unique": true,
+            "name": "StationaryResource",
+            "source": "stationary_resources",
+            "columns": [
+                { "column_kind": "type", "name": "index" },
+                { 
+                    "column_kind": "simple", 
+                    "name": "label", 
+                    "indexing_strategy": ["label"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "identification", 
+                    "indexing_strategy" : ["identification"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "external_identifications", 
+                    "indexing_strategy": ["external_identifications"] 
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "name", 
+                    "indexing_strategy": ["name"]
+                },
+                { 
+                    "column_kind": "simple", 
+                    "name": "entity_type", 
+                    "indexing_strategy": ["entity_type", "label"]
+                }
+            ]
+        }
+    ]
+} 

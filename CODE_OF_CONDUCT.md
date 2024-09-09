@@ -42,7 +42,7 @@ Examples of unacceptable behavior by Contributors include:
 
 ## Handling of violations
 
-Reports should be directed to repository@openfactorytwin.org. # ToDo email address
+Reports should be directed to {}. # ToDo email address
 It is the Conduct Committee’s role to receive and address reported violations of this Code and to ensure a fair and 
 speedy resolution.
 

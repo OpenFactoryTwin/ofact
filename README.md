@@ -179,7 +179,9 @@ the [Center of Excellence Logistics and It](https://ce-logit.com/).
 ---
 
 If you have any further questions, please do not hesitate to contact us:
-requests@openfactorytwin.org
+
+- christian.schwede@isst.fraunhofer.de
+- adrian.freiter@isst.fraunhofer.de
 
 ---
 
