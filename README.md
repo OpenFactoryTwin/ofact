@@ -186,4 +186,4 @@ If you have any further questions, please do not hesitate to contact us:
 ---
 
 ## Notice
-This work is licensed under the [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/legalcode).
+The documentation part of this work is licensed under the [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/legalcode) while the software part is licensed under Apache 2.0.
