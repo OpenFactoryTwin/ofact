@@ -1,8 +1,9 @@
 [tool.poetry]
-name = "dt"
+name = "ofact"
 version = "0.1.0"
 description = ""
-authors = ["AFr <adrian.freiter@isst.fraunhofer.de>"]
+packages = [{ include = "ofact" }]
+authors = ["CSc <christian.schwede@hsbi.de>", "AFr <adrian.freiter@isst.fraunhofer.de>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
@@ -17,3 +18,4 @@ openpyxl = "^3.1.2"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
