@@ -161,7 +161,11 @@ This work is licensed under the Apache 2.0 license.
 See `LICENSE` file for more information.
 
 In the meantime, the project was created within the scope of
-the [Center of Excellence Logistics and It](https://ce-logit.com/).
+the [Center of Excellence Logistics and It](https://ce-logit.com/) - Nationales Leistungszentrum Logistik und IT.
+
+<div align="center">
+   <img src="ofact/docs/assets/imgsleistungszentrum-600x200-1.png" width="600" height="200" />
+</div>
 
 ---
 
