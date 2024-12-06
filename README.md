@@ -164,7 +164,7 @@ In the meantime, the project was created within the scope of
 the [Center of Excellence Logistics and It](https://ce-logit.com/) - Nationales Leistungszentrum Logistik und IT.
 
 <div align="center">
-   <img src="docs/assets/imgsleistungszentrum-600x200-1.png" width="600" height="200" />
+   <img src="docs/assets/imgs/imgsleistungszentrum-600x200-1.png" width="600" height="200" />
 </div>
 
 ---
