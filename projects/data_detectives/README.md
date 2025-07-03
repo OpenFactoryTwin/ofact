@@ -31,9 +31,11 @@ Für diesen Workshop haben wir die notwendigen Installationen bereits vorbereite
 ## Installation von OFacT
 
 Um ein Gefühl dafür zu bekommen, wie einfach die Installation von **OFacT** ist, werden wir dies gemeinsam tun. Öffnet das Terminal (Alt + F12) und gebt folgenden Befehl ein:
-- git clone https://github.com/OpenFactoryTwin/ofact.git
+- git clone https://github.com/OpenFactoryTwin/ofact.git .
 
 **Voilà!** Ihr habt gerade **OFacT** installiert. Ihr könnt dies überprüfen, indem ihr die Ordnerstruktur betrachtet. Wenn ihr einen **OFacT**-Ordner findet, habt ihr alles erfolgreich abgeschlossen.
+
+Environment erstellen und danach aktivieren ...
 
 ## Installation notwendiger Bibliotheken
 
