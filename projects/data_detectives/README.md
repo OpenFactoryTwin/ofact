@@ -12,8 +12,7 @@ Für den Analysepfad von der aggregierten Auftragssicht bis hin zur einzelnen Re
   - Bicycle Factory
   - Unternehmensdaten
 - **2. Kennenlernen**
-  - Einführung 
-  - Datenintegration
+  - Einführung
 - **3. Ermitteln**
   - Schwachstellen erkennen
 

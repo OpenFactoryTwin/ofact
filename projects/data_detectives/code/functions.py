@@ -69,6 +69,39 @@ def create_state_model(state_model_file_name, order_amount=20, file_type="xlsx")
     state_model = deserialize_state_model(state_model_file_path, persistence_format=file_type,
                                           state_model_generation_settings=state_model_generation_settings,
                                           deserialization_required=deserialization_required)
+
+    if file_type == "xlsx":
+        orders = state_model.get_orders()
+        date_list = [
+            datetime(2025, 7, 4, 11, 0, 0),
+            datetime(2025, 7, 4, 11, 0, 0),
+            datetime(2025, 7, 4, 11, 0, 0),
+            datetime(2025, 7, 4, 11, 0, 0),
+            datetime(2025, 7, 4, 12, 0, 0),
+            datetime(2025, 7, 4, 12, 0, 0),
+            datetime(2025, 7, 4, 13, 0, 0),
+            datetime(2025, 7, 4, 13, 0, 0),
+            datetime(2025, 7, 4, 13, 0, 0),
+            datetime(2025, 7, 4, 13, 0, 0),
+            datetime(2025, 7, 4, 15, 0, 0),
+            datetime(2025, 7, 4, 15, 0, 0),
+            datetime(2025, 7, 4, 15, 0, 0),
+            datetime(2025, 7, 4, 15, 0, 0),
+            datetime(2025, 7, 4, 15, 0, 0),
+            datetime(2025, 7, 4, 17, 0, 0),
+            datetime(2025, 7, 4, 17, 0, 0),
+            datetime(2025, 7, 4, 17, 0, 0),
+            datetime(2025, 7, 4, 17, 0, 0),
+            datetime(2025, 7, 4, 17, 0, 0),
+        ]
+        for i, order in enumerate(orders):
+            order.delivery_date_planned = date_list[i]
+        state_model_file_name = "bicycle_factory.pkl"
+        state_model_file_path = get_state_model_file_path(project_path=PROJECT_PATH,
+                                                          state_model_file_name=state_model_file_name,
+                                                          path_to_model="scenarios/current/models/twin/")
+        serialize_state_model(state_model=state_model, target_file_path=state_model_file_path, dynamics=False,
+                              serialization_required=False)
     return state_model
 
 
