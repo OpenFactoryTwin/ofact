@@ -303,7 +303,7 @@ def update_state_model(source_file: str, sheet_name: str = None,
 
 
 def update_simulation_input_parameters(start_time_simulation = datetime(2025, 7, 4, 7),
-                                       resource_schedule = "schedule_s1.xlsx", work_in_process = 5):
+                                       resource_schedule = "schedule_s1", work_in_process = 5):
 
     config = {
         "start_time_simulation": start_time_simulation,
