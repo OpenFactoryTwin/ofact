@@ -1,0 +1,19 @@
+# Main requirements (libraries that need to be installed on top of anaconda)
+# These are needed for each project, while project specific may have an extra requirements.txt file
+# that needs to be executed too
+#
+# toggle the comments on the versions to get an older, but guaranteed working version
+# (but you may integrate security issues and already fixed bugs with older versions)
+# TODO check if running and then add version numbers
+
+# STANDARD
+# python version tested:
+
+
+# #### data integration ################################################################################################
+openpyxl==3.1.2
+pandas==2.2.2
+
+# #### Notebook integration ############################################################################################
+ipydatagrid==1.4.0
+jupyter==1.1.1

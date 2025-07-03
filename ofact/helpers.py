@@ -13,10 +13,10 @@ from typing import Union
 from weakref import WeakValueDictionary
 import cProfile, pstats, io
 from datetime import datetime, timedelta
+import pytz
 
 # Imports Part 2: PIP Imports
 import numpy as np
-
 
 # Imports Part 3: Project Imports
 
@@ -124,3 +124,19 @@ def colored_print(print_string):
     start = f'\x1b[{style};{foreground};{background}m'
     end = '\x1b[0m'
     print(start + print_string + end)
+
+
+def datetime_to_timestamp(dt: datetime) -> int:
+    dt = dt.replace(tzinfo=pytz.utc)
+    ts = int(dt.timestamp() * 1e9)
+    return ts
+
+
+def timestamp_to_datetime(ts: int | float) -> datetime:
+    dt = datetime.fromtimestamp(ts / 1e9, pytz.utc)
+    dt = dt.replace(tzinfo=None)
+    return dt
+
+
+def root_path_without_lib_name(root_path):
+    return str(root_path).rsplit("ofact", 1)[0]

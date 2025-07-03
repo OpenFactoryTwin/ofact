@@ -1,0 +1,27 @@
+# Git and Docker specific files
+.git
+.gitignore
+.dockerignore
+Dockerfile
+docker-compose.yml
+
+# Python cache and virtual environment files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.venv/
+env/
+
+# IDE and OS specific files
+.idea/
+.vscode/
+.DS_Store
+
+# Local environment, state, and database files
+*.env
+*.db
+
+# Unused dependency lock files for this project
+poetry.lock

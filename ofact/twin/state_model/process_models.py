@@ -54,13 +54,13 @@ import numpy as np
 
 # Imports Part 3: Project Imports
 from ofact.twin.state_model.basic_elements import ProcessExecutionTypes, DigitalTwinObject
-from ofact.twin.state_model.serialization import Serializable
 from ofact.twin.state_model.entities import ConveyorBelt
 from ofact.twin.state_model.probabilities import (ProbabilityDistribution, NormalDistribution, SingleValueDistribution,
                                                   BernoulliDistribution)
 
 if TYPE_CHECKING:
-    from ofact.twin.state_model.entities import (EntityType, Entity, Resource, StationaryResource, NonStationaryResource,
+    from ofact.twin.state_model.entities import (EntityType, Entity, Resource, StationaryResource,
+                                                 NonStationaryResource,
                                                  Part)
     from ofact.twin.state_model.processes import ProcessExecution, Process
     from ofact.twin.state_model.sales import Order
@@ -69,9 +69,7 @@ if TYPE_CHECKING:
 logging.debug("DigitalTwin/process_models")
 
 
-class DTModel(DigitalTwinObject, Serializable, metaclass=ABCMeta):
-    drop_before_serialization = []
-    further_serializable = []
+class DTModel(DigitalTwinObject, metaclass=ABCMeta):
 
     def __init__(self,
                  is_re_trainable: bool = False,
@@ -105,42 +103,6 @@ class DTModel(DigitalTwinObject, Serializable, metaclass=ABCMeta):
         if not hasattr(self, "_is_re_trainable"):
             self._is_re_trainable = False  # currently not in the static twin model
         return self._is_re_trainable
-
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Converts the object to a json serializable dict.
-
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-        Defaults to True.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-        Then the static model id is used. Defaults to False.
-        use_label: Whether to use the static model id as representation. Defaults to False.
-        use_label_for_situated_in: Whether to use the static model id as representation for the situated_in attribute.
-
-        Returns
-        -------
-        The dict representation of the entity type or the static model id.
-        """
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             use_label=use_label,
-                                             use_label_for_situated_in=use_label_for_situated_in,
-                                             deactivate_id_filter=deactivate_id_filter)
-        for key, value in object_dict.items():
-            if key in self.further_serializable and value is not None:
-                object_dict[key] = value.timestamp()
-
-        # Check if attributes are missing
-        Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                    ignore=self.drop_before_serialization,
-                                                    dictionary=object_dict,
-                                                    use_ignore=True)
-
-        return object_dict
 
 
 class ProcessTimeModel(DTModel, ProbabilityDistribution, metaclass=ABCMeta):
@@ -620,7 +582,7 @@ class SimpleQualityModel(QualityModel):
 class SimpleBernoulliDistributedQualityModel(SimpleQualityModel, BernoulliDistribution):
 
     def __init__(self,
-                 probability: float,
+                 probability: float = 1.0,
                  not_successful_value: float = 0.0,
                  successful_value: float = 1.0,
                  is_re_trainable: bool = False,
@@ -654,8 +616,7 @@ def create_count_dict(lst):
     return count_dict
 
 
-class ResourceGroup(DigitalTwinObject, Serializable):
-    drop_before_serialization = []
+class ResourceGroup(DigitalTwinObject):
 
     def __init__(self,
                  resources: list[EntityType],
@@ -683,7 +644,7 @@ class ResourceGroup(DigitalTwinObject, Serializable):
     def __str__(self):
         resource_names = self.get_resource_names()
         main_resource_names = self.get_main_resource_names()
-        return (f"EntityTransformationNode with ID '{self.identification}' and resources '{resource_names}' and "
+        return (f"ResourceGroup with ID '{self.identification}' and resources '{resource_names}' and "
                 f"main_resources {main_resource_names}")
 
     def copy(self):
@@ -833,7 +794,7 @@ class ResourceGroup(DigitalTwinObject, Serializable):
         return needed_resource_entity_types
 
     def get_usable_resources_for_process(self, available_resources: list[tuple[Resource, EntityTransformationNode]]) \
-            -> list[tuple[Resource, ]]:
+            -> list[tuple[Resource,]]:
         """
         Used to determine which (available) resources (e.g., organized in processes before)
         can be used in this resource_group
@@ -901,49 +862,8 @@ class ResourceGroup(DigitalTwinObject, Serializable):
             completely_filled = True
         return completely_filled, not_completely_filled_attributes
 
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Converts the object to a json serializable dict.
-
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-        Defaults to True.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-        Then the static model id is used. Defaults to False.
-        use_label: Whether to use the static model id as representation. Defaults to False.
-        use_label_for_situated_in: Whether to use the static model id as representation for the situated_in attribute.
-        Defaults to False.
-
-        Returns
-        -------
-        object_dict: The dict representation of the entity type or the static model id.
-        """
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             deactivate_id_filter=deactivate_id_filter,
-                                             use_label_for_situated_in=use_label_for_situated_in,
-                                             use_label=use_label)
-        if isinstance(object_dict, str):
-            return object_dict
-        further_serializable_list = ['resources', 'main_resources']
-        for key, value in object_dict.items():
-            if key in further_serializable_list and value is not None:
-                object_dict[key] = Serializable.serialize_list(value)
-
-        # Check if attributes are missing
-        Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                    ignore=self.drop_before_serialization,
-                                                    dictionary=object_dict,
-                                                    use_ignore=True)
-
-        return object_dict
-
 
 class ResourceModel(DTModel):
-    drop_before_serialization = []
 
     def __init__(self,
                  resource_groups: list[ResourceGroup],
@@ -956,42 +876,6 @@ class ResourceModel(DTModel):
                          domain_specific_attributes=domain_specific_attributes)
 
         self._resource_groups: list[ResourceGroup] = resource_groups
-
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Converts the object to a json serializable dict.
-
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-            Defaults to True.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-            Then the static model id is used. Defaults to False.
-        use_label: Whether to use the static model id as representation. Defaults to False.
-        use_label_for_situated_in: Whether to use the static model id as representation for the situated_in
-            attribute. Defaults to False.
-
-        Returns
-        ----------
-        object_dict: The dict representation of the entity type or the static model id.
-        """
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             use_label_for_situated_in=use_label_for_situated_in,
-                                             use_label=use_label,
-                                             deactivate_id_filter=deactivate_id_filter)
-        further_serializable_list = ['_resource_groups']
-        for key, value in object_dict.items():
-            if key in further_serializable_list and value is not None:
-                object_dict[key] = Serializable.serialize_list(value)
-        # Check if attributes are missing
-        Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                    ignore=self.drop_before_serialization,
-                                                    dictionary=object_dict,
-                                                    use_ignore=True)
-        return object_dict
 
     @property
     def resource_groups(self):
@@ -1011,7 +895,6 @@ class ResourceModel(DTModel):
 
 
 class TransitionModel(DTModel):
-    drop_before_serialization = []
 
     def __init__(self,
                  possible_origins: list[Resource],
@@ -1099,63 +982,29 @@ class TransitionModel(DTModel):
         destination: Resource
         return destination
 
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Converts the object to a json serializable dict.
-
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-            Defaults to True.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-            Then the static model id is used. Defaults to False.
-        use_label: Whether to use the static model id as representation. Defaults to False.
-        use_label_for_situated_in: Whether to use the static model id as representation for the situated_in
-            attribute. Defaults to False.
-
-        Returns
-        -------
-        object_dict: The dict representation of the entity type or the static model id.
-        """
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             use_label=use_label,
-                                             use_label_for_situated_in=use_label_for_situated_in,
-                                             deactivate_id_filter=deactivate_id_filter)
-        further_serializable_list = ['_possible_origins', '_possible_destinations']
-
-        for key, value in object_dict.items():
-            if key in further_serializable_list and value is not None:
-                object_dict[key] = Serializable.serialize_list(value)
-
-        # Check if attributes are missing
-        Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                    ignore=self.drop_before_serialization,
-                                                    dictionary=object_dict,
-                                                    use_ignore=True)
-
-        return object_dict
-
 
 # # # # TRANSFORMATION MODEL # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 
-EntityTransformationNodeTransformationTypes = \
-    Enum('EntityTransformationNodeTransformationTypes',
-         'MAIN_ENTITY BLANK SUB_PART INGREDIENT DISASSEMBLE SUPPORT UNSUPPORT',
-         qualname='EntityTransformationNode.TransformationTypes')
+EntityTransformationNodeTransformationTypes = Enum('EntityTransformationNodeTransformationTypes',
+                                                   'MAIN_ENTITY '
+                                                   'BLANK '
+                                                   'INGREDIENT '
+                                                   'SUB_ENTITY '
+                                                   'DISASSEMBLE '
+                                                   'SUPPORT '
+                                                   'UNSUPPORT '
+                                                   'QUALITY_INSPECTION',
+                                                   qualname='EntityTransformationNode.TransformationTypes')
 
 EntityTransformationNodeIoBehaviours = Enum('EntityTransformationNodeIoBehaviours',
                                             'EXIST CREATED DESTROYED',
                                             qualname='EntityTransformationNode.IoBehaviours')
 
 
-class EntityTransformationNode(DigitalTwinObject, Serializable):
+class EntityTransformationNode(DigitalTwinObject):
     TransformationTypes = EntityTransformationNodeTransformationTypes
     IoBehaviours = EntityTransformationNodeIoBehaviours
-    drop_before_serialization = []
 
     @classmethod
     def get_transformation_types(cls):
@@ -1166,40 +1015,58 @@ class EntityTransformationNode(DigitalTwinObject, Serializable):
         return cls.IoBehaviours
 
     def __init__(self,
-                 entity_type: EntityType,
+                 entity_type: EntityType,  # | PartType
                  amount: int,
-                 quality: float,
                  transformation_type: TransformationTypes,
                  io_behaviour: IoBehaviours,
+                 quality: Optional[float] = None,
+                 reset_inspected_quality: Optional[bool] = False,
                  parents: Optional[list[EntityTransformationNode]] = None,
                  children: Optional[list[EntityTransformationNode]] = None,
                  identification: Optional[int] = None,
                  external_identifications: Optional[dict[object, list[object]]] = None,
                  domain_specific_attributes: Optional[dict[str, Optional[object]]] = None):
         """
-        The EntityTransformationNode describes how an entity is transformed in a process within a transformation graph.
-        The transformation is done by getting the transformation_types and entities from the parent nodes
-        and combining them according to the transformation_types.
-        Io_behaviour defines if parts have to be destroyed or created in the current node.
+        The EntityTransformationNode (ETN) describes how an entity is transformed in a process.
+        The transformation is described through a transformation graph.
+        The root node(s) (ETNs) of the graph build the required input entities and
+        the leaf/ end node(s) (ETNs) the output entities.
+        The transformation is done by transforming the entities from the parent nodes
+        (at the beginning of the transformation the parent nodes are the root nodes)
+        considering the transformation_types and io_behaviours.
+        Io_behaviour defines if entities have to be destroyed or created in the current node.
 
         Parameters
         ----------
         entity_type: EntityType that is transformed
         amount: amount of part
-        quality: Minimum quality needed to start the transformation
+        quality: if set, the minimum quality (of the entity matched with the entity_type) needed
+        to start the transformation
+        else, the transformation can start at any quality
+        reset_inspected_quality: if set, the inspected_quality is reset after the transformation
+        - only relevant for root nodes of the transformation type exists, others are ignored ..
+        (meaning that the quality should be inspected again if required - a kind of quality life span)
+        children: list of EntityTransformationNode. Successor nodes of the current one.
+        Transformation_type is used in these nodes
+        parents: list of EntityTransformationNode. Possible predecessors of the current node
 
+        ###
         transformation_type: determine the transformation (see below)
 
         Possible variables:
         - MAIN_ENTITY: Necessary to start the process if not created.
-        Part leaves the process unchanged or extended
+        Entity leaves the process unchanged or extended
+
         - BLANK: Necessary to start the process if not created. Part is transformed/ processed.
         The entity type is changed, but the attributes remain untouched (no further parts attached) (e.g., bending)
-        - SUB_PART: Necessary to start the process if not created. Part is built into the main_entity and can be taken
-        apart later (e.g., assembly, packing)
+
         - INGREDIENT: Necessary to start the process if not created. Part ist transformed into or
         combined with the main entity. Cannot be removed later (e.g., surface coating)
+
+        - SUB_ENTITY: Necessary to start the process if not created. Entity is built into the main_entity and
+        can be taken apart later (e.g., assembly, packing)
         - DISASSEMBLE: SubParts can be disassembled in the children nodes.
+
         - SUPPORT: Necessary to marry (NonStationaryResource and Parts) or
         (NonStationaryResource and NonStationaryResource).
         The marriage is needed to create a (longer) connection, for example, for transport.
@@ -1207,6 +1074,9 @@ class EntityTransformationNode(DigitalTwinObject, Serializable):
         Bin and screws.
         - UNSUPPORT: cancel/ undo the SUPPORT transformation.
 
+        - QUALITY_INSPECTION: The quality of the entity (matching with the entity_type) is inspected.
+
+        ###
         io_behaviour: describe if a part is created, exist or destroyed (see below)
 
         Possible variables:
@@ -1215,16 +1085,13 @@ class EntityTransformationNode(DigitalTwinObject, Serializable):
         - CREATED: Part is created in the process
         - DESTROYED: Part is destroyed at the end of the process
         (e.g. scrap bad quality, parts with no further tracking)
-
-        children: list of EntityTransformationNode. Successor nodes of the current one.
-        Transformation_type is used in these nodes
-        parents: list of EntityTransformationNode. Possible predecessors of the current node
         """
         super().__init__(identification=identification, external_identifications=external_identifications,
                          domain_specific_attributes=domain_specific_attributes)
         self.entity_type: EntityType = entity_type
         self.amount: int = amount
-        self.quality: float = quality
+        self.quality: Optional[float] = quality
+        self.reset_inspected_quality: bool = reset_inspected_quality
 
         if isinstance(transformation_type, EntityTransformationNode.TransformationTypes):
             self.transformation_type = transformation_type
@@ -1246,6 +1113,7 @@ class EntityTransformationNode(DigitalTwinObject, Serializable):
         entity_type_name = self.get_entity_type_name()
         return (f"EntityTransformationNode with ID '{self.identification}' and entity_type_name '{entity_type_name}'; "
                 f"amount: '{self.amount}', quality: '{self.quality}', "
+                f"reset_inspected_quality: '{self.reset_inspected_quality}'"
                 f"transformation_type: '{self.transformation_type.name}', io_behaviour: '{self.io_behaviour.name}'")
 
     def copy(self):
@@ -1274,42 +1142,72 @@ class EntityTransformationNode(DigitalTwinObject, Serializable):
         for further_parent_node in further_parent_nodes:
             self.parents.append(further_parent_node)
 
-    def entity_usable(self, entity: Entity):
+    def entity_usable(self, entity: Entity) -> bool:
         """Check if the input is available"""
         return entity.entity_type.check_entity_type_match(self.entity_type)
 
-    def amount_available(self, amount: int):
+    def amount_available(self, amount: int) -> bool:
         """Check if the amount is available"""
         return amount >= self.amount
 
-    def quality_sufficient(self, entity: Entity):
-        """Check if the quality is sufficient for the transformation"""
-        return entity.quality >= self.quality
+    def quality_sufficient(self, entity: Entity) -> bool:
+        """Check if the quality is sufficient to execute the transformation"""
+        if self.quality is None:
+            return True  # quality check isn't required
+        elif entity.inspected_quality is None:
+            return False # quality isn't inspected before
+        else:
+            return entity.inspected_quality >= self.quality # quality isn't enough
+
+    def transformation_type_main_entity(self) -> bool:
+        return self.transformation_type == EntityTransformationNodeTransformationTypes.MAIN_ENTITY
+
+    def transformation_type_blank(self) -> bool:
+        return self.transformation_type == EntityTransformationNodeTransformationTypes.BLANK
+
+    def transformation_type_ingredient(self) -> bool:
+        return self.transformation_type == EntityTransformationNodeTransformationTypes.INGREDIENT
+
+    def transformation_type_sub_part(self) -> bool:
+        return self.transformation_type == EntityTransformationNodeTransformationTypes.SUB_ENTITY
+
+    def transformation_type_disassemble(self) -> bool:
+        return self.transformation_type == EntityTransformationNodeTransformationTypes.DISASSEMBLE
+
+    def transformation_type_support(self) -> bool:
+        return self.transformation_type == EntityTransformationNodeTransformationTypes.SUPPORT
+
+    def transformation_type_un_support(self) -> bool:
+        return self.transformation_type == EntityTransformationNodeTransformationTypes.UNSUPPORT
+
+    def transformation_type_quality_inspection(self) -> bool:
+        return self.transformation_type == EntityTransformationNodeTransformationTypes.QUALITY_INSPECTION
 
     def compare_transformation_type_self(self, possible_transformation_types: list[TransformationTypes]) -> bool:
         """Check if the own transformation_type match to other transformation_types"""
+        return self.transformation_type in possible_transformation_types
 
-        if self.transformation_type in possible_transformation_types:
-            return True
-        else:
-            return False
+    def io_behaviour_exist(self) -> bool:
+        return self.io_behaviour == EntityTransformationNodeIoBehaviours.EXIST
+
+    def io_behaviour_created(self) -> bool:
+        return self.io_behaviour == EntityTransformationNodeIoBehaviours.CREATED
+
+    def io_behaviour_destroyed(self) -> bool:
+        return self.io_behaviour == EntityTransformationNodeIoBehaviours.DESTROYED
 
     def compare_io_behaviour_self(self, io_behaviors: list[IoBehaviours]) -> bool:
         """Check if the own io_behaviour match to other io_behaviours"""
-
-        if self.io_behaviour in io_behaviors:
-            return True
-        else:
-            return False
+        return self.io_behaviour in io_behaviors
 
     def completely_filled(self):
 
         not_completely_filled_attributes = []
-        if self.entity_type.__class__.__name__ != "EntityType" and self.entity_type.__class__.__name__ != "PartType":
+        if self.entity_type.__class__.__name__ not in {"EntityType", "PartType"}:
             not_completely_filled_attributes.append("entity_type")
         if not (isinstance(self.amount, int) or isinstance(self.amount, float)):
             not_completely_filled_attributes.append("amount")
-        if not (isinstance(self.quality, float) or isinstance(self.quality, int)):
+        if not (isinstance(self.quality, float) or isinstance(self.quality, int) or self.quality is None):
             not_completely_filled_attributes.append("quality")
         if not isinstance(self.transformation_type, EntityTransformationNodeTransformationTypes):
             not_completely_filled_attributes.append("transformation_type")
@@ -1336,64 +1234,11 @@ class EntityTransformationNode(DigitalTwinObject, Serializable):
             completely_filled = True
         return completely_filled, not_completely_filled_attributes
 
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Converts the object to a json serializable dict.
-
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-            Defaults to True.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-            Then the static model id is used. Defaults to False.
-        use_label: Whether to use the static model id as representation. Defaults to False.
-        use_label_for_situated_in: Whether to use the static model id as representation for the situated_in
-            attribute. Defaults to False.
-
-        Returns
-        -------
-        object_dict: The dict representation of the entity type or the static model id.
-        """
-        if use_label:
-            return self.get_static_model_id()
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             deactivate_id_filter=deactivate_id_filter,
-                                             use_label=use_label,
-                                             use_label_for_situated_in=use_label_for_situated_in)
-        if isinstance(object_dict, str):
-            return object_dict
-        further_serializable = ['entity_type']
-        further_serializable_list = ['parents', 'children']
-
-        for key, value in object_dict.items():
-            if key in further_serializable and value is not None:
-                object_dict[key] = value.dict_serialize()
-            elif key in further_serializable_list and value is not None:
-                if object_dict[key] != []:
-                    print(object_dict[key])
-                object_dict[key] = Serializable.serialize_list(value, use_label=True)
-            elif key == 'transformation_type':
-                object_dict[key] = 'EntityTransformationNode.TransformationTypes.' + value.name
-            elif key == 'io_behaviour':
-                object_dict[key] = 'EntityTransformationNode.IoBehaviours.' + value.name
-
-        # Check if attributes are missing
-        Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                    ignore=self.drop_before_serialization,
-                                                    dictionary=object_dict,
-                                                    use_ignore=True)
-
-        return object_dict
-
 
 class TransformationModel(DTModel):
-    drop_before_serialization = []
 
     def __init__(self,
-                 root_nodes: list[EntityTransformationNode],
+                 root_nodes: list[EntityTransformationNode | str],
                  is_re_trainable: bool = False,
                  identification: Optional[int] = None,
                  external_identifications: Optional[dict[object, list[object]]] = None,
@@ -1405,6 +1250,7 @@ class TransformationModel(DTModel):
         Parameters
         ----------
         root_nodes: A list of entity_transformation_nodes that builds the first level of the transformation_model
+        A list of strings is also recognized so that the root nodes can be loaded by the database. [id.1234']
         """
         DTModel.__init__(self, is_re_trainable=is_re_trainable,
                          identification=identification, external_identifications=external_identifications,
@@ -1412,7 +1258,7 @@ class TransformationModel(DTModel):
 
         root_nodes_with_wrong_type = [root_node
                                       for root_node in root_nodes
-                                      if not isinstance(root_node, EntityTransformationNode)]
+                                      if not isinstance(root_node, EntityTransformationNode | str)]
         if root_nodes_with_wrong_type:
             error_description = [(root_node, type(root_node)) for root_node in root_nodes_with_wrong_type]
             raise TypeError(f"[{self.__class__.__name__}] The root_nodes have a wrong type: {error_description}. \n "
@@ -1437,42 +1283,3 @@ class TransformationModel(DTModel):
     def get_root_nodes(self, process_execution: ProcessExecution = None) -> list[EntityTransformationNode]:
         """Returns the root nodes of the transformation model."""
         return self._root_nodes
-
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Converts the object to a json serializable dict.
-
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-        Defaults to True.
-        deactivate_id_filter: Whether to check if an obj has already been serialized. Then the static model id is used.
-        Defaults to False.
-        use_label: Whether to use the static model id as representation. Defaults to False.
-        use_label_for_situated_in: Whether to use the static model id as representation for the situated_in attribute.
-        Defaults to False.
-
-        Returns
-        -------
-        object_dict: The dict representation of the entity type or the static model id.
-        """
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             use_label=use_label,
-                                             use_label_for_situated_in=use_label_for_situated_in,
-                                             deactivate_id_filter=deactivate_id_filter)
-
-        further_serializable = ['_root_nodes']
-        for key, value in object_dict.items():
-            if key in further_serializable and value is not None:
-                object_dict[key] = Serializable.serialize_list(value)
-
-        # Check if attributes are missing
-        Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                    ignore=self.drop_before_serialization,
-                                                    dictionary=object_dict,
-                                                    use_ignore=True)
-
-        return object_dict

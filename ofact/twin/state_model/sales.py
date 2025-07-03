@@ -37,17 +37,16 @@ import numpy as np
 
 # Imports Part 3: Project Imports
 from ofact.twin.state_model.basic_elements import DigitalTwinObject, DynamicDigitalTwinObject
-from ofact.twin.state_model.serialization import Serializable
 from ofact.twin.state_model.entities import EntityType, Part, PartType
-from ofact.twin.state_model.probabilities import SingleValueDistribution
 from ofact.twin.state_model.helpers.helpers import convert_to_datetime
+from ofact.twin.state_model.probabilities import SingleValueDistribution
 
 if TYPE_CHECKING:
     from ofact.twin.state_model.probabilities import ProbabilityDistribution
     from ofact.twin.state_model.processes import ProcessExecution
 
 
-class Customer(DigitalTwinObject, Serializable):
+class Customer(DigitalTwinObject):
 
     def __init__(self,
                  name: str,
@@ -98,9 +97,7 @@ class Customer(DigitalTwinObject, Serializable):
                 f"'{self.location}', '{self.e_mail_address}'")
 
 
-class FeatureCluster(DigitalTwinObject, Serializable):
-    drop_before_serialization = []
-    further_serializable = ['product_class']
+class FeatureCluster(DigitalTwinObject):
 
     def __init__(self,
                  name: str,
@@ -127,58 +124,17 @@ class FeatureCluster(DigitalTwinObject, Serializable):
 
         return feature_cluster_copy
 
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Creates a dict representation of the object.
-        Also serializes objects in attributes by calling the function on them.
-
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-            Defaults to True.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-            Then the static model id is used. Defaults to False.
-        use_label_for_situated_in: No functionality.
-        use_label: Whether to represent this object by its label.
-
-        Returns
-        -------
-        object_dict: The dict representation of the entity type or the static model id.
-        """
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             deactivate_id_filter=deactivate_id_filter,
-                                             use_label=use_label,
-                                             use_label_for_situated_in=use_label_for_situated_in)
-        if isinstance(object_dict, str):
-            return object_dict
-        for key, value in object_dict.items():
-            if key in self.further_serializable and value is not None:
-                object_dict[key] = value.dict_serialize()
-
-        # Check if attributes are missing
-        Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                    ignore=self.drop_before_serialization,
-                                                    dictionary=object_dict,
-                                                    use_ignore=True)
-
-        return object_dict
-
     def __str__(self):
-        return (f"Customer with ID '{self.identification}' and name '{self.name}'; "
+        return (f"FeatureCluster with ID '{self.identification}' and name '{self.name}'; "
                 f"'{self.product_class}'")
 
 
-class Feature(DigitalTwinObject, Serializable):
-    drop_before_serialization = []
-    further_serializable = ['feature_cluster', 'selection_probability_distribution']
+class Feature(DigitalTwinObject):
 
     def __init__(self,
                  name: str,
                  feature_cluster: FeatureCluster,
-                 price: Optional[float],
+                 price: Optional[float] = 0.0,
                  selection_probability_distribution: ProbabilityDistribution = SingleValueDistribution(1),
                  is_not_chosen_option: bool = False,
                  identification: Optional[int] = None,
@@ -190,7 +146,7 @@ class Feature(DigitalTwinObject, Serializable):
         Parameters
         ----------
         name: Name of the feature cluster
-        is_not_chosen_option: True if the feature is not chosen
+        is_not_chosen_option: True if the feature is not chosen (chosen if no process is associated with the feature)
         feature_cluster: the corresponding feature cluster
         price: the market price of the feature, sum of all feature prices is the product price
         selection_probability_distribution: the probability that the feature is chosen
@@ -216,48 +172,6 @@ class Feature(DigitalTwinObject, Serializable):
         feature_copy = super(Feature, self).copy()
 
         return feature_copy
-
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Creates a dict representation of the object.
-        Also serialize an object in attributes by calling the function on them.
-
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-        Defaults to True.
-        use_label: If set to true, only the static_model_id is returned for this object.
-        Defaults to False.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-        Then the static model id is used. Defaults to False.
-        use_label_for_situated_in: Whether to use only the label for the situated_in attribute.
-
-        Returns
-        -------
-        object_dict: The dict representation of the entity type or the static model id.
-        """
-        if use_label:
-            return self.get_static_model_id()
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             deactivate_id_filter=deactivate_id_filter,
-                                             use_label=use_label,
-                                             use_label_for_situated_in=use_label_for_situated_in)
-        if isinstance(object_dict, str):
-            return object_dict
-
-        for key, value in object_dict.items():
-            if key in self.further_serializable and value is not None:
-                object_dict[key] = value.dict_serialize()
-
-        # Check if attributes are missing
-        Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                    ignore=self.drop_before_serialization,
-                                                    dictionary=object_dict,
-                                                    use_ignore=True)
-        return object_dict
 
     def get_expected_selection_probability(self):
         """
@@ -289,27 +203,30 @@ class Feature(DigitalTwinObject, Serializable):
         return price
 
 
-class Order(DynamicDigitalTwinObject, Serializable):
-    drop_before_serialization = ['dynamic_attributes']
+class Order(DynamicDigitalTwinObject):
 
     def __init__(self,
                  identifier: Optional[str] = None,
-                 product_class: Optional[Union[EntityType, PartType]] = None,
+                 product_classes: list[Union[EntityType, PartType]] = None,
                  features_requested: Optional[list[Feature]] = None,
                  customer: Optional[Customer] = None,
                  order_date: Optional[Union[int, datetime]] = None,
-                 release_date: Optional[Union[int, datetime]] = None,
+                 release_date_planned: Optional[Union[int, datetime]] = None,
+                 release_date_actual: Optional[Union[int, datetime]] = None,
+                 start_time_planned: Optional[Union[int, datetime]] = None,
+                 start_time_actual: Optional[Union[int, datetime]] = None,
+                 end_time_planned: Optional[Union[int, datetime]] = None,
+                 end_time_actual: Optional[Union[int, datetime]] = None,
                  delivery_date_requested: Optional[Union[int, datetime]] = None,
                  delivery_date_planned: Optional[Union[int, datetime]] = None,
                  delivery_date_actual: Optional[Union[int, datetime]] = None,
                  urgent: Optional[int] = None,
                  features_completed: Optional[list[Feature]] = None,
-                 product: Optional[Part] = None,
+                 products: list[Part] = None,
                  price: Optional[float] = 0,
-                 process_executions: Optional[list[ProcessExecution]] = None,
                  identification: Optional[int] = None,
                  process_execution: Optional[ProcessExecution] = None,
-                 current_time: datetime = datetime.min,
+                 current_time: datetime = datetime(1970, 1, 1),
                  external_identifications: Optional[dict[object, list[object]]] = None,
                  domain_specific_attributes: Optional[dict[str, Optional[object]]] = None):
         """
@@ -323,19 +240,31 @@ class Order(DynamicDigitalTwinObject, Serializable):
         identifier: next to the identification that is digital twin model intern,
         the identifier is used as external identifier for the order (in general, the order ID should be more
         human readable, since the identifier is displayed on the analytics dashboard)
-        product_class: part or entity type that specifies the product processed by the order
+        product_classes: list of part or entity types that specifies the products processed by the order
+        ToDo: set or complete list (including doubling)
+        In the most cases, there is only one product_class per order e.g., a car or a bicycle part to be assembled.
+        However, it could be also a stocking order, where more than one part type is stocked in a warehouse.
         features_requested: features requested by the customer (one per each feature cluster)
         features_completed: features of teh requested feature that have already been completed in production
         customer: Customer who bought the product
-        product: physical product as a concrete part
-        order_date: Date in seconds the product was ordered
-        release_date: Date the order was released to process
+        products: A list physical products as concrete parts
+        In the most cases, there is only one product per order e.g., a car or a bicycle assembled.
+        However, it could be also a stocking order, where more than one part is stocked in a warehouse.
+        urgent: normally a bool value (0: not urgent; 1: urgent),
+        with values higher 1 can be used for more urgent orders
+
+        order_date: Datetime in seconds the product was ordered
+        release_date_planned: Datetime the order should be released to process (planned)
+        release_date_actual: Datetime the order was released to process (actual)
+        start_time_planned: Datetime the order should be started to process (planned)
+        start_time_actual: Datetime the order started to process (actual)
+        end_time_planned: Datetime the order should be finished to process (planned)
+        end_time_actual: Datetime the order finished to process (actual)
         delivery_date_requested: requested delivery date from the customer
         (should be the same as the planned one, if possible)
         delivery_date_planned: planned delivery date
         delivery_date_actual: actual delivery date
-        urgent: normally a bool value (0: not urgent; 1: urgent),
-        with values higher 1 can be used for more urgent orders
+
         price: the market price of the feature, sum of all feature prices is the product price
 
         attribute feature_process_execution_match: match the process_executions with the features of the order.
@@ -352,7 +281,9 @@ class Order(DynamicDigitalTwinObject, Serializable):
                          domain_specific_attributes=domain_specific_attributes)
         self.identifier = identifier
 
-        self.product_class: Optional[EntityType, PartType] = product_class
+        if product_classes is None:
+            product_classes = []
+        self.product_classes: list[Union[EntityType, PartType]] = product_classes
 
         if features_requested is None:
             features_requested = []
@@ -363,16 +294,51 @@ class Order(DynamicDigitalTwinObject, Serializable):
         if not isinstance(customer, Customer):
             customer = None
         self.customer: Optional[Customer] = customer
-        self.product: Optional[Part] = product
 
+        if products is None:
+            products = []
+        self.products: list[Part] = products
+
+        self.urgent: Optional[int] = urgent
+
+        # order progress timeline
+        # order date
         if isinstance(order_date, str):
             order_date = convert_to_datetime(order_date)
         self.order_date: Optional[int, datetime] = order_date
 
-        if isinstance(release_date, str):
-            release_date = convert_to_datetime(order_date)
-        self.release_date: Optional[int, datetime] = release_date
+        # release date
+        if isinstance(release_date_planned, str):
+            release_date_planned = convert_to_datetime(release_date_planned)
+        self.release_date_planned: Optional[int, datetime] = release_date_planned
 
+        if isinstance(release_date_actual, str):
+            release_date_actual = convert_to_datetime(release_date_actual)
+        self.release_date_actual: Optional[int, datetime] = release_date_actual
+
+        # start time
+        if isinstance(start_time_planned, str):
+            start_time_planned = convert_to_datetime(start_time_planned)
+        self.start_time_planned: Optional[int, datetime] = start_time_planned
+
+        # Note: actual should be derivable from the first process execution
+        # should be set when the first process_execution is completed
+        if isinstance(start_time_actual, str):
+            start_time_actual = convert_to_datetime(start_time_actual)
+        self.start_time_actual: Optional[int, datetime] = start_time_actual
+
+        # end time
+        if isinstance(end_time_planned, str):
+            end_time_planned = convert_to_datetime(end_time_planned)
+        self.end_time_planned: Optional[int, datetime] = end_time_planned
+
+        # Note: actual should be derivable from the last process execution
+        # should be set when all features are completed
+        if isinstance(end_time_actual, str):
+            end_time_actual = convert_to_datetime(end_time_actual)
+        self.end_time_actual: Optional[int, datetime] = end_time_actual
+
+        # delivery date
         if isinstance(delivery_date_requested, str):
             delivery_date_requested = convert_to_datetime(delivery_date_requested)
         self.delivery_date_requested: Optional[int, datetime] = delivery_date_requested
@@ -385,15 +351,14 @@ class Order(DynamicDigitalTwinObject, Serializable):
             delivery_date_actual = convert_to_datetime(delivery_date_actual)
         self.delivery_date_actual: Optional[int, datetime] = delivery_date_actual
 
-        self.urgent: Optional[int] = urgent
-
+        # run time variable
         self.feature_process_execution_match: dict[Feature: list[ProcessExecution]] = {}
 
     def __str__(self):
         return (f"Order with ID '{self.identification}' from customer '{self.get_customer_name()}'; "
-                f"'{self.price}', '{self.get_product_name()}', '{self.get_product_class_name()}', "
+                f"'{self.price}', '{self.get_product_names()}', '{self.get_product_class_names()}', "
                 f"'{self.get_feature_requested_names()}', '{self.get_feature_completed_names()}', "
-                f"'{self.order_date}', '{self.release_date}', '{self.delivery_date_requested}', "
+                f"'{self.order_date}', '{self.release_date_actual}', '{self.delivery_date_requested}', "
                 f"'{self.delivery_date_planned}', '{self.delivery_date_actual}', '{self.urgent}', "
                 f"'{self.feature_process_execution_match}'")
 
@@ -421,7 +386,7 @@ class Order(DynamicDigitalTwinObject, Serializable):
             progress_status = 100
 
         elif not number_features_completed:
-            if self.release_date:
+            if self.release_date_actual:
                 # case: order started, but no features finished - providing small progress of max 1 %
                 progress_of_one_feature = int(100 / (number_features_requested * 2))
                 progress_status = min(1, progress_of_one_feature)
@@ -444,13 +409,12 @@ class Order(DynamicDigitalTwinObject, Serializable):
                                    for feature in self.features_completed]
         return feature_completed_names
 
-    def get_product_name(self):
+    def get_product_names(self):
+        """Names of the products already processed in the order"""
+        product_names = [product.name
+                         for product in self.products]
 
-        if self.product is not None:
-            product_name = self.product.name
-        else:
-            product_name = None
-        return product_name
+        return product_names
 
     def get_customer_name(self):
         if self.customer is not None:
@@ -459,13 +423,12 @@ class Order(DynamicDigitalTwinObject, Serializable):
             customer_name = None
         return customer_name
 
-    def get_product_class_name(self):
+    def get_product_class_names(self):
+        """Names of the product classes to be processed in the order"""
+        product_class_names = [product_class.name
+                               for product_class in self.product_classes]
 
-        if self.product_class is not None:
-            product_class_name = self.product_class.name
-        else:
-            product_class_name = None
-        return product_class_name
+        return product_class_names
 
     def get_value_added_process_executions(self):
         """Returns the value_added_process_executions associated with the order"""
@@ -484,8 +447,8 @@ class Order(DynamicDigitalTwinObject, Serializable):
         """Returns the process_executions associated with the order"""
         process_executions_nested = list(self.feature_process_execution_match.values())
         process_executions_completed = [process_execution
-                                                    for process_execution_lst in process_executions_nested
-                                                    for process_execution in process_execution_lst]
+                                        for process_execution_lst in process_executions_nested
+                                        for process_execution in process_execution_lst]
 
         return process_executions_completed
 
@@ -516,19 +479,19 @@ class Order(DynamicDigitalTwinObject, Serializable):
 
         return features_with_value_added_processes
 
-    def release(self, release_date: Optional[datetime] = None):
+    def release(self, release_date_actual: Optional[datetime] = None):
         """
         Release the order.
         Tasks: Set the release date of the order
 
         Parameters
         ----------
-        release_date: The release date of the order
+        release_date_actual: The release date of the order
         """
-        if release_date is None:
-            release_date = datetime.now()
+        if release_date_actual is None:
+            release_date_actual = datetime.now()
 
-        self.release_date = release_date
+        self.release_date_actual = release_date_actual
 
     def complete(self, delivery_date_actual: Optional[datetime] = None):
         """
@@ -545,6 +508,7 @@ class Order(DynamicDigitalTwinObject, Serializable):
         if delivery_date_actual is None:
             delivery_date_actual = datetime.now()
 
+        self.end_time_actual = delivery_date_actual  # ToDo: is the differentiation relevant?
         self.delivery_date_actual = delivery_date_actual
 
     def add_process_execution(self, process_execution: ProcessExecution):
@@ -562,10 +526,23 @@ class Order(DynamicDigitalTwinObject, Serializable):
         features_without_value_added_processes: a list of features that did not have any value_added_processes
         """
         self.features_requested = \
-            [feature_requested for feature_requested in self.features_requested
+            [feature_requested
+             for feature_requested in self.features_requested
              if feature_requested not in features_without_value_added_processes]
         for feature_without_value_added_process in features_without_value_added_processes:
             self.complete_feature(feature_without_value_added_process)
+
+    def remove_feature(self, feature: Feature):
+        """
+        Remove a feature from the features requested because, e.g.,
+        the feature is detected as impossible to execute anymore (data source inconsistencies etc.)
+        Parameters
+        ----------
+        feature: feature that should be removed from the features requested
+        """
+
+        if feature in self.features_requested:
+            self.features_requested.remove(feature)
 
     def complete_feature(self, feature_completed: Feature,
                          process_executions: Optional[list[ProcessExecution] | ProcessExecution] = None,
@@ -586,7 +563,8 @@ class Order(DynamicDigitalTwinObject, Serializable):
             process_executions = [process_executions]
         process_executions: list[ProcessExecution]
 
-        feature_founded = [feature_requested for feature_requested in self.features_requested
+        feature_founded = [feature_requested
+                           for feature_requested in self.features_requested
                            if feature_requested.identification == feature_completed.identification]
 
         # exceptions
@@ -607,7 +585,6 @@ class Order(DynamicDigitalTwinObject, Serializable):
         self.match_feature_process_executions(feature, process_executions)
 
         # update the dynamic attribute
-
         if process_executions:
             # find the last process_execution
             last_process_execution_idx = np.argmax([process_execution.executed_end_time
@@ -633,7 +610,7 @@ class Order(DynamicDigitalTwinObject, Serializable):
     def get_release_date_from_process_executions(self):
         """
         Determine the release date based on the process executions (chronological first process execution)
-        Note: this could be a incorrect if a process is executed before the order is released
+        Note: this could be an incorrect if a process is executed before the order is released
         but give an insight if the "real" release date is not set.
         """
         order_process_executions = self.get_sorted_process_executions()
@@ -658,10 +635,12 @@ class Order(DynamicDigitalTwinObject, Serializable):
 
     def add_product(self, part: Part):
         """Add a part as product"""
-        if part.entity_type.check_entity_type_match(self.product_class):
-            self.product = part
-        else:
-            raise ValueError(f"[{self.__class__.__name__}] add_product cannot be conducted "
+        for product_class in self.product_classes:
+            if part.entity_type.check_entity_type_match(product_class):
+                self.products.append(part)
+                return
+
+        raise ValueError(f"[{self.__class__.__name__}] add_product cannot be conducted "
                              f"because the part has a wrong entity_type")
 
     def add_delivery_date_actual(self, delivery_date):
@@ -678,9 +657,47 @@ class Order(DynamicDigitalTwinObject, Serializable):
         # ToDo: the order request more than one equal feature - the assignment of the process_executions
         #  to the right feature is currently not implemented, which means: all process_executions
         #  of different features (which are equal) are mapped to the same feature
+        if not self.feature_process_execution_match:
+            if len(process_executions) > 1:
+                process_execution = sorted(process_executions,
+                                           key=lambda process_execution: process_execution.executed_start_time)[0]
+            else:
+                process_execution = process_executions[0]
+            self.start_time_actual = process_execution.executed_start_time
 
         self.feature_process_execution_match.setdefault(feature,
                                                         []).extend(process_executions)
+
+    def get_lead_time(self):
+        if self.delivery_date_actual is None or self.release_date_actual is None:
+            return None
+        return self.delivery_date_actual - self.release_date_actual
+
+    def get_reliability_status(self, current_time: Optional[datetime] = None):
+        """
+        Determine the reliability status of the order.
+
+        Parameters
+        ----------
+        current_time: current time
+
+        Returns
+        -------
+        bool: True means the order is reliable and False means the order is not reliable
+        """
+        if self.delivery_date_planned is None:
+            return True
+        elif self.delivery_date_actual is None:
+            if current_time is not None:
+                if current_time > self.delivery_date_planned:
+                    return False
+            return True
+        elif self.delivery_date_actual > self.delivery_date_planned:
+            return False
+        return True
+
+    def is_finished(self):
+        return self.delivery_date_actual is not None
 
     def completely_filled(self) -> (bool, list):
         """
@@ -695,9 +712,9 @@ class Order(DynamicDigitalTwinObject, Serializable):
             not_completely_filled_attributes.append("identification")
         if not isinstance(self.customer, Customer):
             not_completely_filled_attributes.append("customer")
-        if not isinstance(self.product, Part):
+        if not isinstance(self.products, list):
             not_completely_filled_attributes.append("product")
-        if not isinstance(self.product_class, EntityType):
+        if not isinstance(self.product_classes, list):
             not_completely_filled_attributes.append("product_class")
         if not isinstance(self.price, float):
             not_completely_filled_attributes.append("price")
@@ -721,59 +738,3 @@ class Order(DynamicDigitalTwinObject, Serializable):
         else:
             completely_filled = True
         return completely_filled, not_completely_filled_attributes
-
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Converts the object to a json serializable dict.
-
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-            Defaults to True.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-            Then the static model id is used. Defaults to False.
-        use_label: Whether to use the static model id as representation. Defaults to False.
-        use_label_for_situated_in: Whether to use the static model id as representation for the situated_in
-            attribute. Defaults to False.
-
-        Returns
-        -------
-        object_dict: The dict representation of the entity type or the static model id.
-        """
-
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             deactivate_id_filter=deactivate_id_filter,
-                                             use_label=use_label,
-                                             use_label_for_situated_in=use_label_for_situated_in)
-        further_serializable = ['feature', 'customer', 'product']
-        further_serializable_list = ['features_completed',
-                                     'features_requested',
-                                     '_process_executions',
-                                     'feature_process_execution_match']
-        datetime_serializable = ['order_date',
-                                 'release_date',
-                                 'delivery_date_requested',
-                                 'delivery_date_planned',
-                                 'delivery_date_actual']
-
-        for key, value in object_dict.items():
-            if key in further_serializable and hasattr(value, 'dict_serialize'):
-                object_dict[key] = value.dict_serialize()
-            elif key in further_serializable_list and value is not None:
-                if key == 'feature_process_execution_match':
-                    object_dict[key] = Serializable.serialize_dict(value)
-                else:
-                    object_dict[key] = Serializable.serialize_list(value)
-            elif key in datetime_serializable and isinstance(value, datetime):
-                object_dict[key] = value.timestamp()
-
-        # Check if attributes are missing
-        Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                    ignore=self.drop_before_serialization,
-                                                    dictionary=object_dict,
-                                                    use_ignore=True)
-
-        return object_dict

@@ -51,13 +51,13 @@ import pandas as pd
 # Imports Part 3: Project Imports
 from ofact.twin.state_model.basic_elements import (DigitalTwinObject, DynamicDigitalTwinObject, ProcessExecutionTypes,
                                                    prints_visible)
-from ofact.twin.state_model.entities import Part, Resource, NonStationaryResource, StationaryResource
+from ofact.twin.state_model.entities import Part, Resource, NonStationaryResource, StationaryResource, Storage, \
+    ActiveMovingResource
 from ofact.twin.state_model.helpers.helpers import convert_to_datetime
 from ofact.twin.state_model.process_models import (ProcessTimeModel, QualityModel, ResourceModel, ResourceGroup,
                                                    TransitionModel, EntityTransformationNode, TransformationModel,
                                                    EntityTransformationNodeIoBehaviours,
                                                    EntityTransformationNodeTransformationTypes)
-from ofact.twin.state_model.serialization import Serializable
 from ofact.twin.state_model.time import ProcessExecutionPlan, WorkCalender
 
 if TYPE_CHECKING:
@@ -69,7 +69,7 @@ if TYPE_CHECKING:
 logging.debug("DigitalTwin/processes")
 
 
-class ProcessController(DigitalTwinObject, Serializable, metaclass=ABCMeta):
+class ProcessController(DigitalTwinObject, metaclass=ABCMeta):
 
     def __init__(self,
                  identification: Optional[int] = None,
@@ -174,8 +174,6 @@ def _check_entity_type_in_entity_type_list(entity_type: EntityType, entity_types
 
 
 class ResourceController(ProcessController):
-    drop_before_serialization = []
-    further_serializable = ['_resource_model']
 
     def __init__(self,
                  resource_model: ResourceModel,
@@ -305,7 +303,7 @@ class ResourceController(ProcessController):
         else:
             return False
 
-    def get_possible_resource_entity_types(self, available_resources: list[Resource] =[]):
+    def get_possible_resource_entity_types(self, available_resources: list[Resource] = []):
         resource_groups = self.get_resource_groups()
         available_resource_ets = [available_resource.entity_type
                                   for available_resource in available_resources]
@@ -367,53 +365,11 @@ class ResourceController(ProcessController):
 
         return possible_main_resource_entity_types
 
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Converts the object to a json serializable dict.
-
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-            Defaults to True.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-            Then the static model id is used. Defaults to False.
-        use_label: Whether to use the static model id as representation. Defaults to False.
-        use_label_for_situated_in: Whether to use the static model id as representation for the situated_in
-            attribute. Defaults to False.
-
-        Returns
-        -------
-        object_dict: The dict representation of the entity type or the static model id.
-        """
-        if use_label:
-            return self.get_static_model_id()
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             use_label=use_label,
-                                             use_label_for_situated_in=use_label_for_situated_in,
-                                             deactivate_id_filter=deactivate_id_filter)
-        if isinstance(object_dict, str):
-            return object_dict
-        for key, value in object_dict.items():
-            if key in self.further_serializable and value is not None:
-                object_dict[key] = value.dict_serialize()
-
-        # Check if attributes are missing
-        Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                    ignore=self.drop_before_serialization,
-                                                    dictionary=object_dict,
-                                                    use_ignore=True)
-        return object_dict
-
     def __str__(self):
         return f"ResourceController with ID '{self.identification}'; {self._resource_model}'"
 
 
-class ProcessTimeController(ProcessController, Serializable):
-    drop_before_serialization = []
-    further_serializable = ['_process_time_model']
+class ProcessTimeController(ProcessController):
 
     def __init__(self,
                  process_time_model: ProcessTimeModel,
@@ -521,54 +477,14 @@ class ProcessTimeController(ProcessController, Serializable):
                                                                            distance=distance)
         return process_lead_time
 
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Converts the object to a json serializable dict.
-
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-            Defaults to True.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-            Then the static model id is used. Defaults to False.
-        use_label: Whether to use the static model id as representation. Defaults to False.
-        use_label_for_situated_in: Whether to use the static model id as representation for the situated_in
-            attribute. Defaults to False.
-
-        Returns
-        -------
-        object_dict: The dict representation of the entity type or the static model id.
-        """
-        if use_label:
-            return self.get_static_model_id()
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             use_label=use_label,
-                                             use_label_for_situated_in=use_label_for_situated_in,
-                                             deactivate_id_filter=deactivate_id_filter)
-        if isinstance(object_dict, str):
-            return object_dict
-
-        for key, value in object_dict.items():
-            if key in self.further_serializable and value is not None:
-                object_dict[key] = value.dict_serialize()
-
-        # Check if attributes are missing
-        Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                    ignore=self.drop_before_serialization,
-                                                    dictionary=object_dict,
-                                                    use_ignore=True)
-        return object_dict
-
     def __str__(self):
         return f"ProcessTimeController with ID '{self.identification}'; {self._process_time_model}'"
 
 
 ProcessTransitionTypes = Enum('ProcessTransitionTypes',
                               'NO_TRANSITION TRANSFER TRANSPORT',
-                              module='DigitalTwin.model.processes', qualname='TransitionController.Types')
+                              module='ofact.twin.state_model.processes',
+                              qualname='TransitionController.Types')
 
 
 def get_process_transition_type(origin: Resource, destination: Resource, class_name: str) -> tuple[str, bool]:
@@ -576,10 +492,6 @@ def get_process_transition_type(origin: Resource, destination: Resource, class_n
 
     if origin is not None and destination is not None:
         if origin.identification == destination.identification:
-            # ToDo: assembly
-            #  - transformation
-            #  - maybe the part cannot be remaining in the same storage -
-            #  change the storage resource (logical position)
             # maybe intern
             process_transition_type = TransitionController.Types.NO_TRANSITION
             intersection = True
@@ -634,12 +546,12 @@ def _determine_intersection(origin: Resource, destination: Resource, class_name:
 def _get_entities_to_remove(entities, destination=None):
     """
     Get the entities that should be transferred and firstly removed
-    That can be supports or main_parts
+    That can be supports or main_entities
     """
     entities_to_transfer = []
     for entity_tuple in entities:
         if len(entity_tuple) == 2:
-            if entity_tuple[1].transformation_type == EntityTransformationNodeTransformationTypes.MAIN_ENTITY:
+            if entity_tuple[1].transformation_type_main_entity():
                 entities_to_transfer.append(entity_tuple[0])
 
     return entities_to_transfer
@@ -680,7 +592,8 @@ def get_transferred_entities(origin: Resource, destination: Resource,
     entities_to_remove = _get_entities_to_remove(entities, destination)
     if origin is not None:
         if half_transited_entities:
-            entities_to_remove_half = [entity for entity in half_transited_entities
+            entities_to_remove_half = [entity
+                                       for entity in half_transited_entities
                                        if entity not in half_transited_entities]
             not_removed_entities = origin.remove_entities(entities_to_remove_half, process_execution,
                                                           sequence_already_ensured=sequence_already_ensured)
@@ -689,16 +602,16 @@ def get_transferred_entities(origin: Resource, destination: Resource,
                 not_removed_entities = origin.remove_entities(entities_to_remove, process_execution,
                                                               sequence_already_ensured=sequence_already_ensured)
             except:
-                raise Exception(origin.name,
-                                process_execution.get_name(),
-                                [(e.name, e.situated_in)
-                                 for e in entities_to_remove])
+                raise Exception(f"Transfer from origin '{origin.name}' "
+                                f"in process execution '{process_execution.get_name()}' failed."
+                                f"Entities to remove are {[(e.name, e.situated_in) for e in entities_to_remove]}")
 
     else:
-        not_removed_entities = []
+        not_removed_entities = entities_to_remove
 
     if transition_forced:
-        entities_to_add = [entity for entity in entities_to_remove
+        entities_to_add = [entity
+                           for entity in entities_to_remove
                            if entity not in not_removed_entities]  # or
         # case: box content and part to stock (was part of box content)
         # (entity.situated_in is None and isinstance(entity, Part))]
@@ -744,6 +657,7 @@ def _raise_transport_exception2(transport_resource, process_execution, class_nam
     debug_str = f"[{class_name}] " \
                 f"PE connected ID: {process_execution.connected_process_execution.identification}"
     logging.debug(debug_str)
+    print(process_execution.process.external_identifications['static_model'][0])
     raise Exception(debug_str)
 
 
@@ -799,7 +713,6 @@ def transport_entities(origin: StationaryResource, destination: StationaryResour
 
 class TransitionController(ProcessController):
     Types = ProcessTransitionTypes
-    drop_before_serialization = []
 
     def __init__(self,
                  transition_model: TransitionModel,
@@ -892,6 +805,12 @@ class TransitionController(ProcessController):
         """Use Case not specified until now"""
         return self._transition_model.get_destination(process_execution=process_execution)
 
+    def get_transition_type(self, origin: Optional[Resource], destination: Optional[Resource]):
+        process_transition_type, intersection = get_process_transition_type(origin, destination,
+                                                                            self.__class__.__name__)
+
+        return process_transition_type
+
     def transit_entities(self, origin: StationaryResource, destination: StationaryResource,
                          transport_resource: Resource, parts_involved: list[tuple[Part, EntityTransformationNode]],
                          resources_used: list[tuple[Resource, EntityTransformationNode]], half_transited_entities,
@@ -905,9 +824,17 @@ class TransitionController(ProcessController):
         # process_execution.process.name)
         process_transition_type, intersection = get_process_transition_type(origin, destination,
                                                                             self.__class__.__name__)
+        # ToDo: ToDo: ToDo: ToDo: ToDo: ToDo: ToDo: ToDo: ToDo: ToDo: ToDo: ToDo: ToDo: ToDo: ToDo: ToDo: ToDo: ToDo: ToDo
+        if process_execution.process.external_identifications['static_model'][0][-19:] == 'loading_warehouse_p':
+            process_transition_type = TransitionController.Types.TRANSFER
 
+
+        if process_execution.process.external_identifications['static_model'][0] =='_main_part_transport_p':
+            print('Debug _main_part_transport')
+        # ToDo: ToDo: ToDo: ToDo: ToDo: ToDo: ToDo: ToDo: ToDo: ToDo: ToDo: ToDo: ToDo: ToDo: ToDo: ToDo: ToDo: ToDo: ToDo
         if process_transition_type == TransitionController.Types.NO_TRANSITION:
             return
+
         elif process_transition_type == TransitionController.Types.TRANSFER:
             entities = parts_involved + resources_used  # ToDo: neglect origin and destination
             get_transferred_entities(origin=origin, destination=destination, entities=entities,
@@ -922,53 +849,11 @@ class TransitionController(ProcessController):
         else:
             raise Exception(f"Process transition type not supported {process_transition_type}")
 
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Converts the object to a json serializable dict.
-
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-            Defaults to True.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-            Then the static model id is used. Defaults to False.
-        use_label: Whether to use the static model id as representation. Defaults to False.
-        use_label_for_situated_in: Whether to use the static model id as representation for the situated_in
-            attribute. Defaults to False.
-
-        Returns
-        -------
-        object_dict: The dict representation of the entity type or the static model id.
-        """
-        if use_label:
-            return self.get_static_model_id()
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             use_label=use_label,
-                                             use_label_for_situated_in=use_label_for_situated_in,
-                                             deactivate_id_filter=deactivate_id_filter)
-        if isinstance(object_dict, str):
-            return object_dict
-        further_serializable = ['_transition_model']
-        for key, value in object_dict.items():
-            if key in further_serializable and value is not None:
-                object_dict[key] = value.dict_serialize()
-
-        # Check if attributes are missing
-        Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                    ignore=self.drop_before_serialization,
-                                                    dictionary=object_dict,
-                                                    use_ignore=True)
-        return object_dict
-
     def __str__(self):
         return f"TransitionController with ID '{self.identification}'; {self._transition_model}'"
 
 
 class QualityController(ProcessController):
-    drop_before_serialization = []
 
     def __init__(self,
                  quality_model: QualityModel,
@@ -1071,47 +956,6 @@ class QualityController(ProcessController):
         quality = self._quality_model.get_quality(process_execution=process_execution, distance=distance)
         return quality
 
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Converts the object to a json serializable dict.
-
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-            Defaults to True.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-            Then the static model id is used. Defaults to False.
-        use_label: Whether to use the static model id as representation. Defaults to False.
-        use_label_for_situated_in: Whether to use the static model id as representation for the situated_in
-            attribute. Defaults to False.
-
-        Returns
-        -------
-        object_dict: The dict representation of the entity type or the static model id.
-        """
-        if use_label:
-            return self.get_static_model_id()
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             use_label=use_label,
-                                             use_label_for_situated_in=use_label_for_situated_in,
-                                             deactivate_id_filter=deactivate_id_filter)
-        if isinstance(object_dict, str):
-            return object_dict
-        further_serializable = ['_quality_model']
-        for key, value in object_dict.items():
-            if key in further_serializable and value is not None:
-                object_dict[key] = value.dict_serialize()
-
-        # Check if attributes are missing
-        Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                    ignore=self.drop_before_serialization,
-                                                    dictionary=object_dict,
-                                                    use_ignore=True)
-        return object_dict
-
     def __str__(self):
         return f"QualityController with ID '{self.identification}'; {self._quality_model}'"
 
@@ -1125,11 +969,11 @@ def _get_nodes_entity_types(entity_transformation_nodes: list[EntityTransformati
 def get_next_children_nodes(parent_nodes) -> list[EntityTransformationNode]:
     """
     The method is used to find the children nodes for the first transformation.
-    Here it is necessary to have no main_part in the predecessors to keep the right sequence.
+    Here it is necessary to have no main_entity in the predecessors to keep the right sequence.
 
     Returns
     -------
-    children_nodes: children nodes without main_part as a predecessor
+    children_nodes: children nodes without main_entity as a predecessor
     """
     possible_children_nodes = list(set([children_node
                                         for parent_node in parent_nodes
@@ -1140,34 +984,45 @@ def get_next_children_nodes(parent_nodes) -> list[EntityTransformationNode]:
     return children_nodes
 
 
-def get_main_part(main_part: Part, nodes: list[EntityTransformationNode],
-                  parts: list[Part]) -> [Part, EntityTransformationNode]:
-    """Determine the main part based on the entity_transformation_node and return them"""
+def get_main_entity(main_entity: Part | Resource, nodes: list[EntityTransformationNode],
+                    entities: list[Part | Resource]) -> [Part | Resource, EntityTransformationNode]:
+    """Determine the main entity based on the entity_transformation_node and return them"""
 
     for node in nodes:
-        if node.transformation_type != EntityTransformationNodeTransformationTypes.MAIN_ENTITY:
+        if not node.transformation_type_main_entity():
             continue
 
-        if main_part:
-            if main_part.entity_type.check_entity_type_match(node.entity_type):
-                return main_part, node
+        if main_entity:
+            if main_entity.entity_type.check_entity_type_match(node.entity_type):
+                return main_entity, node
 
-        for part in parts:
-            if part.entity_type.check_entity_type_match(node.entity_type):
-                return part, node
+        for entity in entities:
+            if entity.entity_type.check_entity_type_match(node.entity_type):
+                return entity, node
 
     return None, None
 
 
-def _append_to_main_part(node: EntityTransformationNode, main_part: Part, parts: list[Part],
-                         part_removable: bool, process_execution):
-    for part in parts:
-        if node.io_behaviour == EntityTransformationNodeIoBehaviours.EXIST:
-            main_part.add_part(part=part,
-                               removable=part_removable,
-                               process_execution=process_execution)
+def _append_to_main_entity(node: EntityTransformationNode, main_entity: Part | Resource, entities: list[Part | Resource],
+                           removable: bool, process_execution, sequence_already_ensured):
+    """Used for sub entity and ingredient 'assembly'"""
 
-    return parts, main_part
+    for entity in entities:
+        if node.io_behaviour_exist():
+            main_entity.add_entity(entity=entity,
+                                       removable=removable,
+                                       process_execution=process_execution)
+
+            if not process_execution:
+                print("Warning: No transition for sub entity or ingredient assembly")
+                continue
+
+            # change situated in attribute of the sub_entities
+            entity.change_situated_in(situated_in=None,
+                                      process_execution=process_execution,
+                                      sequence_already_ensured=sequence_already_ensured)
+
+    return entities, main_entity
 
 
 def get_necessary_entities_by_entity_type(entity_type: EntityType, amount: int, input_entities: list[Entity]):
@@ -1192,28 +1047,36 @@ def get_necessary_entities_by_entity_type(entity_type: EntityType, amount: int, 
     return necessary_entities
 
 
-def _create_and_destroy(parent_nodes: list[EntityTransformationNode], input_parts_to_transform: list[Part],
+def _create_and_destroy(parent_nodes: list[EntityTransformationNode],
+                        input_parts_to_transform: list[Part],
                         transformed_parts: list[tuple[Part, EntityTransformationNode]],
                         destroyed_parts: list[tuple[Part, EntityTransformationNode]]):
     """Create and destroy entities (normally creation is in the root nodes)"""
 
     for parent_node in parent_nodes:
-        if parent_node.io_behaviour == EntityTransformationNodeIoBehaviours.CREATED:
+        if parent_node.io_behaviour_created():
             created_parts = _create_parts(parent_node)
             input_parts_to_transform += created_parts
-            transformed_parts += [(created_part, parent_node) for created_part in created_parts]
-        elif parent_node.io_behaviour == EntityTransformationNodeIoBehaviours.DESTROYED:
+            transformed_parts += [(created_part, parent_node)
+                                  for created_part in created_parts]
+
+        elif parent_node.io_behaviour_destroyed():
             parts_to_destroy = _destroy_parts(parent_node, input_parts_to_transform)
-            input_parts_to_transform = [part for part in input_parts_to_transform
+            input_parts_to_transform = [part
+                                        for part in input_parts_to_transform
                                         if part not in parts_to_destroy]
-            transformed_parts = [(part, node) for part, node in transformed_parts
+            transformed_parts = [(part, node)
+                                 for part, node in transformed_parts
                                  if part not in parts_to_destroy]
-            destroyed_parts += [(part_to_destroy, parent_node) for part_to_destroy in parts_to_destroy]
+            destroyed_parts += [(part_to_destroy, parent_node)
+                                for part_to_destroy in parts_to_destroy]
 
     return input_parts_to_transform, transformed_parts, destroyed_parts
 
 
 def _create_parts(node: EntityTransformationNode):
+    """Create parts based on the transformation node"""
+
     created_parts = []
     for i in range(int(node.amount)):
         created_part = Part(identification=None,
@@ -1230,140 +1093,167 @@ def _create_parts(node: EntityTransformationNode):
 
 
 def _destroy_parts(node, parts):
+    """Get the parts to destroy based on the transformation node"""
     return get_necessary_entities_by_entity_type(node.entity_type, node.amount, parts)
 
 
-def _execute_disassemble(parent_node, children_node, main_part, process_execution, input_entities_to_transform,
+def _execute_disassemble(parent_node, children_node, main_entity, process_execution, input_entities_to_transform,
                          transformed_entities, class_name, sequence_already_ensured):
-    sub_parts = transform_existing_disassemble(children_node, main_part, process_execution, sequence_already_ensured)
-    input_entities_to_transform += sub_parts
-    transformed_entities += [(sub_part, children_node)
-                             for sub_part in sub_parts]
+    sub_entities = transform_existing_disassemble(children_node, main_entity, process_execution,
+                                                  sequence_already_ensured)
+    input_entities_to_transform += sub_entities
+    transformed_entities += [(sub_entity, children_node)
+                             for sub_entity in sub_entities]
     transited_entity = None
     half_transited_entity = None
-    return input_entities_to_transform, main_part, transited_entity, half_transited_entity
+    return input_entities_to_transform, main_entity, transited_entity, half_transited_entity
 
 
-def _execute_unsupport(parent_node, children_node, main_part, process_execution, input_entities_to_transform,
+def _execute_unsupport(parent_node, children_node, main_entity, process_execution, input_entities_to_transform,
                        transformed_entities, class_name, sequence_already_ensured):
-    support, half_transited_entity = transform_existing_unsupport(children_node, main_part, process_execution,
+    support, half_transited_entity = transform_existing_unsupport(children_node, main_entity, process_execution,
                                                                   class_name, sequence_already_ensured)
     transited_entity = None
-    return input_entities_to_transform, main_part, transited_entity, half_transited_entity
+    return input_entities_to_transform, main_entity, transited_entity, half_transited_entity
 
 
-def _execute_main_entity(parent_node, children_node, main_part, process_execution, input_entities_to_transform,
+def _inspect_quality(root_nodes, entities_to_inspect, process_execution):
+    for root_node in root_nodes:
+        if not root_node.transformation_type_quality_inspection():
+            continue
+
+        # does not consider the amount
+        for entity in entities_to_inspect:
+            if root_node.entity_type.check_entity_type_match(entity.entity_type):
+                # ToDo: measurement tools should be also considered and have an impact
+                entity.inspect_quality(process_execution)
+
+    return entities_to_inspect
+
+
+def _execute_main_entity(parent_node, children_node, main_entity, process_execution, input_entities_to_transform,
                          transformed_entities, class_name, sequence_already_ensured):
-    transform_existing_main_part(main_part, children_node)
+    transform_existing_main_entity(main_entity, children_node)
     transited_entity = None
     half_transited_entity = None
-    return input_entities_to_transform, main_part, transited_entity, half_transited_entity
+    return input_entities_to_transform, main_entity, transited_entity, half_transited_entity
 
 
-def _execute_sub_part(parent_node, children_node, main_part, process_execution, input_entities_to_transform,
-                      transformed_entities, class_name, sequence_already_ensured):
-    parts, main_part = _transform_existing_sub_part(main_part, parent_node,
-                                                    input_entities_to_transform,
-                                                    process_execution, sequence_already_ensured)
-    input_entities_to_transform = list(set(input_entities_to_transform) - set(parts))
-    transited_entity = None
-    half_transited_entity = None
-    return input_entities_to_transform, main_part, transited_entity, half_transited_entity
-
-
-def _execute_ingredient(parent_node, children_node, main_part, process_execution, input_entities_to_transform,
+def _execute_sub_entity(parent_node, children_node, main_entity, process_execution, input_entities_to_transform,
                         transformed_entities, class_name, sequence_already_ensured):
-    parts, main_part = _transform_existing_ingredients(main_part, parent_node,
-                                                       input_entities_to_transform,
-                                                       process_execution)
-    input_entities_to_transform = list(set(input_entities_to_transform) - set(parts))
+    entities, main_entity = _transform_existing_sub_entity(main_entity, parent_node,
+                                                           input_entities_to_transform,
+                                                           process_execution, sequence_already_ensured)
+    input_entities_to_transform = list(set(input_entities_to_transform) - set(entities))
     transited_entity = None
     half_transited_entity = None
-    return input_entities_to_transform, main_part, transited_entity, half_transited_entity
+    return input_entities_to_transform, main_entity, transited_entity, half_transited_entity
 
 
-def _execute_support(parent_node, children_node, main_part, process_execution, input_entities_to_transform,
+def _execute_ingredient(parent_node, children_node, main_entity, process_execution, input_entities_to_transform,
+                        transformed_entities, class_name, sequence_already_ensured):
+    entities, main_entity = _transform_existing_ingredients(main_entity, parent_node, input_entities_to_transform,
+                                                       process_execution, sequence_already_ensured)
+    input_entities_to_transform = list(set(input_entities_to_transform) - set(entities))
+    transited_entity = None
+    half_transited_entity = None
+    return input_entities_to_transform, main_entity, transited_entity, half_transited_entity
+
+
+def _execute_support(parent_node, children_node, main_entity, process_execution, input_entities_to_transform,
                      transformed_entities, class_name, sequence_already_ensured):
-    support, main_part, transited_entity = _transform_existing_support(main_part, parent_node,
-                                                                       input_entities_to_transform,
-                                                                       process_execution,
-                                                                       sequence_already_ensured)
+    support, main_entity, transited_entity = _transform_existing_support(main_entity, parent_node,
+                                                                         input_entities_to_transform,
+                                                                         process_execution,
+                                                                         sequence_already_ensured)
     input_entities_to_transform.remove(support)
     half_transited_entity = None
-    return input_entities_to_transform, main_part, transited_entity, half_transited_entity
+    return input_entities_to_transform, main_entity, transited_entity, half_transited_entity
 
 
 children_transformations = {EntityTransformationNodeTransformationTypes.DISASSEMBLE: _execute_disassemble,
                             EntityTransformationNodeTransformationTypes.UNSUPPORT: _execute_unsupport}
 parent_transformations = {EntityTransformationNodeTransformationTypes.MAIN_ENTITY: _execute_main_entity,
-                          EntityTransformationNodeTransformationTypes.SUB_PART: _execute_sub_part,
+                          EntityTransformationNodeTransformationTypes.SUB_ENTITY: _execute_sub_entity,
                           EntityTransformationNodeTransformationTypes.INGREDIENT: _execute_ingredient,
                           EntityTransformationNodeTransformationTypes.SUPPORT: _execute_support}
 
 
-def _transform_with_main_part(input_entities_to_transform, transformed_entities, parent_node, children_node,
-                              main_part, process_execution, class_name, sequence_already_ensured: bool = False):
-    if children_node.transformation_type in children_transformations:
+def _transform_with_main_entity(input_entities_to_transform, transformed_entities, parent_node, children_node,
+                                main_entity, process_execution, class_name, sequence_already_ensured: bool = False):
+    if children_node.compare_transformation_type_self(children_transformations):
         execution_func = children_transformations[children_node.transformation_type]
-        input_entities_to_transform, main_part, transited_entity, half_transited_entity = (
-            execution_func(parent_node, children_node, main_part, process_execution, input_entities_to_transform,
+        input_entities_to_transform, main_entity, transited_entity, half_transited_entity = (
+            execution_func(parent_node, children_node, main_entity, process_execution, input_entities_to_transform,
                            transformed_entities, class_name, sequence_already_ensured))
 
-    elif parent_node.transformation_type in parent_transformations:
+    elif parent_node.compare_transformation_type_self(parent_transformations):
         execution_func = parent_transformations[parent_node.transformation_type]
-        input_entities_to_transform, main_part, transited_entity, half_transited_entity = (
-            execution_func(parent_node, children_node, main_part, process_execution, input_entities_to_transform,
+        input_entities_to_transform, main_entity, transited_entity, half_transited_entity = (
+            execution_func(parent_node, children_node, main_entity, process_execution, input_entities_to_transform,
                            transformed_entities, class_name, sequence_already_ensured))
 
     else:
         raise Exception(parent_node.transformation_type, children_node.transformation_type)
 
-    return input_entities_to_transform, main_part, transited_entity, half_transited_entity
+    return input_entities_to_transform, main_entity, transited_entity, half_transited_entity
 
 
-def transform_existing_main_part(main_part, children_node):
-    # no transformation needed until now - the sub_parts and the raw_material is appended in their transformation
-    return main_part
+def transform_existing_main_entity(main_entity, children_node):
+    # no transformation needed until now - the sub_entities and the raw_material is appended in their transformation
+    return main_entity
 
 
-def transform_existing_disassemble(children_node: EntityTransformationNode, main_part: Part,
+def transform_existing_disassemble(children_node: EntityTransformationNode, main_entity: Part | Resource,
                                    process_execution: ProcessExecution,
-                                   sequence_already_ensured: bool = False) -> list[Part]:
+                                   sequence_already_ensured: bool = False) -> list[Part | Resource]:
     """
-    Disassemble a number of parts (defined by the EntityTransformationNode) from the main_part.
+    Disassemble a number of entities (defined by the EntityTransformationNode) from the main_entity.
 
     Parameters
     ----------
-    children_node: a children part transformation_node
-    main_part: main_part that is disassembled (described by the children nodes)
-    process_execution:
+    children_node: a children entity transformation_node
+    main_entity: main_entity that is disassembled (described by the children nodes)
+    process_execution: the process execution responsible for the disassembly
+    sequence_already_ensured: says if the process execution sequence is time chronological or not
 
     Returns
     -------
-    sub_parts: a list with main_part and the disassembled parts
+    sub_entities: a list with main_entity and the disassembled entities
     """
-    sub_parts = main_part.get_disassembled_parts(part_entity_type=children_node.entity_type,
-                                                 amount=children_node.amount,
-                                                 process_execution=process_execution,
-                                                 sequence_already_ensured=sequence_already_ensured)
-    return sub_parts
+    sub_entities = main_entity.get_disassembled_parts(part_entity_type=children_node.entity_type,
+                                                      amount=children_node.amount,
+                                                      process_execution=process_execution,
+                                                      sequence_already_ensured=sequence_already_ensured)
+
+    if not process_execution:
+        print("Warning: No transition for disassembly")
+        return sub_entities
+
+    # change situated in attribute of the sub_entities
+    for sub_entity in sub_entities:
+        sub_entity.change_situated_in(situated_in=process_execution.destination,
+                                    process_execution=process_execution,
+                                    sequence_already_ensured=sequence_already_ensured)
+
+    return sub_entities
 
 
-def transform_existing_unsupport(children_node: EntityTransformationNode, main_part, process_execution, class_name,
+def transform_existing_unsupport(children_node: EntityTransformationNode, main_entity, process_execution, class_name,
                                  sequence_already_ensured) -> Resource:
-    support = main_part.situated_in
+    support = main_entity.situated_in
 
     if support is not None:
-        support.remove_entity(main_part, process_execution, sequence_already_ensured)
-        half_transited_entity = main_part
+        support.remove_entity(main_entity, process_execution, sequence_already_ensured)
+        half_transited_entity = main_entity
 
     else:
-        debug_str = f"[{class_name}] Main part has no support {main_part.external_identifications}"
+        debug_str = f"[{class_name}] Main entity has no support {main_entity.external_identifications}"
         logging.debug(debug_str)
         raise Exception(debug_str)
 
-    main_part.change_situated_in(situated_in=None, process_execution=process_execution,
-                                 sequence_already_ensured=sequence_already_ensured)
+    main_entity.change_situated_in(situated_in=None, process_execution=process_execution,
+                                   sequence_already_ensured=sequence_already_ensured)
 
     if not children_node.entity_type.check_entity_type_match(support.entity_type):
         if prints_visible:
@@ -1386,58 +1276,89 @@ def _transform_existing_blank(parent_node: EntityTransformationNode, children_no
                                                              input_parts)
     processed_parts = []
     for part_to_process in parts_to_process:
-        processed_part_entity_transformation_node_entity_type = parent_node.children[0].entity_type
+        processed_part_type = parent_node.children[0].entity_type
+
+        # execute the transition
+        if not process_execution:
+            print("Warning: No transition for blank part or ingredient assembly")
+
+        part_to_process.change_situated_in(situated_in=None,
+                                           process_execution=process_execution,
+                                           sequence_already_ensured=sequence_already_ensured)
+
+        processed_part_situated_in = part_to_process.situated_in
+        if isinstance(processed_part_situated_in, Storage):
+            if processed_part_situated_in.situated_in is not None:
+                # remove the entity from the "old" storage to add them to the "new" with a different entity_type
+
+                processed_part_situated_in = processed_part_situated_in.situated_in
+                processed_part_situated_in.remove_entity(entity=part_to_process,
+                                                         process_execution=process_execution,
+                                                         sequence_already_ensured=sequence_already_ensured)
+                processed_part_storages = processed_part_situated_in.get_storages(entity_type=processed_part_type)
+
+                if processed_part_type not in processed_part_storages:
+                    print("Warning: No storage available for blank transformation")
+                elif not processed_part_storages[processed_part_type]:
+                    print("Warning: No storage available for blank transformation")
+                else:
+                    # take the first storage as new storage for the processed part
+                    processed_part_situated_in = processed_part_storages[processed_part_type][0]
+
+        # create a new part
         processed_part = Part(identification=None,
-                              name=processed_part_entity_transformation_node_entity_type.name,
-                              entity_type=processed_part_entity_transformation_node_entity_type,
+                              name=processed_part_type.name,
+                              entity_type=processed_part_type,
                               parts=[part_to_process],
-                              situated_in=part_to_process.situated_in,
-                              part_removable=[False])
-        processed_part.add_part(part=part_to_process,
-                                removable=False,
-                                process_execution=process_execution,
-                                sequence_already_ensured=sequence_already_ensured)
+                              situated_in=processed_part_situated_in,
+                              parts_removable=[False])
+
         processed_parts.append(processed_part)
 
     return processed_parts
 
 
-def _transform_existing_sub_part(main_part, node: EntityTransformationNode, input_parts,
-                                 process_execution: ProcessExecution, sequence_already_ensured):
-    """Add one or more parts as subparts to another part"""
+def _transform_existing_sub_entity(main_entity, node: EntityTransformationNode, input_parts,
+                                   process_execution: ProcessExecution, sequence_already_ensured):
+    """[REMOVABLE] Add one or more entities as sub-entities (equipment or sub entity) to another entity"""
 
     parts = get_necessary_entities_by_entity_type(node.entity_type, node.amount, input_parts)
-    parts, main_part = _append_to_main_part(node, main_part, parts, True, process_execution)
-    return parts, main_part
+    parts, main_entity = _append_to_main_entity(node, main_entity, parts, True, process_execution,
+                                              sequence_already_ensured)
+
+    return parts, main_entity
 
 
-def _transform_existing_support(main_part, node: EntityTransformationNode, input_parts,
+def _transform_existing_ingredients(main_entity, node: EntityTransformationNode, input_parts,
+                                    process_execution: ProcessExecution, sequence_already_ensured):
+    """[Not REMOVABLE] Add one or more entities as sub-entities (equipment or sub entity) to another entity"""
+
+    parts = get_necessary_entities_by_entity_type(node.entity_type, node.amount, input_parts)
+    parts, main_entity = _append_to_main_entity(node, main_entity, parts, False, process_execution,
+                                              sequence_already_ensured)
+    return parts, main_entity
+
+
+def _transform_existing_support(main_entity, node: EntityTransformationNode, input_parts,
                                 process_execution: ProcessExecution, sequence_already_ensured: bool = True) -> \
         [Resource, Entity, Entity]:
-    """Transform an existing support means that the main_part is added to the support if not already in the storages"""
+    """Transform an existing support means that the main_entity is added to the support if not already in the storages"""
 
     support = get_necessary_entities_by_entity_type(entity_type=node.entity_type, amount=1,
                                                     input_entities=input_parts)[0]
 
-    main_part_stored_in_support = support.check_entity_stored(main_part)
+    main_entity_stored_in_support = support.check_entity_stored(main_entity)
     transited_entity = None
-    if main_part_stored_in_support:
-        return support, main_part, transited_entity
+    if main_entity_stored_in_support:
+        return support, main_entity, transited_entity
 
-    if main_part.situated_in:
-        main_part.situated_in.remove_entity(entity=main_part, process_execution=process_execution,
+    if main_entity.situated_in:
+        main_entity.situated_in.remove_entity(entity=main_entity, process_execution=process_execution,
                                             sequence_already_ensured=sequence_already_ensured)
-    support.add_entity(entity=main_part, process_execution=process_execution)
-    transited_entity = main_part
+    support.add_entity(entity=main_entity, process_execution=process_execution)
+    transited_entity = main_entity
 
-    return support, main_part, transited_entity
-
-
-def _transform_existing_ingredients(main_part, node: EntityTransformationNode, input_parts,
-                                    process_execution: ProcessExecution):
-    parts = get_necessary_entities_by_entity_type(node.entity_type, node.amount, input_parts)
-    parts, main_part = _append_to_main_part(node, main_part, parts, False, process_execution)
-    return parts, main_part
+    return support, main_entity, transited_entity
 
 
 def _raise_not_all_entities_available_exception(process_execution, input_parts, input_resources, class_name):
@@ -1475,14 +1396,14 @@ class TransformationController(ProcessController):
                              EntityTransformationNodeIoBehaviours.DESTROYED,
                              EntityTransformationNodeIoBehaviours.EXIST]
     transformation_types_sequence = \
-        [EntityTransformationNodeTransformationTypes.MAIN_ENTITY,
-         EntityTransformationNodeTransformationTypes.SUB_PART,
+        [EntityTransformationNodeTransformationTypes.QUALITY_INSPECTION,
+         EntityTransformationNodeTransformationTypes.MAIN_ENTITY,
+         EntityTransformationNodeTransformationTypes.SUB_ENTITY,
          EntityTransformationNodeTransformationTypes.INGREDIENT,
          EntityTransformationNodeTransformationTypes.BLANK,
          EntityTransformationNodeTransformationTypes.DISASSEMBLE,
          EntityTransformationNodeTransformationTypes.SUPPORT,
          EntityTransformationNodeTransformationTypes.UNSUPPORT]
-    drop_before_serialization = []
 
     def __init__(self,
                  transformation_model: TransformationModel,
@@ -1547,7 +1468,7 @@ class TransformationController(ProcessController):
         root_nodes = self.get_root_nodes()
         necessary_input_entity_types = [(root_node.entity_type, root_node.amount)
                                         for root_node in root_nodes
-                                        if root_node.io_behaviour != EntityTransformationNodeIoBehaviours.CREATED]
+                                        if not root_node.io_behaviour_created()]
         return necessary_input_entity_types
 
     def get_support_entity_type(self) -> Optional[EntityType]:
@@ -1600,8 +1521,7 @@ class TransformationController(ProcessController):
         necessary_input_entity_types_without_support = \
             [(root_node.entity_type, root_node.amount)
              for root_node in root_nodes
-             if root_node.transformation_type != EntityTransformationNodeTransformationTypes.SUPPORT and
-             root_node.transformation_type != EntityTransformationNodeTransformationTypes.UNSUPPORT]
+             if not (root_node.transformation_type_support() or root_node.transformation_type_un_support())]
 
         return necessary_input_entity_types_without_support
 
@@ -1611,8 +1531,7 @@ class TransformationController(ProcessController):
         support_nodes = [root_node
                          for root_node in root_nodes
                          if root_node.entity_type.check_entity_type_match(support_entity_type)
-                         if root_node.transformation_type == EntityTransformationNodeTransformationTypes.SUPPORT or
-                         root_node.transformation_type == EntityTransformationNodeTransformationTypes.UNSUPPORT]
+                         if root_node.transformation_type_support() or root_node.transformation_type_un_support()]
         return support_nodes
 
     def get_possible_output_entity_types(self) -> list[tuple[EntityType, int]]:
@@ -1697,14 +1616,14 @@ class TransformationController(ProcessController):
                             input_resources_to_transform.remove(input_entity)
                         amount += 1
                 # add created entities (parts)
-                elif root_node.compare_io_behaviour_self([EntityTransformationNodeIoBehaviours.CREATED]):
+                elif root_node.io_behaviour_created():
                     parts_with_entity_transformation_node.append((None, root_node))
                     break
 
         return available, parts_with_entity_transformation_node, resources_with_entity_transformation_node
 
     def get_entity_with_entity_transformation_node(self, entity: Entity) \
-            -> list[tuple[Union[Resource, Part], EntityTransformationNode]]:
+            -> list[tuple[Entity, EntityTransformationNode]]:
         """Match an entity_transformation_node to an entity"""
 
         entity_type = entity.entity_type
@@ -1719,7 +1638,26 @@ class TransformationController(ProcessController):
     def get_transformed_entities(self, process_execution: ProcessExecution, sequence_already_ensured: bool = False) -> \
             [list[tuple[Part, EntityTransformationNode]], list[tuple[Resource, EntityTransformationNode]], list, list]:
         """
-        The method is used for the part transformation.
+        The method is used for the entity transformation.
+
+        Transitions executed by the transformation controller based on the transformation type:
+        No Action:
+        - MAIN_ENTITY
+        - SUPPORT
+        - UNSUPPORT
+
+        Change the Storage (managed by the main entity):
+        - BLANK (change the storage in the transformation model)
+
+        Remove situated in:
+        - SUB_ENTITY
+        - INGREDIENT
+
+        Situated in destination:
+        - DISASSEMBLE
+
+        Set inspected quality:
+        - QUALITY_INSPECTION
 
         Parameters
         ----------
@@ -1729,6 +1667,8 @@ class TransformationController(ProcessController):
         Returns
         -------
         necessary_input_entity_types: transformed_parts and destroyed_parts
+        transited: relevant for the support and unsupport transformation type
+        half_transited: relevant for the support and unsupport transformation type
         """
         class_name = self.__class__.__name__
 
@@ -1744,8 +1684,8 @@ class TransformationController(ProcessController):
             _raise_not_all_entities_available_exception(process_execution, input_parts, input_resources,
                                                         class_name)
 
-        transited_entities = []
-        half_transited_entities = []
+        # execute the transformation
+        transited_entities, half_transited_entities = [], []
         transformed_entities = []  # [(Part, EntityTransformationNode)]
         destroyed_parts = []
         root_nodes = self.get_root_nodes()
@@ -1758,52 +1698,60 @@ class TransformationController(ProcessController):
         input_entities_to_transform, transformed_entities, destroyed_parts = \
             _create_and_destroy(parent_nodes, input_entities_to_transform, transformed_entities, destroyed_parts)
 
-        # Parts are appended to the main_part (SUB_PART, INGREDIENT). Therefore, the main_part is determined.
-        main_part, node = get_main_part(None, parent_nodes, input_entities_to_transform)
-        if main_part in input_entities_to_transform:
-            transformed_entities.append((main_part, node))
-            input_entities_to_transform.remove(main_part)
+        input_entities_to_transform = _inspect_quality(root_nodes, input_entities_to_transform, process_execution)
+
+        # Parts are appended to the main_entity (SUB_ENTITY, INGREDIENT). Therefore, the main_entity is determined.
+        main_entity, node = get_main_entity(None, parent_nodes, input_entities_to_transform)
+        if main_entity in input_entities_to_transform:
+            transformed_entities.append((main_entity, node))
+            input_entities_to_transform.remove(main_entity)
 
         # case: Children nodes available
+        iteration = 0 # reset the inspected quality based on the root nodes
         while children_nodes:
-
-            # determine the main_part
-            main_part, node = get_main_part(main_part, parent_nodes, input_entities_to_transform)
-            if main_part in input_entities_to_transform:
-                input_entities_to_transform.remove(main_part)
-            main_part_in_transformed_parts = False
-            for idx, transformed_part in enumerate(transformed_entities):
-                if main_part.identification == transformed_part[0].identification:
+            # determine the main_entity
+            main_entity, node = get_main_entity(main_entity, parent_nodes, input_entities_to_transform)
+            if main_entity in input_entities_to_transform:
+                input_entities_to_transform.remove(main_entity)
+            main_entity_in_transformed_entities = False
+            for idx, transformed_entity in enumerate(transformed_entities):
+                if main_entity.identification == transformed_entity[0].identification:
                     # update the node
-                    transformed_part_lst = list(transformed_entities[idx])
-                    transformed_part_lst[1] = node
-                    transformed_entities[idx] = tuple(transformed_part_lst)
+                    transformed_entities_lst = list(transformed_entities[idx])
+                    transformed_entities_lst[1] = node
+                    transformed_entities[idx] = tuple(transformed_entities_lst)
 
-                    main_part_in_transformed_parts = True
+                    main_entity_in_transformed_entities = True
                     break
 
-            if main_part and not main_part_in_transformed_parts:
-                transformed_entities.append((main_part, node))
+            if main_entity and not main_entity_in_transformed_entities:
+                transformed_entities.append((main_entity, node))
 
-            # process the existing parts
+            # process the existing entities
             for children_node in children_nodes:
-                if children_node.io_behaviour != EntityTransformationNodeIoBehaviours.EXIST:
+                if not children_node.io_behaviour_exist():
                     continue
 
                 parent_nodes = self.get_sorted_nodes_transformation_type(children_node.parents)
                 for parent_node in parent_nodes:
-                    if main_part:
-                        input_entities_to_transform, main_part, transited_entity, half_transited_entity = \
-                            _transform_with_main_part(input_entities_to_transform, transformed_entities,
-                                                      parent_node, children_node, main_part,
-                                                      process_execution, class_name,
-                                                      sequence_already_ensured=sequence_already_ensured)
+                    if main_entity:
+                        input_entities_to_transform, main_entity, transited_entity, half_transited_entity = \
+                            _transform_with_main_entity(input_entities_to_transform, transformed_entities,
+                                                        parent_node, children_node, main_entity,
+                                                        process_execution, class_name,
+                                                        sequence_already_ensured=sequence_already_ensured)
                         if transited_entity:
                             transited_entities.append(transited_entity)
                         if half_transited_entity:
                             half_transited_entities.append(half_transited_entity)
 
-                    elif parent_node.transformation_type == EntityTransformationNodeTransformationTypes.BLANK:
+                        if iteration == 0:
+                            if not parent_node.reset_inspected_quality:
+                                continue
+
+                            main_entity.reset_inspected_quality(process_execution)
+
+                    elif parent_node.transformation_type_blank():
                         processed_parts = _transform_existing_blank(parent_node, children_node,
                                                                     input_entities_to_transform,
                                                                     process_execution,
@@ -1811,16 +1759,23 @@ class TransformationController(ProcessController):
                         transformed_entities += [(processed_part, children_node)
                                                  for processed_part in processed_parts]
 
+                        if iteration == 0:
+                            if not parent_node.reset_inspected_quality:
+                                continue
+
+                            for process_part in processed_parts:
+                                process_part.reset_inspected_quality(process_execution)
+
             parent_nodes = self.get_sorted_nodes_io_behaviour(children_nodes)
             children_nodes = get_next_children_nodes(parent_nodes)
 
-        transformed_parts = [(entity, entity_transformation_node)
-                             for entity, entity_transformation_node in transformed_entities
-                             if isinstance(entity, Part)]
-
-        transformed_resources = [(entity, entity_transformation_node)
-                                 for entity, entity_transformation_node in transformed_entities
-                                 if not isinstance(entity, Part)]
+        transformed_parts = []
+        transformed_resources = []
+        for entity, entity_transformation_node in transformed_entities:
+            if isinstance(entity, Part):
+                transformed_parts.append((entity, entity_transformation_node))
+            elif isinstance(entity, Resource):
+                transformed_resources.append((entity, entity_transformation_node))
 
         return transformed_parts, transformed_resources, destroyed_parts, transited_entities, half_transited_entities
 
@@ -1828,7 +1783,7 @@ class TransformationController(ProcessController):
                                               ignore_resources: bool = False, event_type="PLAN") -> \
             [list[Part], list[Resource], bool]:
         """
-        Check if all needed input_parts are available and their quality is "okay".
+        Check if all necessary input_parts are available and their quality is "okay".
 
         Parameters
         ----------
@@ -1840,8 +1795,8 @@ class TransformationController(ProcessController):
 
         Returns
         -------
-        input_parts_to_transform: the needed parts
-        input_resources_to_transform: the needed resources
+        input_parts_to_transform: the necessary parts
+        input_resources_to_transform: the necessary resources
         availability: True if possible to perform the transformation based on input_parts and resources
         """
         input_parts_to_transform = []
@@ -1889,7 +1844,7 @@ class TransformationController(ProcessController):
                     break
 
             # for the transformation "creation" is no input_part necessary
-            if node.io_behaviour == EntityTransformationNodeIoBehaviours.CREATED:
+            if node.io_behaviour_created():
                 pass
 
             # the transformation is not "creation" and no input_part available
@@ -1899,8 +1854,7 @@ class TransformationController(ProcessController):
                     continue
 
                 # assume that resources are used as support
-                if node.transformation_type == EntityTransformationNodeTransformationTypes.SUPPORT or \
-                        node.transformation_type == EntityTransformationNodeTransformationTypes.UNSUPPORT:
+                if node.transformation_type_support() or node.transformation_type_un_support():
                     availability = True
 
         return input_parts_to_transform, input_resources_to_transform, availability
@@ -1943,7 +1897,8 @@ class TransformationController(ProcessController):
         nodes_sorted_according_sequence: a sorted list
         """
         nodes_sorted_according_sequence = [node
-                                           for io_behaviour in type(self).io_behaviour_sequence for node in nodes
+                                           for io_behaviour in type(self).io_behaviour_sequence
+                                           for node in nodes
                                            if node.io_behaviour == io_behaviour]
         return nodes_sorted_according_sequence
 
@@ -1958,54 +1913,11 @@ class TransformationController(ProcessController):
              if node.transformation_type == transformation_type]
         return transformation_types_sorted_according_sequence
 
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Converts the object to a json serializable dict.
-
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-            Defaults to True.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-            Then the static model id is used. Defaults to False.
-        use_label: Whether to use the static model id as representation. Defaults to False.
-        use_label_for_situated_in: Whether to use the static model id as representation for the situated_in
-            attribute. Defaults to False.
-
-        Returns
-        -------
-        object_dict: The dict representation of the entity type or the static model id.
-        """
-
-        if use_label:
-            return self.get_static_model_id()
-
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             use_label=use_label,
-                                             use_label_for_situated_in=use_label_for_situated_in,
-                                             deactivate_id_filter=deactivate_id_filter)
-
-        further_serializable = ['_transformation_model']
-        for key, value in object_dict.items():
-            if key in further_serializable and value is not None:
-                object_dict[key] = value.dict_serialize()
-
-        # Check if attributes are missing
-        Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                    ignore=self.drop_before_serialization,
-                                                    dictionary=object_dict,
-                                                    use_ignore=True)
-        return object_dict
-
     def __str__(self):
         return f"TransformationController with ID '{self.identification}'; {self._transformation_model}'"
 
 
-class Process(DigitalTwinObject, Serializable):
-    drop_before_serialization = []
+class Process(DigitalTwinObject):
 
     def __init__(self,
                  name: str,
@@ -2238,6 +2150,15 @@ class Process(DigitalTwinObject, Serializable):
         return self._resource_controller.check_resources_build_resource_group(
             available_resources=available_resources, available_main_resource=available_main_resource)
 
+    def get_all_entity_types_required(self, available_resources=[]):
+        """Return possible entity types required for the process"""
+        resource_entity_types = \
+            self._resource_controller.get_possible_resource_entity_types(available_resources=available_resources)
+        transformation_entity_types = \
+            self._transformation_controller.get_input_entity_types_set()
+
+        return list(set(resource_entity_types + transformation_entity_types))
+
     def get_possible_resource_entity_types(self, available_resources=[]):
         """Return possible entity types for resources needed for the process"""
         return self._resource_controller.get_possible_resource_entity_types(available_resources=available_resources)
@@ -2256,6 +2177,9 @@ class Process(DigitalTwinObject, Serializable):
 
     def get_possible_destinations(self):
         return self._transition_controller.get_possible_destinations()
+
+    def get_transition_type(self, origin: Optional[Resource], destination: Optional[Resource]):
+        return self._transition_controller.get_transition_type(origin, destination)
 
     def check_resource_intern(self) -> bool:
         """Requesting if the process is performed resource intern. Further information in the transition_model method"""
@@ -2387,13 +2311,15 @@ class Process(DigitalTwinObject, Serializable):
         return self._transformation_controller.get_transformed_entities(
             process_execution=process_execution, sequence_already_ensured=sequence_already_ensured)
 
-    def get_entities_needed(self) -> list[list[EntityType, PartType]]:
-        input_part_entity_types = [part_type
-                                   for part_type, amount in self.get_necessary_input_part_entity_types()
-                                   for i in range(int(amount))]
+    def get_entities_needed(self) -> list[EntityType | PartType]:
+        input_part_entity_types: list[EntityType | PartType] = \
+            [entity_type
+             for entity_type, amount in self.get_necessary_input_part_entity_types()
+             for i in range(int(amount))]
         resource_groups: list[ResourceGroup] = self.get_resource_groups()
-        input_entity_types = [resource_group.resources + input_part_entity_types
-                              for resource_group in resource_groups]
+        input_entity_types: list[EntityType | PartType] = \
+            [resource_group.resources + input_part_entity_types
+             for resource_group in resource_groups]
 
         return input_entity_types
 
@@ -2419,57 +2345,6 @@ class Process(DigitalTwinObject, Serializable):
 
         return completely_filled, not_completely_filled_attributes
 
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Converts the object to a json serializable dict.
-
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-        Defaults to True.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-        Then the static model id is used.
-        Defaults to False.
-        use_label: Whether to use the static model id as representation. Defaults to False.
-        use_label_for_situated_in: Whether to use the static model id as representation for the situated_in attribute.
-        Defaults to False.
-
-        Returns
-        -------
-        object_dict: The dict representation of the entity type or the static model id.
-        """
-
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             deactivate_id_filter=deactivate_id_filter,
-                                             use_label=use_label,
-                                             use_label_for_situated_in=use_label_for_situated_in)
-        if isinstance(object_dict, str):
-            return object_dict
-        further_serializable = ['group']
-        controllers = ['_lead_time_controller',
-                       '_quality_controller',
-                       '_resource_controller',
-                       '_transition_controller',
-                       '_transformation_controller']
-        for key, value in object_dict.items():
-
-            if key in further_serializable and value is not None:
-                if not isinstance(value, str):
-                    object_dict[key] = value.dict_serialize(use_label=True)
-            elif key in controllers and value is not None:
-                object_dict[key] = value.dict_serialize()
-
-        # Check if attributes are missing
-        Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                    ignore=self.drop_before_serialization,
-                                                    dictionary=object_dict,
-                                                    use_ignore=True)
-
-        return object_dict
-
     def __str__(self):
         return (f"Process with ID '{self.identification}' and name '{self.name}'; "
                 f"'{self.lead_time_controller}', '{self.transition_controller}', "
@@ -2478,8 +2353,6 @@ class Process(DigitalTwinObject, Serializable):
 
 
 class ValueAddedProcess(Process):
-    drop_before_serialization = []
-    further_serializable = ['feature']
 
     def __init__(self,
                  name: str,
@@ -2529,7 +2402,8 @@ class ValueAddedProcess(Process):
         """Append successor value_added_process"""
         self.successors.append(successor)
 
-    def possible_to_execute(self, processes_executed: list[Union[Process, ValueAddedProcess]]) -> bool:
+    def possible_to_execute(self, processes_executed: list[Union[Process, ValueAddedProcess]],
+                            processes_requested: list[Union[Process, ValueAddedProcess]]) -> bool:
         """
         States if the process (self) could be executed based on the priority chart given by the predecessors and
         successors.
@@ -2537,6 +2411,7 @@ class ValueAddedProcess(Process):
         Parameters
         ----------
         processes_executed: a list of processes that are already executed for the order
+        processes_requested: a list of processes not executed until now
 
         Returns
         -------
@@ -2544,10 +2419,15 @@ class ValueAddedProcess(Process):
         """
         processes_executed_set = set(processes_executed)
         for process_tuple in self.predecessors:
+            if not process_tuple:  # no process to choose
+                continue
+
             predecessor_process_fulfilled = set(process_tuple).intersection(processes_executed_set)
 
             if not predecessor_process_fulfilled:
-                return False
+                predecessor_process_required = set(process_tuple).intersection(set(processes_requested))
+                if predecessor_process_required:
+                    return False
 
         return True
 
@@ -2581,55 +2461,6 @@ class ValueAddedProcess(Process):
             completely_filled = True
 
         return completely_filled, not_completely_filled_attributes
-
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Creates a dict representation of the object.
-        Also serialize an object in attributes by calling the function on them.
-
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-        Defaults to True.
-        use_label: If set to true, only the static_model_id is returned for this object.
-        Defaults to False.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-        Then the static model id is used.
-        Defaults to False.
-        use_label_for_situated_in: No functionality.
-        Only for usage in automatic serialization.
-
-        Returns
-        -------
-        object_dict: The dict representation of the entity type or the static model id.
-        """
-        if use_label:
-            return self.get_static_model_id()
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             deactivate_id_filter=deactivate_id_filter,
-                                             use_label=use_label,
-                                             use_label_for_situated_in=use_label_for_situated_in)
-        if isinstance(object_dict, str):
-            return object_dict
-
-        for key, value in object_dict.items():
-            if key == 'successors' and value is not None:
-                object_dict[key] = Serializable.serialize_list(value, use_label=True)
-            elif key == 'predecessors' and value is not None:
-                object_dict[key] = Serializable.serialize_list_of_tuple(value, use_label=True)
-            if key in self.further_serializable and hasattr(value, 'dict_serialize'):
-                object_dict[key] = value.dict_serialize(use_label=True)
-
-        # Check if attributes are missing
-        Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                    ignore=self.drop_before_serialization,
-                                                    dictionary=object_dict,
-                                                    use_ignore=True)
-
-        return object_dict
 
     def __str__(self):
         return (f"ValueAddedProcess with ID '{self.identification}' and name '{self.name}';  "
@@ -2699,7 +2530,7 @@ class ProcessExecution(DigitalTwinObject):
                  etn_specification: bool = True):
         """
         Process executions describe the dynamics of the value creation. They can be used for planning the future or
-        describing the past. It can be created by a Simulation run or the real world.
+        describing the past. It can be created by a Simulation run or the physcial world.
 
         Parameters
         ----------
@@ -3131,6 +2962,15 @@ class ProcessExecution(DigitalTwinObject):
                 available_resources.append(self.main_resource)
         return self.process.get_possible_resource_entity_types(available_resources=available_resources)
 
+    def get_all_entity_types_required(self, available_resources=[]):
+        """Return possible entity types required for the process"""
+        resource_entity_types = \
+            self.get_possible_resource_entity_types(available_resources=available_resources)
+        transformation_entity_types = \
+            self.process.get_input_entity_types_set()
+
+        return list(set(resource_entity_types + transformation_entity_types))
+
     def get_possible_main_resource_entity_types(self, available_resources=None, available_main_resource=None):
         if available_resources is None:
             available_resources = self.get_resources()
@@ -3190,11 +3030,16 @@ class ProcessExecution(DigitalTwinObject):
             if len(new_resources_or_parts_tuple) == 2:
                 if new_resources_or_parts_tuple[1] in entity_transformation_nodes_used and \
                         new_resources_or_parts_tuple[1].amount == 1:
-                    entity_description = [(entity.identification, entity.name)
-                                          for entity in resources_used_or_parts_involved]
+                    try:
+                        entity_description = [(entity_tuple[0].identification, entity_tuple[0].name,
+                                               entity_tuple[1].entity_type.name if len(entity_tuple) > 1 else None
+                                               , entity_tuple[1].amount if len(entity_tuple) > 1 else None)
+                                              for entity_tuple in resources_used_or_parts_involved]
+                    except:
+                        print
                     raise NotImplementedError(f"[{self.__class__.__name__}] "
                                               f"Entity Transformation can only be used one time for process "
-                                              f"'{self.process.name}' with entities '{entity_description}' ... "
+                                              f"'{self.process.name}' with entities \n '{entity_description}' ... \n "
                                               f"{self._executed_start_time} {self._executed_end_time}")
 
                 entity_transformation_nodes_used.append(new_resources_or_parts_tuple[1])
@@ -3219,18 +3064,19 @@ class ProcessExecution(DigitalTwinObject):
         return parts
 
     def get_main_entity(self) -> Optional[Part, Resource]:
-        """Return the entity with the transformation_type MAIN_PART in the entity_transformation_nodes
-        Assumption: only one main_part in the root_nodes"""
+        """Return the entity with the transformation_type MAIN_ENTITY in the entity_transformation_nodes
+        Assumption: only one main_entity in the root_nodes"""
 
-        main_parts = [part_tuple[0] for part_tuple in self.parts_involved
+        main_parts = [part_tuple[0]
+                      for part_tuple in self.parts_involved
                       if len(part_tuple) == 2
-                      if part_tuple[1].transformation_type == EntityTransformationNodeTransformationTypes.MAIN_ENTITY
-                      and part_tuple[1].io_behaviour != EntityTransformationNodeIoBehaviours.CREATED]
+                      if part_tuple[1].transformation_type_main_entity()
+                      and not part_tuple[1].io_behaviour_created()]
         main_resources = \
             [resource_tuple[0]
              for resource_tuple in self.resources_used
              if len(resource_tuple) == 2
-             if resource_tuple[1].transformation_type == EntityTransformationNodeTransformationTypes.MAIN_ENTITY]
+             if resource_tuple[1].transformation_type_main_entity()]
 
         main_entities = main_parts + main_resources
 
@@ -3320,8 +3166,8 @@ class ProcessExecution(DigitalTwinObject):
         return [(resource_tuple[0],)
                 for resource_tuple in self.resources_used
                 if len(resource_tuple) == 2
-                if resource_tuple[1].transformation_type == EntityTransformationNodeTransformationTypes.SUPPORT or
-                resource_tuple[1].transformation_type == EntityTransformationNodeTransformationTypes.MAIN_ENTITY]
+                if resource_tuple[1].transformation_type_support() or
+                resource_tuple[1].transformation_type_main_entity()]
 
     def get_resources(self) -> list[Resource]:
         """Return resources used"""
@@ -3396,16 +3242,17 @@ class ProcessExecution(DigitalTwinObject):
         return assigned_possible_destination_resources
 
     def get_main_entity_types(self):
-        """Get entity_types with the transformation_type MAIN_PART in the EntityTransformationNode"""
+        """Get entity_types with the transformation_type MAIN_ENTITY in the EntityTransformationNode"""
         return [main_entity.entity_type
                 for main_entity in self.get_main_entities()]
 
     def get_main_entities(self):
-        """Get entities with the transformation_type MAIN_PART in the EntityTransformationNode"""
+        """Get entities with the transformation_type MAIN_ENTITY in the EntityTransformationNode"""
+        entities_participating = self.get_entities_participating()
         main_entities = [entity_tuple[0]
-                         for entity_tuple in self.get_entities_participating()
+                         for entity_tuple in entities_participating
                          if len(entity_tuple) == 2
-                         if entity_tuple[1] == EntityTransformationNodeTransformationTypes.MAIN_ENTITY]
+                         if entity_tuple[1].transformation_type_main_entity()]
         return main_entities
 
     def get_entities_participating(self):
@@ -3441,13 +3288,18 @@ class ProcessExecution(DigitalTwinObject):
         if main_resource is None:
             main_resource = self.main_resource
 
-        max_execution_time = max([self.process.get_estimated_process_lead_time(origin=possible_origin,
-                                                                               destination=possible_destination,
-                                                                               main_resource=main_resource,
-                                                                               distance=distance)
-                                  for possible_origin in possible_origins
-                                  for possible_destination in possible_destinations])
+        all_possible_process_times = [self.process.get_estimated_process_lead_time(origin=possible_origin,
+                                                          destination=possible_destination,
+                                                          main_resource=main_resource,
+                                                          distance=distance)
+                                      for possible_origin in possible_origins
+                                      for possible_destination in possible_destinations]
 
+        if all_possible_process_times:
+            max_execution_time = max(all_possible_process_times)
+        else:
+            max_execution_time = self.process.get_estimated_process_lead_time(distance=distance,
+                                                                              main_resource=main_resource)
         return max_execution_time
 
     def get_expected_process_lead_time(self, distance=None):
@@ -3696,6 +3548,8 @@ class ProcessExecution(DigitalTwinObject):
             #         return
 
             int_delta = round(process_lead_time, 0)  # ToDo: accuracy problem
+            if int_delta > 500:
+                print
             timedelta_process_execution = timedelta(seconds=int_delta)
 
             self._executed_end_time = executed_start_time + timedelta_process_execution
@@ -3866,7 +3720,7 @@ class ProcessExecution(DigitalTwinObject):
                 [part_tuple
                  for part_tuple in self.parts_involved
                  if len(part_tuple) == 2
-                 if part_tuple[1].transformation_type == EntityTransformationNodeTransformationTypes.DISASSEMBLE]
+                 if part_tuple[1].transformation_type_disassemble()]
             parts_involved = self.connected_process_execution.parts_involved + disassembled_parts_involved
             resources_used = self.connected_process_execution.resources_used
 
@@ -3896,6 +3750,8 @@ class ProcessExecution(DigitalTwinObject):
         parts_with_etn, resources_with_etn, all_entities_available = \
             self.check_availability_of_needed_entities(event_type=self.event_type)
         if not all_entities_available:
+            parts_with_etn, resources_with_etn, all_entities_available = \
+                self.check_availability_of_needed_entities(event_type=self.event_type)
             not_completely_filled_attributes.append("parts_involved")
 
         if isinstance(self.resulting_quality, int) or isinstance(self.resulting_quality, float):
@@ -3999,7 +3855,7 @@ class WorkOrder(DynamicDigitalTwinObject):
                  work_calendar: Optional[WorkCalender] = None,
                  identification: Optional[int] = None,
                  process_execution: Optional[ProcessExecution] = None,
-                 current_time: datetime = datetime.min,
+                 current_time: datetime = datetime(1970, 1, 1),
                  external_identifications: Optional[dict[object, list[object]]] = None,
                  domain_specific_attributes: Optional[dict[str, Optional[object]]] = None):
         """
@@ -4285,7 +4141,7 @@ class WorkOrder(DynamicDigitalTwinObject):
 
         return value_added_processes_requested_lst
 
-    def complete_value_added_process(self, value_added_process_completed,
+    def complete_value_added_process(self, value_added_process_completed: ValueAddedProcess,
                                      process_executions: list[ProcessExecution] = [],
                                      sequence_already_ensured: bool = False):
         """
@@ -4312,8 +4168,8 @@ class WorkOrder(DynamicDigitalTwinObject):
 
         feasible = self.check_priority_chart_consistency(value_added_process_completed)
         if not feasible:
-            pass  # ToDo: validation needed
-            # print(f"Warning: The process is not possible to execute at this point of the priority chart")
+            print(f"Warning: The process '{value_added_process_completed.name}' is not possible to execute "
+                  f"at this point of the priority chart")
 
         # exceptions
         if len(feature_value_added_process) == 0:
@@ -4392,7 +4248,6 @@ class WorkOrder(DynamicDigitalTwinObject):
         """
         Check if the value_added_process is possible to execute based on the priority chart defined in the
         value_added_processes needed to be executed for the order completion to detect not possible processing sequences
-        ToDo
 
         Parameters
         ----------
@@ -4408,9 +4263,19 @@ class WorkOrder(DynamicDigitalTwinObject):
 
         processes_executed: list[Union[Process, ValueAddedProcess]] = (
             [process
-             for lst in list(self._value_added_processes_completed.values())
+             for process_dict in list(self._value_added_processes_completed.values())
+             for lst in list(process_dict.values())
              for process in lst])
-        consistent = value_added_process.possible_to_execute(processes_executed)
+        processes_requested: list[Union[Process, ValueAddedProcess]] = (
+            [process
+             for process_dict in list(self.value_added_processes_requested.values())
+             for lst in list(process_dict.values())
+             for process in lst])
+        if value_added_process in processes_requested:
+            # remove the value_added_process from the list of requested processes
+            processes_requested.remove(value_added_process)
+
+        consistent = value_added_process.possible_to_execute(processes_executed, processes_requested)
 
         return consistent
 
@@ -4447,7 +4312,7 @@ class WorkOrder(DynamicDigitalTwinObject):
 
         Returns
         -------
-        main_part_entity_type: the entity_type of the finished main_part
+        main_entity_entity_type: the entity_type of the finished main_entity
         """
 
         all_value_added_processes = self._get_all_value_added_processes()
@@ -4456,11 +4321,11 @@ class WorkOrder(DynamicDigitalTwinObject):
         transformation_types_main_entity = EntityTransformationNodeTransformationTypes.MAIN_ENTITY
 
         root_nodes = last_value_added_process.transformation_controller.get_root_nodes()
-        main_part_entity_types = \
+        main_entity_entity_types = \
             [root_node.entity_type
              for root_node in root_nodes
              if root_node.compare_transformation_type_self([transformation_types_main_entity])]
-        main_part_entity_type = main_part_entity_types[0]
+        main_entity_entity_type = main_entity_entity_types[0]
 
         # check if super_entity_type exist assuming that the last process has a specific entity_type
         # - no super_entity_type
@@ -4476,9 +4341,9 @@ class WorkOrder(DynamicDigitalTwinObject):
              if root_node.compare_transformation_type_self([transformation_types_main_entity])]
         last_entity_type = entity_types[0]
         if last_entity_type.super_entity_type:
-            main_part_entity_type = last_entity_type
+            main_entity_entity_type = last_entity_type
 
-        return main_part_entity_type
+        return main_entity_entity_type
 
     def _get_possible_last_value_added_process(self) -> ValueAddedProcess:
 
@@ -4636,3 +4501,4 @@ class WorkOrder(DynamicDigitalTwinObject):
             del value_added_processes_requested[feature_with_completed_value_added_process]
 
         return value_added_processes_requested, value_added_processes_completed
+

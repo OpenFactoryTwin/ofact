@@ -31,25 +31,22 @@ from __future__ import annotations
 
 from copy import copy, deepcopy
 from datetime import datetime, time, timedelta
-from enum import Enum
-
-import json
 from typing import Optional, Union
 
 # Imports Part 2: PIP Imports
 import numpy as np
 import pandas as pd
 
-# import timeboard as tb
-# from timeboard.calendars.calendarbase import (nth_weekday_of_month, extend_weekends, from_easter)
-
 # Imports Part 3: Project Imports
 from ofact.twin.state_model.basic_elements import DigitalTwinObject, prints_visible
-from ofact.twin.state_model.serialization import Serializable
 from ofact.twin.state_model.helpers.helpers import convert_to_datetime, convert_to_np_timedelta, convert_to_np_datetime
 
 
-class WorkCalender(DigitalTwinObject, Serializable):
+# import timeboard as tb
+# from timeboard.calendars.calendarbase import (nth_weekday_of_month, extend_weekends, from_easter)
+
+
+class WorkCalender(DigitalTwinObject):
 
     def copy(self):
         work_calender_copy = super(WorkCalender, self).copy()
@@ -60,10 +57,46 @@ class WorkCalender(DigitalTwinObject, Serializable):
 # 12.00.00 - 12.00.00 or 12.00.00 - 12.00.01
 one_second = np.timedelta64(1, "s")
 
+import os
+import pandas as pd
+from datetime import datetime
 
-class ProcessExecutionPlan(DigitalTwinObject, Serializable):
-    drop_before_serialization = ['_work_calendar']
+EXCEL_FILE = 'log.xlsx'
+SHEET_NAME = 'Logs'
 
+def append_to_excel_manual(df_new, filename, sheet_name):
+   if os.path.exists(filename):
+       try:
+           df_existing = pd.read_excel(filename, sheet_name=sheet_name)
+           df_combined = pd.concat([df_existing, df_new], ignore_index=True)
+       except Exception:
+           # Falls das Sheet nicht existiert oder ein Fehler auftritt
+           df_combined = df_new
+   else:
+       df_combined = df_new
+   # Schreibe den kombinierten DataFrame in eine neue Datei bzw. ersetze das existierende Sheet
+   with pd.ExcelWriter(filename, engine='openpyxl', mode='w') as writer:
+       df_combined.to_excel(writer, sheet_name=sheet_name, index=False)
+
+# Beispiel-Decorator
+import functools
+
+def log_args_to_excel(func):
+   @functools.wraps(func)
+   def wrapper(self, *args, **kwargs):
+       log_entry = {
+           'timestamp': datetime.now(),
+           'self': str(self.identification) + str(self.name),
+           'args': str(args),
+           **kwargs
+       }
+       df_new = pd.DataFrame([log_entry])
+       append_to_excel_manual(df_new, EXCEL_FILE, SHEET_NAME)
+       return func(self, *args, **kwargs)
+   return wrapper
+
+
+class ProcessExecutionPlan(DigitalTwinObject):
     time_schedule_data_type = [("Start", "datetime64[ns]"),
                                ("End", "datetime64[ns]"),
                                ("Duration", "float32"),
@@ -134,6 +167,9 @@ class ProcessExecutionPlan(DigitalTwinObject, Serializable):
 
         return process_execution_plan_copy
 
+    def get_scheduled_time_slots(self):
+        return self._time_schedule
+
     def set_available_times(self, available_times: list[tuple[time, time]], start_time_stamp, horizont=5):
         """
         Set available times over the process_execution_plan
@@ -197,6 +233,42 @@ class ProcessExecutionPlan(DigitalTwinObject, Serializable):
         new_rows = np.array(blocked_rows, dtype=type(self).time_schedule_data_type)
 
         self._time_schedule = np.append(self._time_schedule, new_rows)
+
+    def get_schedule(self, start_time):
+        """Return the resource schedule ()"""
+
+        schedule_with_blocks = self._time_schedule[self._time_schedule["Blocker Name"] == "Planner"][["Start", "End"]]
+
+        if schedule_with_blocks.size == 0:
+            end_time = start_time + timedelta(days=5)
+            schedule_df = pd.DataFrame({"Start": [start_time],
+                                        "End": [end_time]})
+            return schedule_df
+
+        # Compute unblocked times using broadcasting
+        unblocked_start = schedule_with_blocks['End'][:-1]
+        unblocked_end = schedule_with_blocks['Start'][1:]
+
+        # Create mask where there is a gap
+        mask = unblocked_start < unblocked_end
+
+        # Extract unblocked intervals
+        schedule = np.column_stack((unblocked_start[mask], unblocked_end[mask]))
+
+        min_day = np.datetime64(start_time, "D")
+        max_day = schedule_with_blocks['End'].astype('datetime64[D]')[-1]
+
+        if min_day != schedule_with_blocks["Start"][0]:
+            start_period = np.array([[min_day, schedule_with_blocks["Start"][0]]])
+            schedule = np.row_stack((start_period, schedule))
+
+        if max_day != schedule_with_blocks["End"][-1]:
+            end_period = np.array([[schedule_with_blocks["End"][-1], max_day]])
+            schedule = np.row_stack((schedule, end_period))
+
+        schedule_df = pd.DataFrame(schedule,
+                                   columns=["Start", "End"])
+        return schedule_df
 
     def get_next_possible_period(self, period_length: timedelta, start_time=None, issue_id=None,
                                  last_element: bool = False, type_="ALL") -> (datetime, datetime):
@@ -355,7 +427,8 @@ class ProcessExecutionPlan(DigitalTwinObject, Serializable):
         # if long_time_reservation_duration:
         #     warnings.warn("Not implemented . It should be ensured that the period of "
         #                   "the 'long_time_reservation_duration' is free of blocking")  # ToDo
-
+        if free_periods_calendar_extract.size == 0:
+            print
         return free_periods_calendar_extract.astype("datetime64[s]").astype(datetime)
 
     def get_free_time_from(self, start_time, issue_id=None) -> np.array:
@@ -371,7 +444,10 @@ class ProcessExecutionPlan(DigitalTwinObject, Serializable):
             next_time_slot = time_slots_after_start_time[0]
             if next_time_slot["Start"] == start_time:
                 return np.array([])  # empty array, because the start time is blocked
-            end_time = time_slots_after_start_time[0]["Start"]
+            elif next_time_slot["Start"] < start_time:  # blocked case
+                return np.array([])
+            else:
+                end_time = next_time_slot["Start"]
         else:
             end_time = np.datetime64("2100-01-01 00:00:00", "ns")
 
@@ -435,6 +511,7 @@ class ProcessExecutionPlan(DigitalTwinObject, Serializable):
 
         return clashing_process_executions_df
 
+    #@log_args_to_excel
     def block_period(self, start_time, end_time, blocker_name, process_execution_id: int, work_order_id: int,
                      event_type: str = "PLAN", issue_id: Optional[int] = None, block_before=False) -> (
             [bool, list[Optional[str]], list[Optional[int]]]):
@@ -464,7 +541,8 @@ class ProcessExecutionPlan(DigitalTwinObject, Serializable):
         clashing_blocker_names: the names of the agents who blocks the time needed for the new blocking
         clashing_process_execution_ids: the process_execution ids of the clashing appointments
         """
-
+        # import inspect
+        # print(f"Block: ({self.name}) {process_execution_id}", inspect.stack()[2])
         time_slot_duration = end_time - start_time
 
         successful = False
@@ -491,7 +569,7 @@ class ProcessExecutionPlan(DigitalTwinObject, Serializable):
                            issue_id, work_order_id, time_slot_duration=time_slot_duration)
 
         if block_before is True and row_index > 1:
-            if "Fließband" not in self.name:
+            if "Fließband" not in self.name:  # ToDo: name should be not the criteria
                 try:
                     row_before = self._time_schedule[row_index - 1]
                 except:
@@ -564,7 +642,7 @@ class ProcessExecutionPlan(DigitalTwinObject, Serializable):
             print("Exception:", self.name, process_execution_id)
             raise Exception(process_execution_id)
 
-        time_slot_duration = (end_time-start_time).seconds
+        time_slot_duration = (end_time - start_time).seconds
         clashing_blocker_names, clashing_process_execution_ids = (
             self._check_clash(start_time=np.datetime64(start_time, "ns"),
                               end_time=np.datetime64(end_time, "ns"),
@@ -605,7 +683,7 @@ class ProcessExecutionPlan(DigitalTwinObject, Serializable):
         if process_execution_id in self._time_schedule["Process Execution ID"]:
             return  # Case: ACTUAL already stored
         elif plan_process_execution_id not in self._time_schedule["Process Execution ID"]:
-            print("Plan not in schedule...")
+            # Can be a transfer process (timedelta rounded up)
             return
 
         plan_process_execution_mask = self._time_schedule["Process Execution ID"] == plan_process_execution_id
@@ -619,8 +697,6 @@ class ProcessExecutionPlan(DigitalTwinObject, Serializable):
         series_to_adapt["End"] = end_time
         series_to_adapt["Process Execution ID"] = process_execution_id
         series_to_adapt["Event Type"] = "ACTUAL"
-
-        # print(process_execution_id, start_time, end_time, self.name)
 
         self._time_schedule[self._time_schedule["Process Execution ID"] == plan_process_execution_id] = series_to_adapt
 
@@ -779,71 +855,46 @@ class ProcessExecutionPlan(DigitalTwinObject, Serializable):
         return (f"ProcessExecutionsPlan with ID '{self.identification}' and name '{self.name}'; "
                 f"'{self.work_calendar}', '{self.time_now}', '{self._time_schedule}'")
 
-    def dict_serialize(self, serialize_private: bool = True,
+    def dict_serialize(self,
                        deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Converts the object to a json serializable dict.
+                       use_reference: bool = False,
+                       drop_before_serialization: dict[str, list[str]] = None,
+                       further_serializable: dict[str, list[str]] = None,
+                       reference_type: str = "identification") -> Union[dict | str]:
+        time_schedule = self._time_schedule.copy()
 
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-            Defaults to True.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-            Then the static model id is used. Defaults to False.
-        use_label: Whether to use the static model id as representation. Defaults to False.
-        use_label_for_situated_in: Whether to use the static model id as representation for the situated_in
-            attribute. Defaults to False.
+        not_to_process_columns = ["Duration", "Blocker Name", "Process Execution ID", "Event Type", "Issue ID",
+                                  "Work Order ID"]
+        time_columns = ["Start", "End"]
+        if time_schedule.size:
+            time_schedule_serialized = \
+                {name: time_schedule[name].tolist() if name in not_to_process_columns else []
+                 for name in time_schedule.dtype.names}
 
-        Returns
-        -------
-        The dict representation of the entity type or the static model id.
-        """
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             use_label=use_label,
-                                             use_label_for_situated_in=use_label_for_situated_in,
-                                             deactivate_id_filter=deactivate_id_filter)
-        if isinstance(object_dict, str):
-            return object_dict
-        object_dict.update(self.__dict__)
+            for name in time_columns:
+                time_stamp_array = time_schedule[name].astype('int64')
+                time_stamp_array[time_stamp_array != time_stamp_array] = -1
+                time_stamp_array = time_stamp_array
+                time_schedule_serialized[name] = time_stamp_array.tolist()
 
-        for key, value in object_dict.items():
-            if key == '_time_schedule':
-                object_dict[key] = value.tolist()
+        else:
+            time_schedule_serialized = {name: []
+                                        for name in time_schedule.dtype.names}
 
-        # Check if attributes are missing
-        Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                    ignore=self.drop_before_serialization,
-                                                    dictionary=object_dict,
-                                                    use_ignore=True)
-
-        return object_dict
-
-    def to_json(self, human_readable=False, serialize_private=False) -> str:
-        """
-        Converts the dict representation of a class instance to the json representation.
-
-        Parameters
-        ----------
-        human_readable: If set to True, the json string is returned with indentation.
-        serialize_private: Whether to export private (with double underscore) attributes.
-
-        Returns
-        -------
-        json_string: The json representation as string.
-        """
-        # TODO: Check for inheritance of method.
-        indent = 4 if human_readable else None
-        object_dict = self.dict_serialize(serialize_private=serialize_private)
-        json_string = json.dumps(object_dict, indent=indent)
-        return json_string
+        self._time_schedule = time_schedule_serialized
+        process_execution_plan_serialized = super(ProcessExecutionPlan, self).dict_serialize(deactivate_id_filter,
+                                                                                             use_reference,
+                                                                                             drop_before_serialization,
+                                                                                             further_serializable,
+                                                                                             reference_type)
+        self._time_schedule = time_schedule
+        return process_execution_plan_serialized
 
 
 class ProcessExecutionPlanConveyorBelt(ProcessExecutionPlan):
     """
     The process_execution_plan for the conveyor belt has a slight different scheduling behavior,
-    which means that only the transitions are scheduled etc.
+    which means that only the transitions are scheduled, etc.
     """
 
     def __init__(self, name: str,
@@ -864,7 +915,7 @@ class ProcessExecutionPlanConveyorBelt(ProcessExecutionPlan):
     def set_time_interval(self, time_interval):
         """called from the ConveyorBelt itself"""
 
-        self.time_interval = time_interval
+        self.time_interval: int = time_interval
 
     def copy(self):
         return super(ProcessExecutionPlanConveyorBelt, self).copy()
@@ -991,7 +1042,7 @@ class ProcessExecutionPlanConveyorBelt(ProcessExecutionPlan):
             return successful, time_slot
         try:
             time_stamp = np.datetime64(self._transfer_process_execution_mapper[process_execution_id])
-        except:
+        except KeyError:
             raise Exception(self._time_schedule)
 
         if time_stamp:
@@ -1022,3 +1073,18 @@ class ProcessExecutionPlanConveyorBelt(ProcessExecutionPlan):
     def __str__(self):
         return (f"ProcessExecutionsPlanConveyorBelt with ID '{self.identification}' and name '{self.name}'; "
                 f"'{self.work_calendar}', '{self.time_now}', '{self._time_schedule}'")
+
+    def dict_serialize(self,
+                       deactivate_id_filter: bool = False,
+                       use_reference: bool = False,
+                       drop_before_serialization: dict[str, list[str]] = None,
+                       further_serializable: dict[str, list[str]] = None,
+                       reference_type: str = "identification") -> Union[dict | str]:
+        self._transfer_process_execution_mapper = {}  # value is a timestamp
+        self._transport_process_execution_mapper = {}  # value is a tuple of timestamps
+
+        return super().dict_serialize(deactivate_id_filter,
+                                      use_reference,
+                                      drop_before_serialization,
+                                      further_serializable,
+                                      reference_type)

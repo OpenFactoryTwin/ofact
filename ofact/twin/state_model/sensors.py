@@ -65,7 +65,7 @@ class Sensor(DigitalTwinObject):
     def get_data_entries(self, start_time, end_time):
         requested_data = {}
         if start_time is None:
-            start_time = datetime.datetime.min
+            start_time = datetime.datetime(1970, 1, 1)
         for timestamp, measured_value in self.data.items():
             if start_time <= timestamp <= end_time:
                 requested_data[timestamp] = measured_value

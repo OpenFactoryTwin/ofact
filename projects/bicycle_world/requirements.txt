@@ -1,0 +1,18 @@
+# Project requirements (libraries that need to be installed on top of anaconda and the global requirements-file)
+#
+# toggle the comments on the versions to get an older, but guaranteed working version
+# (but you may integrate security issues and already fixed bugs with older versions)
+# TODO check if running and then add version numbers
+
+
+# connect to the anki-vector robots (by digital dream labs) - sdk
+anki_vector
+# anki_vector==x.xx TODO working version
+
+# connect to an arduino-uno which manages sensors and LEDs
+pyserial
+# pyserial==x.xx TODO working version
+
+tksheet==5.2.8  # 5.4.0
+openpyxl==3.0.9
+xlsxwriter

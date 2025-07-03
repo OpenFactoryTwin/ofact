@@ -30,11 +30,11 @@ from __future__ import annotations
 import inspect
 from collections import defaultdict
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import wraps, reduce
 from operator import concat
 from typing import TYPE_CHECKING, Union, Optional, Type
-
+from types import NoneType
 # Imports Part 2: PIP Imports
 import dill as pickle
 import numpy as np
@@ -45,7 +45,7 @@ from ofact.twin.state_model.basic_elements import (DigitalTwinObject, DynamicAtt
 from ofact.twin.state_model.entities import (Plant, PhysicalBody, EntityType, PartType, Entity, Part, Resource,
                                              StationaryResource, Storage, WorkStation, Warehouse, ConveyorBelt,
                                              NonStationaryResource, ActiveMovingResource, PassiveMovingResource)
-from ofact.twin.state_model.helpers.helpers import convert_lst_of_lst_to_lst, load_from_pickle
+from ofact.twin.state_model.helpers.helpers import convert_lst_of_lst_to_lst, load_from_pickle, convert_to_datetime
 from ofact.twin.state_model.probabilities import (ProbabilityDistribution, SingleValueDistribution,
                                                   BernoulliDistribution, NormalDistribution)
 from ofact.twin.state_model.process_models import (
@@ -56,9 +56,8 @@ from ofact.twin.state_model.process_models import (
     EntityTransformationNodeIoBehaviours, EntityTransformationNodeTransformationTypes)
 from ofact.twin.state_model.processes import (ResourceController, ProcessTimeController, TransitionController,
                                               QualityController, TransformationController, Process, ValueAddedProcess,
-                                              ProcessExecution, WorkOrder)
+                                              ProcessExecution, WorkOrder, ProcessController)
 from ofact.twin.state_model.sales import Customer, FeatureCluster, Feature, Order
-from ofact.twin.state_model.serialization import Serializable
 from ofact.twin.state_model.time import WorkCalender, ProcessExecutionPlan, ProcessExecutionPlanConveyorBelt
 
 if TYPE_CHECKING:
@@ -68,6 +67,8 @@ if TYPE_CHECKING:
     stationary_resources_types = Union[StationaryResource, Warehouse, Storage, WorkStation]
     non_stationary_resources_types = Union[NonStationaryResource | ActiveMovingResource | PassiveMovingResource]
     all_resources_types = stationary_resources_types | non_stationary_resources_types
+
+EventTypes = ProcessExecutionTypes
 
 enums_used = {"Types": ProcessExecutionTypes,
               "TransformationTypes": EntityTransformationNodeTransformationTypes,
@@ -203,10 +204,10 @@ def _transform_order_pool_list_to_np_array(order_pool: list[Order]) -> (
 
 
 def _get_order_entry(order: Order) -> (np.datetime64, np.datetime64, np.datetime64, Order):
-    """Set up an order numpy entry for faster access"""
-    order_entry = (order.order_date,
-                   order.delivery_date_planned,
-                   order.delivery_date_actual,
+    """Set up an order numpy array entry for faster access"""
+    order_entry = (order.order_date if order.order_date else np.datetime64('NaT'),
+                   order.delivery_date_planned if order.delivery_date_planned else np.datetime64('NaT'),
+                   order.delivery_date_actual if order.delivery_date_actual else np.datetime64('NaT'),
                    order)
     return order_entry
 
@@ -222,6 +223,9 @@ def _set_up_objects_by_external_identification_cache(name_space: str, dt_objects
             last_column_index: int = list(dt_objects.dtype.fields)[-1]
             # Note: only valid for the 'ProcessExecution' attribute
             dt_objects: list = dt_objects[last_column_index].tolist()
+
+        elif isinstance(dt_objects, DigitalTwinObject):
+            dt_objects = [dt_objects]
 
         else:
             raise NotImplementedError(dt_objects)
@@ -243,12 +247,6 @@ def _get_objects_by_external_identification(name_space, external_id, dt_objects:
      ToDo: it is not the best way to iterate for each object through the list
       Maybe for the data integration a alternative way should be evaluated
     """
-
-    if not isinstance(dt_objects, list):
-        if isinstance(dt_objects, dict):
-            dt_objects = convert_lst_of_lst_to_lst(list(dt_objects.values()))
-        else:
-            raise NotImplementedError
 
     state_model_objects = \
         list({dt_object.get_self_by_external_id(name_space=name_space,
@@ -318,8 +316,8 @@ def get_order_delivery_date_actual(order) -> Optional[datetime]:
 
 
 def get_order_release_date(order) -> Optional[datetime]:
-    if order.release_date is not None:
-        return order.release_date
+    if order.release_date_actual is not None:
+        return order.release_date_actual
 
     release_date_from_process_executions = order.get_release_date_from_process_executions()
 
@@ -375,9 +373,20 @@ def _filter_order_pool(start_date, end_date, order_pool_filtered, ignore_na_valu
     return order_pool_filtered
 
 
-class StateModel(Serializable):
+class StateModel:
+    verison = '1.0.0'
     # could be class attributes (but that could cause problems with dill/ pickle persistence ...)
     state_model_classes = state_model_classes
+
+    @classmethod
+    def _get_digital_twin_class(cls, digital_twin_class):
+        if isinstance(digital_twin_class, str):
+            try:
+                digital_twin_class = eval(digital_twin_class)
+            except NameError:
+                digital_twin_class = None
+
+        return digital_twin_class
 
     @classmethod
     def get_init_parameter_type_hints(cls, digital_twin_class: Union[str, Type]) -> Optional[dict[str, object]]:
@@ -392,10 +401,9 @@ class StateModel(Serializable):
         -------
         new_dict: the init parameters type hints of the state twin
         """
-        if isinstance(digital_twin_class, str):
-            digital_twin_class = eval(digital_twin_class)
+        digital_twin_class = cls._get_digital_twin_class(digital_twin_class)
 
-        if digital_twin_class == WorkCalender:
+        if digital_twin_class == WorkCalender or digital_twin_class is None:
             return None
 
         new_dict = {}
@@ -435,10 +443,9 @@ class StateModel(Serializable):
         -------
         the default values of the init parameters of the digital twin
         """
-        if isinstance(digital_twin_class, str):
-            digital_twin_class = eval(digital_twin_class)
+        digital_twin_class = cls._get_digital_twin_class(digital_twin_class)
 
-        if digital_twin_class == WorkCalender:
+        if digital_twin_class == WorkCalender or digital_twin_class is None:
             return None
 
         new_dict = {}
@@ -464,6 +471,18 @@ class StateModel(Serializable):
 
         return new_dict
 
+    @staticmethod
+    def prepare_processes(process_list) -> dict[type[Union[Process], ValueAddedProcess], list[Process]]:
+        """
+        Prepare the processes for the state model
+        """
+        processes = {Process: [],
+                     ValueAddedProcess: []}
+        for process in process_list:
+            processes[process.__class__].append(process)
+
+        return processes
+
     # used for the frontend to know which probability distributions available in the digital twin
     process_time_model_classes: list = [SimpleSingleValueDistributedProcessTimeModel,
                                         SimpleNormalDistributedProcessTimeModel]
@@ -473,8 +492,9 @@ class StateModel(Serializable):
                                  'digital_twin_class_mapper',
                                  'dt_objects_directory']
 
-    def __init__(self, entity_types: list[Union[EntityType, PartType]],
-                 plant: Plant,
+    def __init__(self,
+                 entity_types: list[Union[EntityType, PartType]],
+                 plant: Optional[Plant],
                  parts: dict[EntityType: list[Part]],
                  obstacles: list[Resource],
                  stationary_resources: dict[EntityType: list[StationaryResource]],
@@ -521,7 +541,7 @@ class StateModel(Serializable):
         self.name: Optional[str] = name
         self.description: Optional[str] = description
 
-        self.plant: Plant = plant
+        self.plant: Optional[Plant] = plant
 
         # entities
         self.entity_types: list[Union[EntityType, PartType]] = entity_types
@@ -532,7 +552,6 @@ class StateModel(Serializable):
         self.active_moving_resources: dict[EntityType: list[ActiveMovingResource]] = active_moving_resources
 
         # processes
-        self.entity_transformation_nodes: list[EntityTransformationNode] = entity_transformation_nodes
         self.processes: dict[Union[Process, ValueAddedProcess]: list[Process]] = processes
 
         process_executions_a = _transform_process_executions_list_to_np_array(process_executions)
@@ -546,13 +565,38 @@ class StateModel(Serializable):
         self.features: list[Feature] = features
         self.feature_clusters: dict[Union[EntityType, PartType]: list[FeatureCluster]] = feature_clusters
 
+        self.state_model_class_mapper: dict[str, object] = {class_.__name__: class_
+                                                            for class_ in type(self).state_model_classes}
+
+        # caching for performance issues
+        self._objects_by_external_identification: dict = {}
+
+        # derivable attributes
+        self.processes_by_main_parts: dict[EntityType: list[Process]] = {}
+        self.processes_by_main_resource: dict[EntityType: list[Process]] = {}
+
+        self.physical_bodies: list[PhysicalBody] = []
+        self.process_executions_plans: list[Union[ProcessExecutionPlan, ProcessExecutionPlanConveyorBelt]] = []
+        self.resource_groups: list[ResourceGroup] = []
+        # ToDo: Always Required ??
+        self.entity_transformation_nodes: list[EntityTransformationNode] = entity_transformation_nodes
+        self.process_controllers: list[ProcessController] = []
+        self.process_models: dict[object, list] = {}
+
         # objects by class name string
+        resources = self.stationary_resources | self.passive_moving_resources | self.active_moving_resources
+        # note: assuming that the different resource types did not have the same entity types
         self.dt_objects_directory: dict[str: object] = \
             {"EntityType": self.entity_types,
              "PartType": self.entity_types,
              "Customer": self.customer_base,
              "Order": self.order_pool,
              "Feature": self.features,
+             "FeatureCluster": self.feature_clusters,
+             "Resource": resources,
+             "ProcessExecutionPlan": self.process_executions_plans,
+             "Plant": self.plant,
+             "NonStationaryResource": self.active_moving_resources | self.passive_moving_resources,
              "PassiveMovingResource": self.passive_moving_resources,
              "ActiveMovingResource": self.active_moving_resources,
              "StationaryResource": self.stationary_resources,
@@ -564,19 +608,6 @@ class StateModel(Serializable):
              "ProcessExecution": self.process_executions,
              "Process": self.processes,
              "ValueAddedProcess": self.processes}
-
-        self.state_model_class_mapper: dict[str, object] = {class_.__name__: class_
-                                                            for class_ in type(self).state_model_classes}
-
-        # caching for performance issues
-        self._objects_by_external_identification: dict = {}
-
-        # derivable attributes
-        self.processes_by_main_parts: dict[EntityType: list[Process]] = {}
-        self.processes_by_main_resource: dict[EntityType: list[Process]] = {}
-
-        self.process_executions_plans: list[Union[ProcessExecutionPlan, ProcessExecutionPlanConveyorBelt]] = []
-        self.process_models: dict[object, list] = {}
 
     def duplicate(self):
         """
@@ -614,6 +645,16 @@ class StateModel(Serializable):
         process_controllers = self.get_all_process_controllers()
         for process_controller in process_controllers:
             process_controller.update_initial()
+
+    def get_consideration_period(self) -> [datetime, datetime]:
+        """Return the consideration period of the ..."""
+        first_execution_np = self.process_executions["Executed Start Time"].min()  # ToDo: datetime?
+        last_execution_np = self.process_executions["Executed End Time"].max()
+
+        first_execution = convert_to_datetime(first_execution_np)
+        last_execution = convert_to_datetime(last_execution_np)
+
+        return first_execution, last_execution
 
     # #### GET DIGITAL TWIN OBJECTS ####################################################################################
 
@@ -678,7 +719,7 @@ class StateModel(Serializable):
 
     def get_stationary_resources(self) -> list[StationaryResource]:
         """Extract/ return the stationary_resources from the state model"""
-        obstacle_resources = self.obstacles
+        obstacle_resources = self.obstacles  # ToDo
 
         stationary_resources_nested = self.stationary_resources.values()
         if stationary_resources_nested:
@@ -709,8 +750,6 @@ class StateModel(Serializable):
 
     def get_entities_of_type_by_entity_types(self, type_, entity_types):
         """Return entities that have the entity_type"""
-        if "StationaryResource" not in self.dt_objects_directory:
-            self.dt_objects_directory["StationaryResource"] = self.stationary_resources  # update the pkl files ...
 
         entities_dict = self.dt_objects_directory[type_]
         if type_ == "StationaryResource":
@@ -811,6 +850,22 @@ class StateModel(Serializable):
 
         return parts
 
+    def get_entities(self):
+
+        parts = self.get_parts()
+        resources = self.get_all_resources()
+
+        entities = parts + resources
+        return entities
+
+    def get_physical_bodies(self):
+        all_resources = self.get_all_resources()
+
+        physical_bodies = [resource.physical_body
+                           for resource in all_resources
+                           if hasattr(resource, "_physical_body")]
+        return physical_bodies
+
     # time
 
     def get_process_executions_plans(self, cache: bool = True) -> (
@@ -828,7 +883,8 @@ class StateModel(Serializable):
             return self.process_executions_plans
 
         all_resources = self.get_all_resources()
-        process_executions_plans = list(set([resource.process_execution_plan for resource in all_resources
+        process_executions_plans = list(set([resource.process_execution_plan
+                                             for resource in all_resources
                                              if resource.process_execution_plan is not None]))
         if cache:
             self.process_executions_plans = process_executions_plans
@@ -1160,19 +1216,19 @@ class StateModel(Serializable):
             if start_date is not None and end_date is not None:
                 orders_filtered = [order
                                    for order in orders_filtered
-                                   if order.release_date is not None
-                                   if (order.release_date >= start_date) and
-                                   (order.release_date <= end_date)]
+                                   if order.release_date_actual is not None
+                                   if (order.release_date_actual >= start_date) and
+                                   (order.release_date_actual <= end_date)]
             elif start_date is not None:
                 orders_filtered = [order
                                    for order in orders_filtered
-                                   if order.release_date is not None
-                                   if order.release_date >= start_date]
+                                   if order.release_date_actual is not None
+                                   if order.release_date_actual >= start_date]
             elif end_date is not None:
                 orders_filtered = [order
                                    for order in orders_filtered
-                                   if order.release_date is not None
-                                   if order.release_date <= end_date]
+                                   if order.release_date_actual is not None
+                                   if order.release_date_actual <= end_date]
 
         return orders_filtered
 
@@ -1248,7 +1304,8 @@ class StateModel(Serializable):
             print(f"[{self.__class__.__name__:20}] There is no object with the id '{id_}' stored in the state model.")
         return None
 
-    def get_object_by_external_identification(self, name_space: str, external_id: str, object_type: Optional[str] = None,
+    def get_object_by_external_identification(self, name_space: str, external_id: str,
+                                              class_name: Optional[str] = None,
                                               from_cache: bool = False) -> list[DigitalTwinObject]:
         """
         Get the state model object by external identification
@@ -1257,11 +1314,14 @@ class StateModel(Serializable):
         ----------
         name_space: namespace of the external id
         external_id: identification from the environment associated with the object
-        object_type: type of the object as string
+        class_name: type of the object as string
         from_cache: in some cases, e.g. in the data_integration, lots of objects are requested,
-        and it is assumed that the objects lists do not change in this time, respectively, the changes can be neglected.
-        In this case the data is cached with the purpose of faster access ...
+        and it is assumed that the objects lists do not change at this time, respectively, the changes can be neglected.
+        In this case, the data is cached with the purpose of faster access ...
         """
+        if class_name is None:
+            return []
+
         if not hasattr(self, "_objects_by_external_identification"):
             self._objects_by_external_identification = {}
 
@@ -1270,22 +1330,29 @@ class StateModel(Serializable):
                 # set up the dict for the name_space
                 self._objects_by_external_identification[name_space] = {}
 
-            if object_type not in self._objects_by_external_identification[name_space]:
+            if class_name not in self._objects_by_external_identification[name_space]:
                 # set up the dict for the object_type
-                if object_type in self.dt_objects_directory:
-                    self._objects_by_external_identification[name_space][object_type] = (
+                if class_name in self.dt_objects_directory:
+                    if class_name == "ProcessExecutionPlan":
+                        self.get_process_executions_plans()  # set them up initially
+                        self.dt_objects_directory[class_name] = self.process_executions_plans
+
+                    self._objects_by_external_identification[name_space][class_name] = (
                         _set_up_objects_by_external_identification_cache(
-                            name_space=name_space, dt_objects=self.dt_objects_directory[object_type]))
+                            name_space=name_space, dt_objects=self.dt_objects_directory[class_name]))
                 else:
-                    raise NotImplementedError(object_type)
+                    raise NotImplementedError(f"The class_name: {class_name} with external_id: {external_id}")
 
-            if external_id in self._objects_by_external_identification[name_space][object_type]:
+            if class_name == "Part":  # ToDo: should be replaced!
+                external_id = "_".join(external_id.split("_")[:-2]) + " " + external_id.split("_")[-2]
 
-                return self._objects_by_external_identification[name_space][object_type][external_id]
+            if external_id in self._objects_by_external_identification[name_space][class_name]:
+
+                return self._objects_by_external_identification[name_space][class_name][external_id]
             else:
                 return []
 
-        available_objects = self.get_objects_by_class_name(object_type)
+        available_objects = self.get_objects_by_class_name(class_name)
         state_model_objects = \
             _get_objects_by_external_identification(name_space=name_space,
                                                     external_id=external_id,
@@ -1293,11 +1360,21 @@ class StateModel(Serializable):
 
         return state_model_objects
 
-    def get_objects_by_class_name(self, class_name: str):
+    def get_objects_by_class_name(self, class_name: str) -> list:
         """Get digital twin objects associated with the class_name as string"""
 
         if class_name in self.dt_objects_directory:
             available_objects = self.dt_objects_directory[class_name]
+
+            if not isinstance(available_objects, list):
+                if isinstance(available_objects, dict):
+                    available_objects = convert_lst_of_lst_to_lst(list(available_objects.values()))
+                else:
+                    raise NotImplementedError
+
+            available_objects = [available_object
+                                 for available_object in available_objects
+                                 if available_object.__class__.__name__ == class_name]
 
         else:
             raise NotImplementedError(class_name)
@@ -1315,6 +1392,61 @@ class StateModel(Serializable):
 
         class_ = self.state_model_class_mapper[class_name]
         return class_
+
+    # #### HANDLE (NESTED-) OBJECTS DERIVABLE FROM OTHER OBJECTS #######################################################
+
+    def set_implicit_objects_explicit(self):
+        self.physical_bodies = self.get_physical_bodies()
+
+        process_executions_plans = self.get_process_executions_plans()
+        process_executions_plans_cb = [pep
+                                       for pep in process_executions_plans
+                                       if isinstance(pep, ProcessExecutionPlanConveyorBelt)]
+        process_executions_plans = list(set(process_executions_plans).difference(set(process_executions_plans_cb)))
+        self.process_executions_plans = process_executions_plans + process_executions_plans_cb  # sorted
+
+        process_controllers = self.get_all_process_controllers()
+
+        process_time_controllers = [process_controller
+                                    for process_controller in process_controllers
+                                    if isinstance(process_controller.get_model(), ProcessTimeModel)]
+        quality_controllers = [process_controller
+                               for process_controller in process_controllers
+                               if isinstance(process_controller.get_model(), QualityModel)]
+        transition_controllers = [process_controller
+                                  for process_controller in process_controllers
+                                  if isinstance(process_controller.get_model(), TransitionModel)]
+        transformation_controllers = [process_controller
+                                      for process_controller in process_controllers
+                                      if isinstance(process_controller.get_model(), TransformationModel)]
+        resource_controllers = [process_controller
+                                for process_controller in process_controllers
+                                if isinstance(process_controller.get_model(), ResourceModel)]
+
+        resource_models = []
+        self.resource_groups = []
+        for process_controller in resource_controllers:
+            process_model = process_controller.get_model()
+            if not isinstance(process_model, ResourceModel):
+                continue
+
+            resource_models.append(process_model)
+            self.resource_groups.extend(process_model.resource_groups)
+
+        self.process_controllers = (process_time_controllers + quality_controllers + transition_controllers +
+                                    transformation_controllers + resource_controllers)
+        self.process_models = {ProcessTimeModel: [ptc.get_model() for ptc in process_time_controllers],
+                               QualityModel: [qc.get_model() for qc in quality_controllers],
+                               TransitionModel: [tsc.get_model() for tsc in transition_controllers],
+                               TransformationModel: [tfc.get_model() for tfc in transformation_controllers],
+                               ResourceModel: resource_models}
+
+    def delete_explicit_objects(self):
+        self.physical_bodies = []
+        self.process_executions_plans = []
+        self.resource_groups = []
+        self.process_controllers = []
+        self.process_models = {}
 
     # #### SET DIGITAL TWIN OBJECTS ####################################################################################
 
@@ -1340,6 +1472,14 @@ class StateModel(Serializable):
             raise Exception("False format!")
         if entity_type not in self.entity_types:
             self.entity_types.append(entity_type)
+
+    def add_process(self, process):
+        if not isinstance(process, Process) and not isinstance(process, ValueAddedProcess):
+            raise Exception("False format!")
+
+        process_type = Process if isinstance(process, Process) else ValueAddedProcess
+        if process not in self.processes[process_type]:
+            self.processes[process_type].append(process)
 
     def add_process_executions(self, process_executions: list[ProcessExecution]):
         """
@@ -1399,7 +1539,12 @@ class StateModel(Serializable):
 
         parts = process_execution.get_parts()
         for part in parts:
-            parts_list = self.parts[part.entity_type]
+            try:
+                parts_list = self.parts[part.entity_type]
+            except:
+                print(part.entity_type.name,
+                      part.entity_type.identification)
+                raise Exception
             if part not in parts_list:
                 self.add_part(part)
 
@@ -1551,7 +1696,14 @@ class StateModel(Serializable):
 
         product_class = feature_cluster.product_class
         self.feature_clusters.setdefault(product_class,
-                                         []).append(product_class)
+                                         []).append(feature_cluster)
+
+    def add_feature(self, feature: Feature):
+        if not isinstance(feature, Feature):
+            print(f"The feature {feature} is not a feature.")
+            return
+
+        self.features.append(feature)
 
     def delete_order(self, order: Order):
         """Delete order from the state model order_pool"""
@@ -1577,6 +1729,40 @@ class StateModel(Serializable):
                 parts_list = self.parts[part.entity_type.super_entity_type]
                 if part not in parts_list:
                     parts_list.append(part)
+
+    # interim elements
+
+    def add_process_executions_plan(self, process_executions_plan: (
+            Union[ProcessExecutionPlan, ProcessExecutionPlanConveyorBelt])):
+        self.process_executions_plans.append(process_executions_plan)
+
+    def add_process_time_model(self, process_time_model: ProcessTimeModel):
+        if process_time_model not in self.process_models[ProcessTimeModel]:
+            self.process_models[ProcessTimeModel].append(process_time_model)
+
+    def add_quality_model(self, quality_model: QualityModel):
+        if quality_model not in self.process_models[QualityModel]:
+            self.process_models[QualityModel].append(quality_model)
+
+    def add_resource_model(self, resource_model: ResourceModel):
+        if resource_model not in self.process_models[ResourceModel]:
+            self.process_models[ResourceModel].append(resource_model)
+
+    def add_resource_group(self, resource_group: ResourceGroup):
+        if resource_group not in self.resource_groups:
+            self.resource_groups.append(resource_group)
+
+    def add_transition_model(self, transition_model: TransitionModel):
+        if transition_model not in self.process_models[TransitionModel]:
+            self.process_models[TransitionModel].append(transition_model)
+
+    def add_transformation_model(self, transformation_model: TransformationModel):
+        if transformation_model not in self.process_models[TransformationModel]:
+            self.process_models[TransformationModel].append(transformation_model)
+
+    def add_entity_transformation_node(self, entity_transformation_node: EntityTransformationNode):
+        if entity_transformation_node not in self.entity_transformation_nodes:
+            self.entity_transformation_nodes.append(entity_transformation_node)
 
     # #### DELETE DIGITAL TWIN OBJECTS #################################################################################
 
@@ -1638,6 +1824,12 @@ class StateModel(Serializable):
         if not deleted:
             print(f"Non Stationary Resource {non_stationary_resource} not found")
 
+    def delete_process_execution_plan(self, process_execution_plan: ProcessExecutionPlan):
+        if process_execution_plan in self.process_executions_plans:
+            self.process_executions_plans.remove(process_execution_plan)
+        else:
+            print(f"Process Execution Plan {process_execution_plan} not found")
+
     def delete_customer(self, customer: Customer):
         if customer in self.customer_base:
             self.customer_base.remove(customer)
@@ -1652,6 +1844,12 @@ class StateModel(Serializable):
                 return
 
         print(f"Feature Cluster {feature_cluster} not found")
+
+    def delete_feature(self, feature: Feature):
+        if feature in self.features:
+            self.features.remove(feature)
+        else:
+            print(f"Feature {feature} not found")
 
     def delete_part(self, part: Part):
         """Delete part from the state model"""
@@ -1822,7 +2020,11 @@ class StateModel(Serializable):
             orders_without_delivery_date_actual = np.concatenate([orders_without_delivery_date_actual,
                                                                   orders_with_delivery_date_actual])
 
-        orders_without_delivery_date_actual = orders_without_delivery_date_actual["Order"]
+        orders_list = orders_without_delivery_date_actual["Order"]
+        orders_without_delivery_date_actual=[]
+        for order in orders_list:
+            if type(order.delivery_date_actual) == NoneType:
+                orders_without_delivery_date_actual.append(order)
 
         return orders_without_delivery_date_actual
 
@@ -1886,59 +2088,86 @@ class StateModel(Serializable):
 
         return state_model
 
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Converts the digital twin to a dictionary, which is serializable by the json module.
+    def get_resource_capacity_utilization(self, resource_names: list[str]):
+        all_resources = self.get_all_resources()
+        relevant_resources = [resource
+                              for resource in all_resources
+                              if resource.name in resource_names]
 
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-            Defaults to False.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-            Then the static model id is used. Defaults to False.
-        use_label: Whether to use the static model id as representation. Defaults to False.
-        use_label_for_situated_in: Whether to use the static model id as representation for the situated_in
-            attribute.
+        start_time = self.process_executions[0]["Executed Start Time"]
+        end_time = self.process_executions[-1]["Executed End Time"]
 
-        Returns
-        -------
-        The dict representation of the entity type or the static model id.
-        """
+        utilization_lst = [round(float(resource.get_utilization(start_time, end_time)), 2) * 100
+                           for resource in relevant_resources]
+        return utilization_lst
 
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             deactivate_id_filter=deactivate_id_filter,
-                                             use_label=use_label,
-                                             use_label_for_situated_in=use_label_for_situated_in)
+    def get_order_lead_time_mean(self):
+        lead_times = self.get_order_lead_times()
 
-        # Check if this object has already been serialized. If so, just return its string
-        if isinstance(object_dict, str):
-            return object_dict
+        order_lead_time_mean = np.mean(lead_times)
+        print("order_lead_time_mean", order_lead_time_mean)
+        return order_lead_time_mean
 
-        # In this dict serializing id checking is deactivated. Otherwise, some attributes are only represented by their
-        # static model id. However, in top level every attribute should be represented by its dictionary.
-        for attribute_name, attribute in object_dict.items():
-            if isinstance(attribute, list):
-                new_attribute = Serializable.serialize_list(attribute, deactivate_id_filter=True)
-            elif hasattr(attribute, "dict_serialize"):
-                new_attribute = attribute.dict_serialize(deactivate_id_filter=True)
-            elif isinstance(attribute, dict):
-                new_attribute = Serializable.serialize_dict(attribute,
-                                                            deactivate_id_filter=True)
-            elif attribute_name == 'process_executions':
-                new_attribute = Serializable.serialize_2d_numpy_array(attribute)
-            elif attribute_name == 'order_pool':
-                new_attribute = Serializable.serialize_2d_numpy_array(attribute)
-            else:
-                new_attribute = attribute
-            object_dict[attribute_name] = new_attribute
+    def get_order_lead_times(self):
+        orders = self.get_orders()
 
-        # Check if attributes are missing
-        Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                    ignore=self.drop_before_serialization,
-                                                    dictionary=object_dict,
-                                                    use_ignore=True)
+        lead_times = [order.get_lead_time()
+                      for order in orders
+                      if order.get_lead_time() is not None]
+        return lead_times
 
-        return object_dict
+    def get_estimated_order_lead_time_mean(self, orders: Optional[list[Order]] = None):
+        lead_times = self.get_estimated_order_lead_times(orders)
+
+        estimated_order_lead_time_mean = np.mean(lead_times)
+        print("estimated_order_lead_time_mean", estimated_order_lead_time_mean)
+        return estimated_order_lead_time_mean
+
+    def get_estimated_order_lead_times(self, orders: Optional[list[Order]] = None):
+        if orders is None:
+            orders = self.get_orders()
+        feature_value_added_processes = self.get_feature_process_mapper()
+        lead_times = [self.get_estimated_order_lead_time(order, feature_value_added_processes)
+                      for order in orders]
+
+        return lead_times
+
+    def get_estimated_order_lead_time(self, order, feature_value_added_processes: dict = None):
+        # feature value_added_process required mapping
+        if feature_value_added_processes is None:
+            feature_value_added_processes = self.get_feature_process_mapper()
+
+        value_added_processes_required = \
+            [value_added_processes
+             for feature in order.features_requested
+             for value_added_processes in feature_value_added_processes[feature]]
+        if not value_added_processes_required:
+            return timedelta(seconds=0)
+
+        # value added process order lead_time mapping
+        estimated_order_lead_time = sum([value_added_process.get_estimated_process_lead_time()
+                                         for value_added_process in value_added_processes_required])
+
+        return timedelta(seconds=estimated_order_lead_time)
+
+
+
+    def get_number_of_orders_finished(self):
+        orders = self.get_orders()
+        finished_orders = [order.is_finished()
+                           for order in orders]
+        number_of_orders_finished = sum(finished_orders)
+        return number_of_orders_finished
+
+    def get_delivery_reliability(self, end_of_consideration_period: Optional[datetime] = None):
+        """Return the delivery reliability of the orders."""
+        if end_of_consideration_period is None:
+            _, end_of_consideration_period = self.get_consideration_period()
+
+        orders = self.get_orders()
+        reliability_status = [order.get_reliability_status(current_time=end_of_consideration_period)
+                              for order in orders]
+        reliable_count = reliability_status.count(True)
+        delivery_reliability = (reliable_count / len(orders)) * 100
+
+        return delivery_reliability

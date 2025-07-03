@@ -1,0 +1,28 @@
+adapters:
+  Excel: ofact.env.model_administration.adapter.XLSXAdapter
+  csv:   ofact.env.model_administration.adapter.CSVAdapter
+  MSSQL: ofact.env.model_administration.adapter.MSSQLAdapter
+
+standardizations:
+  EventLogStandardization: ofact.env.model_administration.standardization.standardization.EventLogStandardization
+
+process_minings:
+  Process Mining: ofact.env.model_administration.standardization.process_mining.ProcessMining
+
+preprocessings:
+  Preprocessing: ofact.env.model_administration.standardization.preprocessing.Preprocessing
+
+objects_collections:
+  ObjectsCollection: ofact.env.model_administration.object_collection.ObjectsCollection
+
+model_creations:
+  StateModelCreation: ofact.env.auto_model_generation.state_model_creation.StateModelCreation
+
+model_updates:
+  StateModelUpdate: ofact.env.data_integration.sm_update.StateModelUpdate
+
+process_model_updates:
+  ProcessModelUpdate: ofact.env.model_administration.model_update.ProcessModelUpdate
+
+state_model_smoothing:
+  StateModelSmoothing: ofact.env.auto_model_generation.pipeline.StateModelSmoothing

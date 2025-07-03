@@ -1,0 +1,132 @@
+{
+    "target_schema": "pkl",
+    "reference_type": "identification",
+    "sources": [
+        {
+            "source": "entity_types",
+            "serialization_kind": "list",
+            "serialize_unique": false,
+            "classes": ["EntityType", "PartType"]
+        },
+        {
+            "source": "plant",
+            "serialization_kind": "single_value",
+            "serialize_unique": false,
+            "classes": ["Plant"],
+            "drop": ["work_calendar"]
+        },
+        {
+            "source": "stationary_resources",
+            "serialization_kind": "dict_flatten",
+            "serialize_unique": true,
+            "classes": ["StationaryResource", "Storage", "Warehouse", "WorkStation", "ConveyorBelt"],
+            "drop": ["_buffer_stations", "_storage_places"]
+        },
+        {
+            "source": "active_moving_resources",
+            "serialization_kind": "dict_flatten",
+            "serialize_unique": true,
+            "classes": ["ActiveMovingResource"],
+            "drop": ["_storage_places"]
+        },
+        {
+            "source": "passive_moving_resources",
+            "serialization_kind": "dict_flatten",
+            "serialize_unique": true,
+            "classes": ["PassiveMovingResource"],
+            "drop": ["_storage_places"]
+        },
+        {
+            "source": "parts",
+            "serialization_kind": "dict_flatten",
+            "serialize_unique": true,
+            "classes": ["Part"]
+        },
+        {
+            "source": "processes",
+            "serialization_kind": "dict_flatten",
+            "serialize_unique": true,
+            "classes": ["Process", "ValueAddedProcess"]
+        },
+        {
+            "source": "process_controllers",
+            "serialization_kind": "list",
+            "serialize_unique": true,
+            "classes": ["ProcessTimeController", "QualityController", "ResourceController",
+                "TransitionController", "TransformationController"]
+        },
+        {
+            "source": "process_models",
+            "serialization_kind": "dict_flatten",
+            "serialize_unique": true,
+            "classes": ["ProcessTimeModel", "QualityModel", "ResourceModel", "TransitionModel", "TransformationModel"]
+        },
+        {
+            "source": "resource_groups",
+            "serialization_kind": "list",
+            "serialize_unique": true,
+            "classes": ["ResourceGroup"]
+        },
+        {
+            "source": "entity_transformation_nodes",
+            "serialization_kind": "list",
+            "serialize_unique": true,
+            "classes": ["EntityTransformationNode"]
+        },
+        {
+            "source": "process_executions_plans",
+            "serialization_kind": "list",
+            "serialize_unique": true,
+            "drop": ["_work_calendar"],
+            "classes": ["ProcessExecutionPlan", "ProcessExecutionPlanConveyorBelt"]
+        },
+        {
+            "source": "feature_clusters",
+            "serialization_kind": "dict_flatten",
+            "serialize_unique": true,
+            "classes": ["FeatureCluster"]
+
+        },
+        {
+            "source": "features",
+            "serialization_kind": "list",
+            "serialize_unique": true,
+            "classes": ["Feature"]
+        },
+        {
+            "source": "customer_base",
+            "serialization_kind": "list",
+            "serialize_unique": true,
+            "classes": ["Customer"]
+        },
+        {
+            "source": "order_pool",
+            "serialization_kind": "list",
+            "serialize_unique": false,
+            "classes": ["Order"],
+            "drop": []
+        },
+        {
+            "source": "process_executions",
+            "serialization_kind": "list",
+            "serialize_unique": true,
+            "classes": ["ProcessExecution"]
+        },
+        {
+            "classes": ["StateModel"],
+            "drop": ["dt_objects_directory"]
+        },
+        {
+            "classes": ["Entity"],
+            "drop": []
+        },
+        {
+            "classes": ["PhysicalBody"],
+            "drop": ["dynamic_attributes"]
+        },
+        {
+            "classes": ["StoragePlaces"],
+            "drop": ["number_of_stored_entities"]
+        }
+    ]
+}

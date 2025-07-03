@@ -1,0 +1,3514 @@
+{
+  "target_schema": "xlsx",
+  "reference_type": "label",
+  "sources": [
+    {
+      "source": "entity_types",
+      "serialization_kind": "list",
+      "serialize_unique": false,
+      "classes": [
+        "EntityType",
+        "PartType"
+      ],
+      "drop": [
+        "identification"
+      ]
+    },
+    {
+      "source": "plant",
+      "serialization_kind": "single_value",
+      "serialize_unique": false,
+      "classes": [
+        "Plant"
+      ],
+      "drop": [
+        "work_calendar",
+        "identification"
+      ]
+    },
+    {
+      "source": "stationary_resources",
+      "serialization_kind": "list",
+      "serialize_unique": true,
+      "classes": [
+        "StationaryResource",
+        "Storage",
+        "Warehouse",
+        "WorkStation",
+        "ConveyorBelt"
+      ],
+      "drop": [
+        "identification"
+      ]
+    },
+    {
+      "source": "active_moving_resources",
+      "serialization_kind": "list",
+      "serialize_unique": true,
+      "classes": [
+        "ActiveMovingResource"
+      ]
+    },
+    {
+      "source": "passive_moving_resources",
+      "serialization_kind": "list",
+      "serialize_unique": true,
+      "classes": [
+        "PassiveMovingResource"
+      ],
+      "drop": [
+        "identification"
+      ]
+    },
+    {
+      "source": "parts",
+      "serialization_kind": "list",
+      "serialize_unique": true,
+      "classes": [
+        "Part"
+      ],
+      "drop": [
+        "identification"
+      ]
+    },
+    {
+      "source": "processes",
+      "serialization_kind": "list",
+      "serialize_unique": true,
+      "classes": [
+        "Process",
+        "ValueAddedProcess"
+      ],
+      "drop": [
+        "identification"
+      ]
+    },
+    {
+      "source": "process_controllers",
+      "serialization_kind": "list",
+      "serialize_unique": true,
+      "classes": [
+        "ProcessTimeController",
+        "QualityController",
+        "ResourceController",
+        "TransitionController",
+        "TransformationController"
+      ],
+      "drop": [
+        "identification"
+      ]
+    },
+    {
+      "source": "process_models",
+      "serialization_kind": "dict_flatten",
+      "serialize_unique": true,
+      "classes": [
+        "SimpleNormalDistributedProcessTimeModel",
+        "SimpleSingleValueDistributedProcessTimeModel",
+        "SimpleBernoulliDistributedQualityModel",
+        "ResourceModel",
+        "TransitionModel",
+        "TransformationModel"
+      ],
+      "drop": [
+        "identification"
+      ]
+    },
+    {
+      "source": "resource_groups",
+      "serialization_kind": "list",
+      "serialize_unique": true,
+      "classes": [
+        "ResourceGroup"
+      ],
+      "drop": [
+        "identification"
+      ]
+    },
+    {
+      "source": "entity_transformation_nodes",
+      "serialization_kind": "list",
+      "serialize_unique": true,
+      "classes": [
+        "EntityTransformationNode"
+      ],
+      "drop": [
+        "identification"
+      ]
+    },
+    {
+      "source": "process_executions_plans",
+      "serialization_kind": "list",
+      "serialize_unique": true,
+      "drop": [
+        "_work_calendar",
+        "identification"
+      ],
+      "classes": [
+        "ProcessExecutionPlan",
+        "ProcessExecutionPlanConveyorBelt"
+      ]
+    },
+    {
+      "source": "feature_clusters",
+      "serialization_kind": "list",
+      "serialize_unique": true,
+      "classes": [
+        "FeatureCluster"
+      ],
+      "drop": [
+        "identification"
+      ]
+    },
+    {
+      "source": "features",
+      "serialization_kind": "list",
+      "serialize_unique": true,
+      "classes": [
+        "Feature"
+      ],
+      "drop": [
+        "identification"
+      ]
+    },
+    {
+      "source": "customer_base",
+      "serialization_kind": "list",
+      "serialize_unique": true,
+      "classes": [
+        "Customer"
+      ],
+      "drop": [
+        "identification"
+      ]
+    },
+    {
+      "source": "order_pool",
+      "serialization_kind": "list",
+      "serialize_unique": false,
+      "classes": [
+        "Order"
+      ],
+      "drop": [
+        "dynamic_attributes",
+        "identification"
+      ]
+    },
+    {
+      "classes": [
+        "Entity"
+      ],
+      "drop": [
+        "dynamic_attributes",
+        "identification"
+      ]
+    },
+    {
+      "classes": [
+        "PhysicalBody"
+      ],
+      "drop": [
+        "dynamic_attributes",
+        "identification"
+      ]
+    },
+    {
+      "classes": [
+        "StoragePlaces"
+      ],
+      "drop": [
+        "number_of_stored_entities"
+      ]
+    }
+  ],
+  "sheets": [
+    {
+      "name": "Sales",
+      "classes": [
+        "FeatureCluster",
+        "Feature"
+      ],
+      "start_row": 1,
+      "columns": [
+        {
+          "column_kind": "type",
+          "description": "description",
+          "notation": "notation",
+          "example": "example",
+          "mandatory": "mandatory",
+          "name": "index",
+          "format": "string"
+        },
+        {
+          "column_kind": "simple",
+          "description": "FeatureCluster: Superior Group of Features. Depending on the order type, one feature of each feature cluster is chosen (product configurator) or zero to n features can be chosen (shopping basket) \nFeatures: Describe a product requirement from the customer perspective. The features are fulfilled by the value added processes.",
+          "notation": "FeatureCluster: _fc \n Feature: _f",
+          "example": "FeatureCluster: Boardgame_fc \n Feature: packaging_f",
+          "mandatory": "yes",
+          "name": "label",
+          "format": "string",
+          "indexing_strategy": [
+            "label"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique identifier for the Sales",
+          "notation": "{1, 2, 3, ....n}",
+          "example": "1",
+          "mandatory": "no",
+          "name": "identification",
+          "format": "integer",
+          "indexing_strategy": [
+            "identification"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique external identifier for the Sales",
+          "notation": "{'data source': ['external_identifications']}",
+          "example": "{'ERP-System':['boardgame_fc']}",
+          "mandatory": "no",
+          "name": "external_identifications",
+          "format": "string_dict",
+          "indexing_strategy": [
+            "external_identifications"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Name of the Sales",
+          "notation": "String based name",
+          "example": "Sales",
+          "mandatory": "yes",
+          "name": "name",
+          "format": "string",
+          "indexing_strategy": [
+            "name"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "(Entity-)Type of the product to be produced if chosen the feature cluster",
+          "notation": "",
+          "example": "_et, _pt",
+          "mandatory": "yes",
+          "name": "product_class",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "product_class"
+          ]
+        },
+        {
+          "column_kind": "complex",
+          "description": "Only for Features: Defines how probable a feature is chosen from the feature cluster. Note, for the product configurator only the relation within a feature cluster is important ",
+          "notation": "selection_probability_distribution(n)",
+          "example": "selection_probability_distribution(1)",
+          "mandatory": "Yes",
+          "name": "selection_probability_distribution",
+          "format": "distribution",
+          "function": "efficiency",
+          "indexing_strategy": [
+            "selection_probability_distribution"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "FeatureCluster of the feature",
+          "notation": "FeatureCluster: _fc",
+          "example": "boardgame_fc",
+          "mandatory": "Yes",
+          "name": "feature_cluster",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "feature_cluster"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Selected if no process is associated with the feature",
+          "notation": "bool",
+          "example": "False",
+          "mandatory": "yes",
+          "name": "is_not_chosen_option",
+          "format": "boolean",
+          "indexing_strategy": [
+            "is_not_chosen_option"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Price of the feature (in sum the price of the product)",
+          "notation": "Float",
+          "example": "",
+          "mandatory": "no",
+          "name": "price",
+          "format": "float",
+          "indexing_strategy": [
+            "price"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Customer",
+      "classes": [
+        "Customer"
+      ],
+      "columns": [
+        {
+          "column_kind": "type",
+          "description": "description",
+          "notation": "notation",
+          "example": "example",
+          "mandatory": "mandatory",
+          "name": "index",
+          "format": "string"
+        },
+        {
+          "column_kind": "simple",
+          "description": "Customer: Customers can be generated for studies in the digital twin or come from the shop floor",
+          "notation": "Customer: _c",
+          "example": "customerABC_c",
+          "mandatory": "yes",
+          "name": "label",
+          "format": "string",
+          "indexing_strategy": [
+            "label"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique identifier for the Customer",
+          "notation": "{1, 2, 3, ....n}",
+          "example": "1",
+          "mandatory": "no",
+          "name": "identification",
+          "format": "integer",
+          "indexing_strategy": [
+            "identification"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique external identifier for the Customer",
+          "notation": "{'data source': ['external_identifications']}",
+          "example": "{'ERP-System':['customer_c']}",
+          "mandatory": "no",
+          "name": "external_identifications",
+          "format": "string_dict",
+          "indexing_strategy": [
+            "external_identifications"
+          ]
+        },
+        {
+          "column_kind": "complex",
+          "description": "Pre name of the Customer",
+          "notation": "String based name",
+          "example": "Pre name customer",
+          "mandatory": "yes",
+          "name": "pre_name",
+          "format": "string",
+          "indexing_strategy": [
+            "name"
+          ],
+          "function": "name_to_pre_name"
+        },
+        {
+          "column_kind": "complex",
+          "description": "Last name of the Customer",
+          "notation": "String based name",
+          "example": "Last name customer",
+          "mandatory": "yes",
+          "name": "last_name",
+          "format": "string",
+          "indexing_strategy": [
+            "name"
+          ],
+          "function": "name_to_last_name"
+        },
+        {
+          "column_kind": "simple",
+          "description": "Location of the Customer",
+          "notation": "String based name",
+          "example": "Berlin",
+          "mandatory": "yes",
+          "name": "location",
+          "format": "string",
+          "indexing_strategy": [
+            "location"
+          ]
+        },
+        {
+          "column_kind": "complex",
+          "description": "providers of the Customer",
+          "notation": "String based name",
+          "example": "Email of the customer",
+          "mandatory": "yes",
+          "name": "providers",
+          "format": "string",
+          "function": "provider",
+          "indexing_strategy": [
+            "e_mail_address"
+          ]
+        }
+      ]
+    },
+    {
+      "serialization_kind": "list",
+      "serialize_unique": false,
+      "name": "Orders",
+      "classes": [
+        "Order"
+      ],
+      "drop": [
+        "dynamic_attributes"
+      ],
+      "source": "order_pool",
+      "index": 3,
+      "columns": [
+        {
+          "column_kind": "type",
+          "description": "description",
+          "notation": "notation",
+          "example": "example",
+          "mandatory": "mandatory",
+          "name": "index",
+          "format": "string"
+        },
+        {
+          "column_kind": "simple",
+          "description": "Orders: Orders can be generated for studies in the digital twin or come from the shop floor. The order coming from the customer relates to a product. They can be marked with a number from 1 to n, e.g. 'order{1}_o', ..., 'order{n}_o'",
+          "notation": "Order: _o",
+          "example": "order1_o",
+          "mandatory": "yes",
+          "name": "label",
+          "format": "string",
+          "indexing_strategy": [
+            "label"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique identifier for the Orders",
+          "notation": "{1, 2, 3, ....n}",
+          "example": "1",
+          "mandatory": "no",
+          "name": "identification",
+          "format": "integer",
+          "indexing_strategy": [
+            "identification"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique external identifier for the Orders",
+          "notation": "{'data source': ['external_identifications']}",
+          "example": "{'ERP-System':['order_o']}",
+          "mandatory": "no",
+          "name": "external_identifications",
+          "format": "string_dict",
+          "indexing_strategy": [
+            "external_identifications"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Type of the product (to be) produced",
+          "notation": "EntityType: _pa_et",
+          "example": "boardgame_packaging_pa_et",
+          "mandatory": "yes",
+          "name": "product_classes",
+          "format": "string_list",
+          "function": "label_list",
+          "indexing_strategy": [
+            "product_classes"
+          ]
+        },
+        {
+          "column_kind": "complex",
+          "description": "Order date: Note leading zeros are not accepted",
+          "notation": "datetime Tuple: (year, month, day, hour, minute)",
+          "example": "(2024, 2, 1, 8, 0)",
+          "mandatory": "yes",
+          "name": "order_date",
+          "format": "datetime",
+          "function": "time",
+          "indexing_strategy": [
+            "order_date"
+          ]
+        },
+        {
+          "column_kind": "complex",
+          "description": "release_date_planned: Note leading zeros are not accepted",
+          "notation": "datetime Tuple: (year, month, day, hour, minute)",
+          "example": "(2024, 2, 1, 8, 0)",
+          "mandatory": "yes",
+          "name": "release_date_planned",
+          "format": "datetime",
+          "function": "time",
+          "indexing_strategy": [
+            "release_date_planned"
+          ]
+        },
+        {
+          "column_kind": "complex",
+          "description": "start_time_planned: Note leading zeros are not accepted",
+          "notation": "datetime Tuple: (year, month, day, hour, minute)",
+          "example": "(2024, 2, 1, 8, 0)",
+          "mandatory": "yes",
+          "name": "start_time_planned",
+          "format": "datetime",
+          "function": "time",
+          "indexing_strategy": [
+            "start_time_planned"
+          ]
+        },
+        {
+          "column_kind": "complex",
+          "description": "end_time_planned: Note leading zeros are not accepted",
+          "notation": "datetime Tuple: (year, month, day, hour, minute)",
+          "example": "(2024, 2, 1, 8, 0)",
+          "mandatory": "yes",
+          "name": "end_time_planned",
+          "format": "datetime",
+          "function": "time",
+          "indexing_strategy": [
+            "end_time_planned"
+          ]
+        },
+        {
+          "column_kind": "complex",
+          "description": "delivery_date_requested: Note leading zeros are not accepted",
+          "notation": "datetime Tuple: (year, month, day, hour, minute)",
+          "example": "(2024, 2, 1, 8, 0)",
+          "mandatory": "yes",
+          "name": "delivery_date_requested",
+          "format": "datetime",
+          "function": "time",
+          "indexing_strategy": [
+            "delivery_date_requested"
+          ]
+        },
+        {
+          "column_kind": "complex",
+          "description": "delivery_date_planned: Note leading zeros are not accepted",
+          "notation": "datetime Tuple: (year, month, day, hour, minute)",
+          "example": "(2024, 2, 1, 8, 0)",
+          "mandatory": "yes",
+          "name": "delivery_date_planned",
+          "format": "datetime",
+          "function": "time",
+          "indexing_strategy": [
+            "delivery_date_planned"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Related customer to the order",
+          "notation": "Customer: _c",
+          "example": "customerA_c",
+          "mandatory": "yes",
+          "name": "customer",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "customer"
+          ]
+        },
+        {
+          "column_kind": "selection",
+          "description": "Horizontal listing of all available features (column header): \n- 1 (or more than one depending on the order type) = feature chosen; \n-0 = no feature chosen means that no process is required for the feature fulfillment (the feature can be marked as done)",
+          "notation": " XOR: {0, 1} ",
+          "example": "packaging: 1, supply: 1",
+          "mandatory": "yes",
+          "name": "features_requested",
+          "format": "selection",
+          "indexing_strategy": [
+            "features_requested"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "EntityType",
+      "classes": [
+        "EntityType",
+        "PartType"
+      ],
+      "columns": [
+        {
+          "column_kind": "type",
+          "description": "description",
+          "notation": "notation",
+          "example": "example",
+          "mandatory": "mandatory",
+          "name": "index",
+          "format": "string"
+        },
+        {
+          "column_kind": "simple",
+          "description": "EntityType: Entity types are required to categorize entities, e.g., all parts of the same type\nPartType: An entity type that defines additionally part-specific properties such as dimensions",
+          "notation": "EntityType: _et\nPartType: _pa_et",
+          "example": "EntityType: workingstation_et \nPartType: gameboard_pa_et",
+          "mandatory": "yes",
+          "name": "label",
+          "format": "string",
+          "indexing_strategy": [
+            "label"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique identifier for the entity and part types",
+          "notation": "{1, 2, 3, ....n}",
+          "example": "1",
+          "mandatory": "no",
+          "name": "identification",
+          "format": "integer",
+          "indexing_strategy": [
+            "identification"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique external identifier for the entity and part types from supplier or customer",
+          "notation": "{'external data source': ['external_identifications']}",
+          "example": "{'ERP-System':['material_XYC123']}",
+          "mandatory": "no",
+          "name": "external_identifications",
+          "format": "string_dict",
+          "indexing_strategy": [
+            "external_identifications"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Name of the entity and part types",
+          "notation": "String based name",
+          "example": "workingstation",
+          "mandatory": "yes",
+          "name": "name",
+          "format": "string",
+          "indexing_strategy": [
+            "name"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "SuperEntityTypes are the total group of EntityTypes belonging to the same SuperEntityType\nFor example: The product is a board game consisting of game packaging, game board and game pieces. The SuperEntityType is material",
+          "notation": "EntityType: material_et",
+          "example": "PartType: gameboard_pa_et - SuperEntityType: material_et",
+          "mandatory": "yes",
+          "name": "super_entity_type",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "super_entity_type"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Part",
+      "classes": [
+        "Part"
+      ],
+      "columns": [
+        {
+          "column_kind": "type",
+          "description": "description",
+          "notation": "notation",
+          "example": "example",
+          "mandatory": "mandatory",
+          "name": "index",
+          "format": "string"
+        },
+        {
+          "column_kind": "simple",
+          "description": "Name of the Part",
+          "notation": "Part: _pa",
+          "example": "Part_pa",
+          "mandatory": "Yes",
+          "name": "label",
+          "format": "string",
+          "indexing_strategy": [
+            "label"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique identifier for the Part",
+          "notation": "{1, 2, 3, ....n}",
+          "example": "1",
+          "mandatory": "no",
+          "name": "identification",
+          "format": "integer",
+          "indexing_strategy": [
+            "identification"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique external identifier for the Part",
+          "notation": "{'data source': ['external_identifications']}",
+          "example": "{'ERP-System':['PartXYC123']}",
+          "mandatory": "no",
+          "name": "external_identifications",
+          "format": "string_dict",
+          "indexing_strategy": [
+            "external_identifications"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Name of the Part",
+          "notation": "String based name",
+          "example": "Part",
+          "mandatory": "yes",
+          "name": "name",
+          "format": "string",
+          "indexing_strategy": [
+            "name"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "EntityType",
+          "notation": "entity_type: _et",
+          "example": "part_et",
+          "mandatory": "yes",
+          "name": "entity_type",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_entity_type"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "How to count the part?",
+          "notation": "string",
+          "example": "Stk",
+          "mandatory": "no",
+          "name": "unit",
+          "format": "string",
+          "indexing_strategy": [
+            "unit"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Where the part is stored",
+          "name": "situated_in",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_situated_in"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "The parent part of the part",
+          "notation": "",
+          "example": "",
+          "mandatory": "",
+          "name": "part_of",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "part_of"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Subparts and ingredients",
+          "notation": "",
+          "example": "",
+          "mandatory": "",
+          "name": "parts",
+          "format": "string_list",
+          "function": "label_list",
+          "indexing_strategy": [
+            "parts"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Complementary list to the parts that states if a part is removable or not.",
+          "notation": "",
+          "example": "",
+          "mandatory": "",
+          "name": "part_removable",
+          "format": "string_list",
+          "indexing_strategy": [
+            "part_removable"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Quality of the parts can be end in processes not possible anymore.",
+          "notation": "Between 0 and 1",
+          "example": "0.7",
+          "mandatory": "yes",
+          "name": "quality",
+          "format": "float",
+          "indexing_strategy": [
+            "_quality"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Plant",
+      "classes": [
+        "Plant"
+      ],
+      "columns": [
+        {
+          "column_kind": "type",
+          "description": "description",
+          "notation": "notation",
+          "example": "example",
+          "mandatory": "mandatory",
+          "name": "index",
+          "format": "string"
+        },
+        {
+          "column_kind": "simple",
+          "description": "Defines the layout of the plant with their dimensions",
+          "notation": "Plant: _pl",
+          "example": "boardgameplant_pl",
+          "mandatory": "yes",
+          "name": "label",
+          "format": "string",
+          "indexing_strategy": [
+            "label"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique identifier for the plant",
+          "notation": "{1, 2, 3, ....n}",
+          "example": "1",
+          "mandatory": "no",
+          "name": "identification",
+          "format": "integer",
+          "indexing_strategy": [
+            "identification"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique external identifier for plant",
+          "notation": "{'external data source': 'external_identifications'}",
+          "example": "{'ERP-System':['plant_XYC123'}]",
+          "mandatory": "no",
+          "name": "external_identifications",
+          "format": "string_dict",
+          "indexing_strategy": [
+            "external_identifications"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Name of the plant",
+          "notation": "String based name",
+          "example": "boardgameplant",
+          "mandatory": "yes",
+          "name": "name",
+          "format": "string",
+          "indexing_strategy": [
+            "name"
+          ]
+        },
+        {
+          "column_kind": "complex",
+          "description": "The dimensions of the plant are described by the corner points of the building.\n The dimensions are uniform throughout the entire state model. This also applies to the positioning of resources, conveyor belt, etc.",
+          "notation": "List of tuples (x,Y), negative values placed in brackets if used",
+          "example": "[(100, 100), (100, 200), (200, 200), (200, 200)]",
+          "mandatory": "Yes",
+          "name": "corners",
+          "format": "string_list",
+          "function": "fix_corners",
+          "indexing_strategy": [
+            "corners"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "StationaryResource",
+      "classes": [
+        "StationaryResource"
+      ],
+      "filter": "filter_stationary_resource_sheet",
+      "columns": [
+        {
+          "column_kind": "type",
+          "description": "description",
+          "notation": "notation",
+          "example": "example",
+          "mandatory": "mandatory",
+          "name": "index",
+          "format": "string"
+        },
+        {
+          "column_kind": "simple",
+          "description": "A resource that has always the same position (cannot move and not moved in general)\nAll required attributes of the stationary resource: label, name, entity type, plant, position, length, width and quality",
+          "notation": "String based name",
+          "example": "Obstacle",
+          "mandatory": "Yes",
+          "name": "label",
+          "format": "string",
+          "indexing_strategy": [
+            "label"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique identifier for the StationaryResource",
+          "notation": "{1, 2, 3, ....n}",
+          "example": "1",
+          "mandatory": "no",
+          "name": "identification",
+          "format": "integer",
+          "indexing_strategy": [
+            "identification"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique external identifier for the StationaryResource",
+          "notation": "{'data source': 'external_identifications'}",
+          "example": "{'ERP-System':['Obstacle_XYC123']}",
+          "mandatory": "no",
+          "name": "external_identifications",
+          "format": "string_dict",
+          "indexing_strategy": [
+            "external_identifications"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Name of the StationaryResource",
+          "notation": "String based name",
+          "example": "StationaryResource",
+          "mandatory": "yes",
+          "name": "name",
+          "format": "string",
+          "indexing_strategy": [
+            "name"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "EntityType StationaryResource",
+          "notation": "entity_type: _et",
+          "example": "StationaryResource_et",
+          "mandatory": "yes",
+          "name": "entity_type",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_entity_type"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "The ProcessExecutionPlan of the resource that were previously defined",
+          "notation": "ProcessExecutionPlan: _pep",
+          "example": "resource_pep",
+          "mandatory": "no",
+          "name": "process_execution_plan",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_process_execution_plan"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Name of the plant where the plant is located",
+          "notation": "String based name",
+          "example": "boardgame",
+          "mandatory": "Yes",
+          "name": "plant",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "plant"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Costs per second of the plant",
+          "notation": "float or int",
+          "example": "0.7 or 0",
+          "mandatory": "No",
+          "name": "costs_per_second",
+          "format": "float",
+          "indexing_strategy": [
+            "costs_per_second"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Position of the StationaryResource",
+          "notation": "Tuple",
+          "example": "(10, 10)",
+          "mandatory": "Yes",
+          "name": "position",
+          "format": "tuple",
+          "indexing_strategy": [
+            "_physical_body",
+            "_position"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Length of the resource",
+          "notation": "float or int",
+          "example": "0.7 or 1",
+          "mandatory": "Yes",
+          "name": "length",
+          "format": "float",
+          "indexing_strategy": [
+            "_physical_body",
+            "length"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Width of the resource",
+          "notation": "float or int",
+          "example": "0.7 or 1",
+          "mandatory": "Yes",
+          "name": "width",
+          "format": "float",
+          "indexing_strategy": [
+            "_physical_body",
+            "width"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Approach edgefor a transport resource",
+          "notation": "[(x, y), (a, b)]",
+          "example": "[(0, 0), (0, 5)]",
+          "mandatory": "no",
+          "name": "entry_edge",
+          "format": "string_list",
+          "indexing_strategy": [
+            "entry_edge"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Departure edge of a transport resource.",
+          "notation": "[(x, y), (a, b)]",
+          "example": "[(0, 0), (0, 5)]",
+          "mandatory": "no",
+          "name": "exit_edge",
+          "format": "string_list",
+          "indexing_strategy": [
+            "exit_edge"
+          ]
+        },
+        {
+          "column_kind": "complex",
+          "description": " Efficiency of the resource, modulated by a distribution. The efficiency can be changed during change of the distribution parameters. Available distributions are: SingleValue, Normal",
+          "notation": "distribution",
+          "example": "SingleValueDistribution(0.7)",
+          "mandatory": "no",
+          "name": "efficiency",
+          "format": "distribution",
+          "function": "efficiency",
+          "indexing_strategy": [
+            "_efficiency"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Resource in which the current resource is located in.",
+          "notation": "StationaryResource",
+          "example": "",
+          "mandatory": "no",
+          "name": "situated_in",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_situated_in"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Quality of the resource that affects the entities processed by the resource.",
+          "notation": "Between 0 and 1",
+          "example": "0.7",
+          "mandatory": "yes",
+          "name": "quality",
+          "format": "float",
+          "indexing_strategy": [
+            "_quality"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Storage",
+      "classes": [
+        "Storage"
+      ],
+      "filter": "filter_type_storage",
+      "columns": [
+        {
+          "column_kind": "type",
+          "description": "description",
+          "notation": "notation",
+          "example": "example",
+          "mandatory": "mandatory",
+          "name": "index",
+          "format": "string"
+        },
+        {
+          "column_kind": "simple",
+          "description": "Name of the Storage",
+          "notation": "Storage: _s",
+          "example": "Storage_s",
+          "mandatory": "Yes",
+          "name": "label",
+          "format": "string",
+          "indexing_strategy": [
+            "label"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique identifier for the Storage",
+          "notation": "{1, 2, 3, ....n}",
+          "example": "1",
+          "mandatory": "no",
+          "name": "identification",
+          "format": "integer",
+          "indexing_strategy": [
+            "identification"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique external identifier for the Storage",
+          "notation": "{'data source': ['external_identifications']}",
+          "example": "{'ERP-System':['WarehouseBoxStorageXYC123']}",
+          "mandatory": "no",
+          "name": "external_identifications",
+          "format": "string_dict",
+          "indexing_strategy": [
+            "external_identifications"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Name of the Storage",
+          "notation": "String based name",
+          "example": "Warehouse_box_storage",
+          "mandatory": "yes",
+          "name": "name",
+          "format": "string",
+          "indexing_strategy": [
+            "name"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "EntityType of the Storage",
+          "notation": "EntityType: _et",
+          "example": "storage_place_et",
+          "mandatory": "yes",
+          "name": "entity_type",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_entity_type"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "The ProcessExecutionPlan of the resource that were previously defined",
+          "notation": "ProcessExecutionPlan: _pep",
+          "example": "resource_pep",
+          "mandatory": "yes",
+          "name": "process_execution_plan",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_process_execution_plan"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Name of the plant where the storage is located",
+          "notation": "Plant: _pl",
+          "example": "boardgameplant_pl",
+          "mandatory": "yes",
+          "name": "plant",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "plant"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Costs per second of the storage",
+          "notation": "float or int",
+          "example": "0.7 or 0",
+          "mandatory": "No",
+          "name": "costs_per_second",
+          "format": "float",
+          "indexing_strategy": [
+            "costs_per_second"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Position of the resource",
+          "notation": "Tuple",
+          "example": "(10, 10)",
+          "mandatory": "Yes",
+          "name": "position",
+          "format": "tuple",
+          "indexing_strategy": [
+            "_physical_body",
+            "_position"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Length of the resource",
+          "notation": "float or int",
+          "example": "0.7 or 1",
+          "mandatory": "Yes",
+          "name": "length",
+          "format": "float",
+          "indexing_strategy": [
+            "_physical_body",
+            "length"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Width of the resource",
+          "notation": "float or int",
+          "example": "0.7 or 1",
+          "mandatory": "Yes",
+          "name": "width",
+          "format": "float",
+          "indexing_strategy": [
+            "_physical_body",
+            "width"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Approach edge for a  resource",
+          "notation": "[(x, y), (a, b)]",
+          "example": "[(0, 0), (0, 5)]",
+          "mandatory": "no",
+          "name": "entry_edge",
+          "format": "string_list",
+          "indexing_strategy": [
+            "entry_edge"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Departure edge of a resource.",
+          "notation": "[(x, y), (a, b)]",
+          "example": "[(0, 0), (0, 5)]",
+          "mandatory": "no",
+          "name": "exit_edge",
+          "format": "string_list",
+          "indexing_strategy": [
+            "exit_edge"
+          ]
+        },
+        {
+          "column_kind": "complex",
+          "description": " Efficiency of the resource, modulated by a distribution. The efficiency can be changed during change of the distribution parameters. Available distributions are: SingleValue, Normal",
+          "notation": "distribution",
+          "example": "SingleValueDistribution(0.7)",
+          "mandatory": "no",
+          "name": "efficiency",
+          "format": "distribution",
+          "function": "efficiency",
+          "indexing_strategy": [
+            "_efficiency"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Resource in which the current resource is located in.",
+          "notation": "Resource",
+          "example": "",
+          "mandatory": "no",
+          "name": "situated_in",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_situated_in"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Number of entities that can be deposited in the Storage",
+          "notation": "Integer",
+          "example": "100",
+          "mandatory": "yes",
+          "name": "capacity",
+          "format": "integer",
+          "indexing_strategy": [
+            "capacity"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Quality of the resource that affects the entities processed by the resource.",
+          "notation": "Between 0 and 1",
+          "example": "0.7",
+          "mandatory": "yes",
+          "name": "quality",
+          "format": "float",
+          "indexing_strategy": [
+            "_quality"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Entities stored in the storage place must match with the allowed entity type",
+          "notation": "EntityType | PartType",
+          "example": "_et",
+          "mandatory": "yes",
+          "name": "allowed_entity_type",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "allowed_entity_type"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "a list of stored entities",
+          "notation": "[entity]",
+          "example": "[]",
+          "mandatory": "no",
+          "name": "stored_entities",
+          "format": "string_list",
+          "indexing_strategy": [
+            "stored_entities"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Warehouse",
+      "classes": [
+        "Warehouse"
+      ],
+      "filter": "filter_type_warehouse",
+      "columns": [
+        {
+          "column_kind": "type",
+          "description": "description",
+          "notation": "notation",
+          "example": "example",
+          "mandatory": "mandatory",
+          "name": "index",
+          "format": "string"
+        },
+        {
+          "column_kind": "simple",
+          "description": "Name of the Warehouse",
+          "notation": "Warehouse: _w",
+          "example": "Warehouse_w",
+          "mandatory": "Yes",
+          "name": "label",
+          "format": "string",
+          "indexing_strategy": [
+            "label"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique identifier for the Warehouse",
+          "notation": "{1, 2, 3, ....n}",
+          "example": "1",
+          "mandatory": "no",
+          "name": "identification",
+          "format": "integer",
+          "indexing_strategy": [
+            "identification"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique external identifier for the Warehouse",
+          "notation": "{'label': 'external_identifications'}",
+          "example": "{'Warehouse_w':'WarehouseXYC123'}",
+          "mandatory": "no",
+          "name": "external_identifications",
+          "format": "string_dict",
+          "indexing_strategy": [
+            "external_identifications"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Name of the Warehouse",
+          "notation": "String based name",
+          "example": "Warehouse",
+          "mandatory": "yes",
+          "name": "name",
+          "format": "string",
+          "indexing_strategy": [
+            "name"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "EntityType Warehouse",
+          "notation": "entity_type: _et",
+          "example": "warehouse_et",
+          "mandatory": "yes",
+          "name": "entity_type",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_entity_type"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "The ProcessExecutionPlan of the resource that were previously defined",
+          "notation": "ProcessExecutionPlan: _pep",
+          "example": "resource_pep",
+          "mandatory": "yes",
+          "name": "process_execution_plan",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_process_execution_plan"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "the plant, the resource is situated in",
+          "notation": "Plant",
+          "example": "_pl",
+          "mandatory": "no",
+          "name": "plant",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "plant"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Costs per second of the Warehouse",
+          "notation": "float or int",
+          "example": "0.7 or 0",
+          "mandatory": "No",
+          "name": "costs_per_second",
+          "format": "float",
+          "indexing_strategy": [
+            "costs_per_second"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Position of the resource",
+          "notation": "Tuple",
+          "example": "(10, 10)",
+          "mandatory": "Yes",
+          "name": "position",
+          "format": "tuple",
+          "indexing_strategy": [
+            "_physical_body",
+            "_position"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Length of the resource",
+          "notation": "float or int",
+          "example": "0.7 or 1",
+          "mandatory": "Yes",
+          "name": "length",
+          "format": "float",
+          "indexing_strategy": [
+            "_physical_body",
+            "length"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Width of the resource",
+          "notation": "float or int",
+          "example": "0.7 or 1",
+          "mandatory": "Yes",
+          "name": "width",
+          "format": "float",
+          "indexing_strategy": [
+            "_physical_body",
+            "width"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Approach edgefor a transport resource",
+          "notation": "[(x, y), (a, b)]",
+          "example": "[(0, 0), (0, 5)]",
+          "mandatory": "no",
+          "name": "entry_edge",
+          "format": "string_list",
+          "indexing_strategy": [
+            "entry_edge"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Departure edge of a transport resource.",
+          "notation": "[(x, y), (a, b)]",
+          "example": "[(0, 0), (0, 5)]",
+          "mandatory": "no",
+          "name": "exit_edge",
+          "format": "string_list",
+          "indexing_strategy": [
+            "exit_edge"
+          ]
+        },
+        {
+          "column_kind": "complex",
+          "description": " Efficiency of the resource, modulated by a distribution. The efficiency can be changed during change of the distribution parameters. Available distributions are: SingleValue, Normal",
+          "notation": "distribution",
+          "example": "SingleValueDistribution(0.7)",
+          "mandatory": "no",
+          "name": "efficiency",
+          "format": "distribution",
+          "function": "efficiency",
+          "indexing_strategy": [
+            "_efficiency"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Resource in which the current resource is located in.",
+          "notation": "Resource",
+          "example": "",
+          "mandatory": "no",
+          "name": "situated_in",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_situated_in"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Quality of the resource that affects the entities processed by the resource.",
+          "notation": "Between 0 and 1",
+          "example": "0.7",
+          "mandatory": "yes",
+          "name": "quality",
+          "format": "float",
+          "indexing_strategy": [
+            "_quality"
+          ]
+        },
+        {
+          "column_kind": "complex",
+          "description": "Storages mapped to the entities that can be stored in the storages",
+          "notation": "Dict[EntityType, list[Storage]]",
+          "example": "{_et: [_s]}",
+          "mandatory": "no",
+          "name": "storage_places",
+          "format": "string_dict",
+          "function": "label_dict",
+          "indexing_strategy": [
+            "_storage_places",
+            "_storage_places"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Number of entities that can be deposited in the Storage",
+          "notation": "Integer",
+          "example": "100",
+          "mandatory": "yes",
+          "name": "capacity",
+          "format": "integer",
+          "indexing_strategy": [
+            "capacity"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "WorkStation",
+      "classes": [
+        "WorkStation"
+      ],
+      "filter": "filter_type_work_station",
+      "columns": [
+        {
+          "column_kind": "type",
+          "description": "description",
+          "notation": "notation",
+          "example": "example",
+          "mandatory": "mandatory",
+          "name": "index",
+          "format": "string"
+        },
+        {
+          "column_kind": "simple",
+          "description": "Name of the Workingstation",
+          "notation": "Workingstation: _as",
+          "example": "Workingstation_as",
+          "mandatory": "Yes",
+          "name": "label",
+          "format": "string",
+          "indexing_strategy": [
+            "label"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique identifier for the Workstation",
+          "notation": "{1, 2, 3, ....n}",
+          "example": "1",
+          "mandatory": "no",
+          "name": "identification",
+          "format": "integer",
+          "indexing_strategy": [
+            "identification"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique external identifier for the Workstation",
+          "notation": "{'data source': ['external_identifications']}",
+          "example": "{'ERP-System':['WorkstationXYC123']}",
+          "mandatory": "no",
+          "name": "external_identifications",
+          "format": "string_dict",
+          "indexing_strategy": [
+            "external_identifications"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Name of the Workstation",
+          "notation": "String based name",
+          "example": "Workstation",
+          "mandatory": "yes",
+          "name": "name",
+          "format": "string",
+          "indexing_strategy": [
+            "name"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "EntityType Workstation",
+          "notation": "entity_type: _et",
+          "example": "workstation_et",
+          "mandatory": "yes",
+          "name": "entity_type",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_entity_type"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "The ProcessExecutionPlan of the resource that were previously defined",
+          "notation": "ProcessExecutionPlan: _pep",
+          "example": "resource_pep",
+          "mandatory": "yes",
+          "name": "process_execution_plan",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_process_execution_plan"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "the plant, the resource is situated in",
+          "notation": "Plant",
+          "example": "_pl",
+          "mandatory": "no",
+          "name": "plant",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "plant"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Costs per second of the Workstation",
+          "notation": "float or int",
+          "example": "0.7 or 0",
+          "mandatory": "No",
+          "name": "costs_per_second",
+          "format": "float",
+          "indexing_strategy": [
+            "costs_per_second"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Position of the resource",
+          "notation": "Tuple",
+          "example": "(10, 10)",
+          "mandatory": "Yes",
+          "name": "position",
+          "format": "tuple",
+          "indexing_strategy": [
+            "_physical_body",
+            "_position"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Length of the resource",
+          "notation": "float or int",
+          "example": "0.7 or 1",
+          "mandatory": "Yes",
+          "name": "length",
+          "format": "float",
+          "indexing_strategy": [
+            "_physical_body",
+            "length"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Width of the resource",
+          "notation": "float or int",
+          "example": "0.7 or 1",
+          "mandatory": "Yes",
+          "name": "width",
+          "format": "float",
+          "indexing_strategy": [
+            "_physical_body",
+            "width"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Approach edgefor a transport resource",
+          "notation": "[(x, y), (a, b)]",
+          "example": "[(0, 0), (0, 5)]",
+          "mandatory": "no",
+          "name": "entry_edge",
+          "format": "string_list",
+          "indexing_strategy": [
+            "entry_edge"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Departure edge of a transport resource.",
+          "notation": "[(x, y), (a, b)]",
+          "example": "[(0, 0), (0, 5)]",
+          "mandatory": "no",
+          "name": "exit_edge",
+          "format": "string_list",
+          "indexing_strategy": [
+            "exit_edge"
+          ]
+        },
+        {
+          "column_kind": "complex",
+          "description": " Efficiency of the resource, modulated by a distribution. The efficiency can be changed during change of the distribution parameters. Available distributions are: SingleValue, Normal",
+          "notation": "distribution",
+          "example": "SingleValueDistribution(0.7)",
+          "mandatory": "no",
+          "name": "efficiency",
+          "format": "distribution",
+          "function": "efficiency",
+          "indexing_strategy": [
+            "_efficiency"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Resource in which the current resource is located in.",
+          "notation": "Resource",
+          "example": "",
+          "mandatory": "no",
+          "name": "situated_in",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_situated_in"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Quality of the resource that affects the entities processed by the resource.",
+          "notation": "Between 0 and 1",
+          "example": "0.7",
+          "mandatory": "yes",
+          "name": "quality",
+          "format": "float",
+          "indexing_strategy": [
+            "_quality"
+          ]
+        },
+        {
+          "column_kind": "complex",
+          "description": "Storages mapped to the entities that can be stored in the storages",
+          "notation": "Dict[EntityType, list[Storage]]",
+          "example": "{_et: [_s]}",
+          "mandatory": "no",
+          "name": "buffer_stations",
+          "format": "string_dict",
+          "function": "label_dict",
+          "indexing_strategy": [
+            "_buffer_stations",
+            "_storage_places"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Number of entities that can be deposited in the Storage",
+          "notation": "Integer",
+          "example": "100",
+          "mandatory": "yes",
+          "name": "capacity",
+          "format": "integer",
+          "indexing_strategy": [
+            "capacity"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ConveyorBelt",
+      "classes": [
+        "ConveyorBelt"
+      ],
+      "filter": "filter_type_conveyor_belt",
+      "columns": [
+        {
+          "column_kind": "type",
+          "description": "description",
+          "notation": "notation",
+          "example": "example",
+          "mandatory": "mandatory",
+          "name": "index",
+          "format": "string"
+        },
+        {
+          "column_kind": "simple",
+          "description": "Name of the Conveyorbelt",
+          "notation": "Conveyorbelt: _cb",
+          "example": "conveyorbelt_cb",
+          "mandatory": "Yes",
+          "name": "label",
+          "format": "string",
+          "indexing_strategy": [
+            "label"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique identifier for the Conveyorbelt",
+          "notation": "{1, 2, 3, ....n}",
+          "example": "1",
+          "mandatory": "no",
+          "name": "identification",
+          "format": "integer",
+          "indexing_strategy": [
+            "identification"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique external identifier for the Conveyorbelt",
+          "notation": "{'data source': ['external_identifications']}",
+          "example": "{'ERP-System':['ConveyorbeltXYC123']}",
+          "mandatory": "no",
+          "name": "external_identifications",
+          "format": "string_dict",
+          "indexing_strategy": [
+            "external_identifications"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Name of the Conveyorbelt",
+          "notation": "String based name",
+          "example": "Conveyorbelt",
+          "mandatory": "yes",
+          "name": "name",
+          "format": "string",
+          "indexing_strategy": [
+            "name"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "EntityType Conveyorbelt",
+          "notation": "entity_type: _et",
+          "example": "Conveyorbelt_et",
+          "mandatory": "yes",
+          "name": "entity_type",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_entity_type"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "The ProcessExecutionPlan of the resource that were previously defined",
+          "notation": "ProcessExecutionPlan: _pep",
+          "example": "resource_pep",
+          "mandatory": "yes",
+          "name": "process_execution_plan",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_process_execution_plan"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "the plant, the resource is situated in",
+          "notation": "Plant",
+          "example": "_pl",
+          "mandatory": "no",
+          "name": "plant",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "plant"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Costs per second of the Conveyorbelt",
+          "notation": "float or int",
+          "example": "0.7 or 0",
+          "mandatory": "No",
+          "name": "costs_per_second",
+          "format": "float",
+          "indexing_strategy": [
+            "costs_per_second"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Position of the resource",
+          "notation": "Tuple",
+          "example": "(10, 10)",
+          "mandatory": "Yes",
+          "name": "position",
+          "format": "tuple",
+          "indexing_strategy": [
+            "_physical_body",
+            "_position"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Length of the resource",
+          "notation": "float or int",
+          "example": "0.7 or 1",
+          "mandatory": "Yes",
+          "name": "length",
+          "format": "float",
+          "indexing_strategy": [
+            "_physical_body",
+            "length"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Width of the resource",
+          "notation": "float or int",
+          "example": "0.7 or 1",
+          "mandatory": "Yes",
+          "name": "width",
+          "format": "float",
+          "indexing_strategy": [
+            "_physical_body",
+            "width"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Approach edgefor a transport resource",
+          "notation": "[(x, y), (a, b)]",
+          "example": "[(0, 0), (0, 5)]",
+          "mandatory": "no",
+          "name": "entry_edge",
+          "format": "string_list",
+          "indexing_strategy": [
+            "entry_edge"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Departure edge of a transport resource.",
+          "notation": "[(x, y), (a, b)]",
+          "example": "[(0, 0), (0, 5)]",
+          "mandatory": "no",
+          "name": "exit_edge",
+          "format": "string_list",
+          "indexing_strategy": [
+            "exit_edge"
+          ]
+        },
+        {
+          "column_kind": "complex",
+          "description": " Efficiency of the resource, modulated by a distribution. The efficiency can be changed during change of the distribution parameters. Available distributions are: SingleValue, Normal",
+          "notation": "distribution",
+          "example": "SingleValueDistribution(0.7)",
+          "mandatory": "no",
+          "name": "efficiency",
+          "format": "distribution",
+          "function": "efficiency",
+          "indexing_strategy": [
+            "_efficiency"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Resource in which the current resource is located in.",
+          "notation": "Resource",
+          "example": "",
+          "mandatory": "no",
+          "name": "situated_in",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_situated_in"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Quality of the resource that affects the entities processed by the resource.",
+          "notation": "Between 0 and 1",
+          "example": "0.7",
+          "mandatory": "yes",
+          "name": "quality",
+          "format": "float",
+          "indexing_strategy": [
+            "_quality"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Entities stored in the storage place must match with the allowed entity types.",
+          "notation": "list[EntityType | PartType]",
+          "example": "[_et, ...]",
+          "mandatory": "yes",
+          "name": "allowed_entity_types",
+          "format": "string_list",
+          "function": "label_list",
+          "indexing_strategy": [
+            "allowed_entity_types"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Capacities per entity type mapped to the entity type. (addition to the capacity)",
+          "notation": "Dict[EntityType, Integer]",
+          "example": "{_et: 1}",
+          "mandatory": "yes",
+          "name": "capacity_per_entity_type",
+          "format": "string_list",
+          "indexing_strategy": [
+            "capacity"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "the direction of the conveyor belt (material) flow (-1 or 1 (origin to destination))",
+          "notation": "Integer",
+          "example": "1",
+          "mandatory": "yes",
+          "name": "flow_direction",
+          "format": "integer",
+          "indexing_strategy": [
+            "flow_direction"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "A list of entities that are currently on the conveyor belt.",
+          "notation": "list[Entity]",
+          "example": "[_pa, _pmr]",
+          "mandatory": "no",
+          "name": "entities_on_transport",
+          "format": "string_list",
+          "function": "label_list",
+          "indexing_strategy": [
+            "entities_on_transport"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "The origin storage, which is the source for entities flow over the conveyor belt",
+          "notation": "Storage",
+          "example": "_s",
+          "mandatory": "yes",
+          "name": "origin",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "origin"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "The destination storage, which is the destination for entities flow over the conveyor belt",
+          "notation": "Storage",
+          "example": "_s",
+          "mandatory": "yes",
+          "name": "destination",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "destination"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "The length of the conveyor belt (used for lead time calculation)",
+          "notation": "Float",
+          "example": "13.98",
+          "mandatory": "yes",
+          "name": "conveyor_length",
+          "format": "float",
+          "indexing_strategy": [
+            "conveyor_length"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "distance between the two pitches/ back sides of the objects on the conveyor belt.",
+          "notation": "Float",
+          "example": "16.67",
+          "mandatory": "yes",
+          "name": "pitch",
+          "format": "float",
+          "indexing_strategy": [
+            "pitch"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Number of entities that can be deposited in the Storage",
+          "notation": "Integer",
+          "example": "100",
+          "mandatory": "yes",
+          "name": "capacity",
+          "format": "integer",
+          "indexing_strategy": [
+            "capacity"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ActiveMovingResource",
+      "classes": [
+        "ActiveMovingResource"
+      ],
+      "columns": [
+        {
+          "column_kind": "type",
+          "description": "description",
+          "notation": "notation",
+          "example": "example",
+          "mandatory": "mandatory",
+          "name": "index",
+          "format": "string"
+        },
+        {
+          "column_kind": "simple",
+          "description": "Name of the ActiveMovingResource",
+          "notation": "ActiveMovingResource: _amr",
+          "example": "ActiveMovingResource_amr",
+          "mandatory": "Yes",
+          "name": "label",
+          "format": "string",
+          "indexing_strategy": [
+            "label"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique identifier for the ActiveMovingResource",
+          "notation": "{1, 2, 3, ....n}",
+          "example": "1",
+          "mandatory": "no",
+          "name": "identification",
+          "format": "integer",
+          "indexing_strategy": [
+            "identification"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique external identifier for the ActiveMovingResource",
+          "notation": "{'data source': ['external_identifications']}",
+          "example": "{'ERP-System':['ActiveMovingResourceXYC123']}",
+          "mandatory": "no",
+          "name": "external_identifications",
+          "format": "string_dict",
+          "indexing_strategy": [
+            "external_identifications"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Name of the ActiveMovingResource",
+          "notation": "String based name",
+          "example": "ActiveMovingResource",
+          "mandatory": "yes",
+          "name": "name",
+          "format": "string",
+          "indexing_strategy": [
+            "name"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "EntityType ActiveMovingResource",
+          "notation": "entity_type: _et",
+          "example": "ActiveMovingResource_et",
+          "mandatory": "yes",
+          "name": "entity_type",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_entity_type"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "The ProcessExecutionPlan of the resource that were previously defined",
+          "notation": "ProcessExecutionPlan: _pep",
+          "example": "resource_pep",
+          "mandatory": "Yes",
+          "name": "process_execution_plan",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_process_execution_plan"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "the plant, the resource is situated in",
+          "notation": "Plant",
+          "example": "_pl",
+          "mandatory": "no",
+          "name": "plant",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "plant"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Costs per second of the resource",
+          "notation": "float or int",
+          "example": "0.7 or 0",
+          "mandatory": "No",
+          "name": "costs_per_second",
+          "format": "float",
+          "indexing_strategy": [
+            "costs_per_second"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Position of the resource",
+          "notation": "Tuple",
+          "example": "(10, 10)",
+          "mandatory": "Yes",
+          "name": "position",
+          "format": "tuple",
+          "indexing_strategy": [
+            "_physical_body",
+            "_position"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Length of the resource",
+          "notation": "float or int",
+          "example": "0.7 or 1",
+          "mandatory": "Yes",
+          "name": "length",
+          "format": "float",
+          "indexing_strategy": [
+            "_physical_body",
+            "length"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Width of the resource",
+          "notation": "float or int",
+          "example": "0.7 or 1",
+          "mandatory": "Yes",
+          "name": "width",
+          "format": "float",
+          "indexing_strategy": [
+            "_physical_body",
+            "width"
+          ]
+        },
+        {
+          "column_kind": "complex",
+          "description": "Storages mapped to the entities that can be stored in the storages",
+          "notation": "Dict[EntityType, list[Storage]]",
+          "example": "{_et: [_s]}",
+          "mandatory": "no",
+          "name": "storage_places",
+          "format": "string_dict",
+          "function": "label_dict",
+          "indexing_strategy": [
+            "_storage_places",
+            "_storage_places"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Resource in which the current resource is located in.",
+          "notation": "Resource",
+          "example": "",
+          "mandatory": "no",
+          "name": "situated_in",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_situated_in"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Orientation in degrees between '-180' and '180'. '0' is north",
+          "notation": "Float",
+          "example": "90",
+          "mandatory": "no",
+          "name": "orientation",
+          "format": "integer",
+          "indexing_strategy": [
+            "_orientation"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Quality of the resource that affects the entities processed by the resource.",
+          "notation": "Between 0 and 1",
+          "example": "0.7",
+          "mandatory": "yes",
+          "name": "quality",
+          "format": "float",
+          "indexing_strategy": [
+            "_quality"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "The speed of the resource (unit should be chosen equally for each resource).",
+          "notation": "Float",
+          "example": "13.85",
+          "mandatory": "yes",
+          "name": "speed",
+          "format": "float",
+          "indexing_strategy": [
+            "speed"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "The initial energy level of the resource.",
+          "notation": "Float",
+          "example": "13.97",
+          "mandatory": "no",
+          "name": "energy_level",
+          "format": "float",
+          "indexing_strategy": [
+            "_energy_level"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "The energy consumption is related to a time unit (currently not used)",
+          "notation": "Float",
+          "example": "14.46",
+          "mandatory": "no",
+          "name": "energy_consumption",
+          "format": "float",
+          "indexing_strategy": [
+            "energy_consumption"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "The energy capacity states the max energy level of the resource",
+          "notation": "Float",
+          "example": "30.78",
+          "mandatory": "no",
+          "name": "energy_capacity",
+          "format": "float",
+          "indexing_strategy": [
+            "energy_capacity"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "PassiveMovingResource",
+      "classes": [
+        "PassiveMovingResource"
+      ],
+      "columns": [
+        {
+          "column_kind": "type",
+          "description": "description",
+          "notation": "notation",
+          "example": "example",
+          "mandatory": "mandatory",
+          "name": "index",
+          "format": "string"
+        },
+        {
+          "column_kind": "simple",
+          "description": "Name of the PassiveMovingResource",
+          "notation": "PassiveMovingResource: _pmr",
+          "example": "PassiveMovingResource_pmr",
+          "mandatory": "Yes",
+          "name": "label",
+          "format": "string",
+          "indexing_strategy": [
+            "label"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique identifier for the PassiveMovingResource",
+          "notation": "{1, 2, 3, ....n}",
+          "example": "1",
+          "mandatory": "no",
+          "name": "identification",
+          "format": "integer",
+          "indexing_strategy": [
+            "identification"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique external identifier for the PassiveMovingResource",
+          "notation": "{'data source': ['external_identifications']}",
+          "example": "{'ERP-System':['PassiveMovingResourceXYC123']}",
+          "mandatory": "no",
+          "name": "external_identifications",
+          "format": "string_dict",
+          "indexing_strategy": [
+            "external_identifications"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Name of the PassiveMovingResource",
+          "notation": "String based name",
+          "example": "PassiveMovingResource",
+          "mandatory": "yes",
+          "name": "name",
+          "format": "string",
+          "indexing_strategy": [
+            "name"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "EntityType PassiveMovingResource",
+          "notation": "entity_type: _et",
+          "example": "PassiveMovingResource_et",
+          "mandatory": "yes",
+          "name": "entity_type",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_entity_type"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "The ProcessExecutionPlan of the resource that were previously defined",
+          "notation": "ProcessExecutionPlan: _pep",
+          "example": "resource_pep",
+          "mandatory": "yes",
+          "name": "process_execution_plan",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_process_execution_plan"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "the plant, the resource is situated in",
+          "notation": "Plant",
+          "example": "_pl",
+          "mandatory": "no",
+          "name": "plant",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "plant"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Costs per second of the resource",
+          "notation": "float or int",
+          "example": "0.7 or 0",
+          "mandatory": "No",
+          "name": "costs_per_second",
+          "format": "float",
+          "indexing_strategy": [
+            "costs_per_second"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Position of the resource",
+          "notation": "Tuple",
+          "example": "(10, 10)",
+          "mandatory": "Yes",
+          "name": "position",
+          "format": "tuple",
+          "indexing_strategy": [
+            "_physical_body",
+            "_position"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Length of the resource",
+          "notation": "float or int",
+          "example": "0.7 or 1",
+          "mandatory": "Yes",
+          "name": "length",
+          "format": "float",
+          "indexing_strategy": [
+            "_physical_body",
+            "length"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Width of the resource",
+          "notation": "float or int",
+          "example": "0.7 or 1",
+          "mandatory": "Yes",
+          "name": "width",
+          "format": "float",
+          "indexing_strategy": [
+            "_physical_body",
+            "width"
+          ]
+        },
+        {
+          "column_kind": "complex",
+          "description": "Storages mapped to the entities that can be stored in the storages",
+          "notation": "Dict[EntityType, list[Storage]]",
+          "example": "{_et: [_s]}",
+          "mandatory": "no",
+          "name": "storage_places",
+          "format": "string_dict",
+          "function": "label_dict",
+          "indexing_strategy": [
+            "_storage_places",
+            "_storage_places"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Resource in which the current resource is located in.",
+          "notation": "Resource",
+          "example": "",
+          "mandatory": "no",
+          "name": "situated_in",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_situated_in"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Orientation in degrees between '-180' and '180'. '0' is north",
+          "notation": "Float",
+          "example": "90",
+          "mandatory": "no",
+          "name": "orientation",
+          "format": "integer",
+          "indexing_strategy": [
+            "_orientation"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Quality of the resource that affects the entities processed by the resource.",
+          "notation": "Between 0 and 1",
+          "example": "0.7",
+          "mandatory": "yes",
+          "name": "quality",
+          "format": "float",
+          "indexing_strategy": [
+            "_quality"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Number of usage cycles (lifetime)",
+          "notation": "Integer",
+          "example": "100",
+          "mandatory": "no",
+          "name": "service_life",
+          "format": "float",
+          "indexing_strategy": [
+            "service_life"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Time",
+      "classes": [
+        "ProcessExecutionPlan",
+        "ProcessExecutionPlanConveyorBelt"
+      ],
+      "start_row": 1,
+      "columns": [{
+          "column_kind": "type",
+          "description": "description",
+          "notation": "notation",
+          "example": "example",
+          "mandatory": "mandatory",
+          "name": "index",
+          "format": "string"
+        },
+        {
+          "column_kind": "simple",
+          "description": "Name of the Process",
+          "notation": "ProcessExecutionPlan: _pep\n ProcessExecutionPlanConveyorBelt: _pep ",
+          "example": "ProcessExecutionPlan: transportation_p",
+          "mandatory": "Yes",
+          "name": "label",
+          "format": "string",
+          "indexing_strategy": [
+            "label"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique identifier for the Process",
+          "notation": "{1, 2, 3, ....n}",
+          "example": "1",
+          "mandatory": "no",
+          "name": "identification",
+          "format": "integer",
+          "indexing_strategy": [
+            "identification"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique external identifier for the Process",
+          "notation": "{'data source': ['external_identifications']}",
+          "example": "{'ERP-System': ['TimeTableXYZ123']}",
+          "mandatory": "no",
+          "name": "external_identifications",
+          "format": "string_dict",
+          "indexing_strategy": [
+            "external_identifications"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Name of the Process Execution Plan",
+          "notation": "String based name",
+          "example": "time table",
+          "mandatory": "yes",
+          "name": "name",
+          "format": "string",
+          "indexing_strategy": [
+            "name"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Process",
+      "classes": [
+        "Process",
+        "ValueAddedProcess"
+      ],
+      "start_row": 1,
+      "columns": [
+        {
+          "column_kind": "type",
+          "description": "description",
+          "notation": "notation",
+          "example": "example",
+          "mandatory": "mandatory",
+          "name": "index",
+          "format": "string"
+        },
+        {
+          "column_kind": "simple",
+          "description": "Name of the Process",
+          "notation": "Process: _p\n ValueAddedProcess: _vap ",
+          "example": "Process: transportation_p\n ValueAddedProcess: packaging_vap",
+          "mandatory": "Yes",
+          "name": "label",
+          "format": "string",
+          "indexing_strategy": [
+            "label"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique identifier for the Process",
+          "notation": "{1, 2, 3, ....n}",
+          "example": "1",
+          "mandatory": "no",
+          "name": "identification",
+          "format": "integer",
+          "indexing_strategy": [
+            "identification"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique external identifier for the Process",
+          "notation": "{'data source': ['external_identifications']}",
+          "example": "{'ERP-System': ['ProcessXYZ123']}",
+          "mandatory": "no",
+          "name": "external_identifications",
+          "format": "string_dict",
+          "indexing_strategy": [
+            "external_identifications"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Name of the process",
+          "notation": "String based name",
+          "example": "process",
+          "mandatory": "yes",
+          "name": "name",
+          "format": "string",
+          "indexing_strategy": [
+            "name"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Controller of the ProcessTimeModel",
+          "notation": "",
+          "example": "_ptc",
+          "mandatory": "yes",
+          "name": "lead_time_controller",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_lead_time_controller"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Controller of the TransitionModel",
+          "notation": "",
+          "example": "_tsc",
+          "mandatory": "yes",
+          "name": "transition_controller",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_transition_controller"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Controller of the QualityModel",
+          "notation": "",
+          "example": "_qc",
+          "mandatory": "yes",
+          "name": "quality_controller",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_quality_controller"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Controller of the TransformationModel",
+          "notation": "",
+          "example": "_tfm",
+          "mandatory": "yes",
+          "name": "transformation_controller",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_transformation_controller"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "A list of XOR resource groups that can be chosen to execute the process.",
+          "notation": "list[ResourceGroup]",
+          "example": "[_rg, _rg, ..]",
+          "mandatory": "yes",
+          "name": "resource_controller",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_resource_controller"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "name": "group",
+          "format": "string",
+          "indexing_strategy": [
+            "group"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "A sales feature that can be fulfilled by executing the processes related to the feature.",
+          "notation": "Feature",
+          "example": "_f",
+          "mandatory": "yes",
+          "name": "feature",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "feature"
+          ]
+        },
+        {
+          "column_kind": "complex",
+          "description": "A tuple list of predecessor processes. One process of each tuple must be executed (if one of the processes is required from the order), to execute the process.",
+          "notation": "List[Tuple[VAP, VAP], ...]",
+          "example": "list[Tuple[_vap, _vap], ...]",
+          "mandatory": "no",
+          "name": "predecessors",
+          "format": "string_list",
+          "function": "list_tuple",
+          "indexing_strategy": [
+            "predecessors"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "A list of sucessor, becoming possible with the process execution.",
+          "notation": "List[ValueAddedProcess, ValueAddedProcess, ...]",
+          "example": "list[_vap, _vap, ...]",
+          "mandatory": "no",
+          "name": "successors",
+          "format": "string_list",
+          "indexing_strategy": [
+            "successors"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ProcessController",
+      "classes": [
+        "ProcessTimeController",
+        "QualityController",
+        "ResourceController",
+        "TransitionController",
+        "TransformationController"
+      ],
+      "start_row": 1,
+      "columns": [
+        {
+          "column_kind": "type",
+          "description": "description",
+          "notation": "notation",
+          "example": "example",
+          "mandatory": "mandatory",
+          "name": "index",
+          "format": "string"
+        },
+        {
+          "column_kind": "simple",
+          "description": "Name of the ProcessController",
+          "notation": "ResourceController: _rc\n ProcessTimeController: _ptc\n TransitionController: _tsc\n TranformationController: _tfc\n QualityController: _qc",
+          "example": "ResourceController: packaging_rc\n ProcessTimeController: packaging_ptc\n TransitionController: packaging_tsc\n TranformationController: packaging_tfc\n QualityController: no_issue_qc",
+          "mandatory": "Yes",
+          "name": "label",
+          "format": "string",
+          "indexing_strategy": [
+            "label"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique identifier for the ProcessController",
+          "notation": "{1, 2, 3, ....n}",
+          "example": "1",
+          "mandatory": "no",
+          "name": "identification",
+          "format": "integer",
+          "indexing_strategy": [
+            "identification"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique external identifier for the ProcessController",
+          "notation": "{'static_model': ['label']}",
+          "example": "{'static_model':['packaging_rc']}",
+          "mandatory": "no",
+          "name": "external_identifications",
+          "format": "string_dict",
+          "indexing_strategy": [
+            "external_identifications"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "States the resources that can be used for the process execution",
+          "notation": "ResourceModel",
+          "example": "_rm",
+          "mandatory": "yes",
+          "name": "resource_model",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_resource_model"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "States the lead time of the process",
+          "notation": "ProcessTimeModel",
+          "example": "_ptm",
+          "mandatory": "yes",
+          "name": "process_time_model",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_process_time_model"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "States the possible transport and resource assignments",
+          "notation": "TransitionModel",
+          "example": "_tsm",
+          "mandatory": "yes",
+          "name": "transition_model",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_transition_model"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "States the transformations executed by the process",
+          "notation": "TransformationModel",
+          "example": "_tfm",
+          "mandatory": "yes",
+          "name": "transformation_model",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_transformation_model"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "States the quality transformation",
+          "notation": "QualityModel",
+          "example": "_qm",
+          "mandatory": "yes",
+          "name": "quality_model",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "_quality_model"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ProcessTimeModel",
+      "classes": [
+        "SimpleNormalDistributedProcessTimeModel",
+        "SimpleSingleValueDistributedProcessTimeModel"
+      ],
+      "filter": "filter_process_models",
+      "start_row": 1,
+      "columns": [
+        {
+          "column_kind": "type",
+          "description": "description",
+          "notation": "notation",
+          "example": "example",
+          "mandatory": "mandatory",
+          "name": "index",
+          "format": "string"
+        },
+        {
+          "column_kind": "simple",
+          "description": "SimpleSingleValueDistributedProcessTimeModel: single value is needed\n SimpleNormalDistributedProcessTimeModel: mue and sigma are needed to map the distribution",
+          "notation": "SimpleNormalDistributedProcessTimeModel: _ptm\n SimpleSingleValueDistributedProcessTimeModel: _ptm",
+          "example": "SimpleNormalDistributedProcessTimeModel: supply_ptm\n SimpleSingleValueDistributedProcessTimeModel: packaging_ptm",
+          "mandatory": "Yes",
+          "name": "label",
+          "format": "string",
+          "indexing_strategy": [
+            "label"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique identifier for the ProcessTimeModel",
+          "notation": "{1, 2, 3, ....n}",
+          "example": "1",
+          "mandatory": "no",
+          "name": "identification",
+          "format": "integer",
+          "indexing_strategy": [
+            "identification"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique external identifier for the ProcessTimeModel",
+          "notation": "{'static_model': ['label']}",
+          "example": "{'static_model':['supply_ptm']}",
+          "mandatory": "no",
+          "name": "external_identifications",
+          "format": "string_dict",
+          "indexing_strategy": [
+            "external_identifications"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "single value distribution parameter",
+          "notation": "Float",
+          "example": "0.1",
+          "mandatory": "yes",
+          "name": "value",
+          "format": "float",
+          "indexing_strategy": [
+            "value"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "normal distribution parameter",
+          "notation": "Float",
+          "example": "0.2",
+          "mandatory": "yes",
+          "name": "mue",
+          "format": "float",
+          "indexing_strategy": [
+            "mue"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "normal distribution parameter",
+          "notation": "Float",
+          "example": "0.3",
+          "mandatory": "yes",
+          "name": "sigma",
+          "format": "float",
+          "indexing_strategy": [
+            "sigma"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "QualityModel",
+      "classes": [
+        "SimpleBernoulliDistributedQualityModel"
+      ],
+      "filter": "filter_process_models",
+      "start_row": 1,
+      "columns": [
+        {
+          "column_kind": "type",
+          "description": "description",
+          "notation": "notation",
+          "example": "example",
+          "mandatory": "mandatory",
+          "name": "index",
+          "format": "string"
+        },
+        {
+          "column_kind": "simple",
+          "description": "escribes the quality change during the process as a SimpleBernoulliDistributedQualityModel",
+          "notation": "SimpleBernoulliDistributedQualityModel: _qm",
+          "example": "no_issue_qm",
+          "mandatory": "yes",
+          "name": "label",
+          "format": "string",
+          "indexing_strategy": [
+            "label"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique identifier for the QualityModel",
+          "notation": "{1, 2, 3, ....n}",
+          "example": "1",
+          "mandatory": "no",
+          "name": "identification",
+          "format": "integer",
+          "indexing_strategy": [
+            "identification"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique external identifier for the QualityModel",
+          "notation": "{'static_model': ['label']}",
+          "example": "{'static_model':['no_issue_qm']}",
+          "mandatory": "no",
+          "name": "external_identifications",
+          "format": "string_dict",
+          "indexing_strategy": [
+            "external_identifications"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Parameter of a probability distribution used for the description of the quality behaviour",
+          "notation": "Float",
+          "example": "0.3",
+          "mandatory": "yes",
+          "name": "probability",
+          "format": "float",
+          "indexing_strategy": [
+            "probability"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ResourceModel",
+      "classes": [
+        "ResourceModel",
+        "ResourceGroup"
+      ],
+      "filter": "filter_process_models",
+      "start_row": 1,
+      "columns": [
+        {
+          "column_kind": "type",
+          "description": "description",
+          "notation": "notation",
+          "example": "example",
+          "mandatory": "mandatory",
+          "name": "index",
+          "format": "string"
+        },
+        {
+          "column_kind": "simple",
+          "description": " ResourceModel: holds different resource groups that can be used to execute a process\nResourceGroup: one resource group specify one option of the resource types required to execute a process",
+          "notation": "ResourceModel: _rm\n ResourceGroup: _rg",
+          "example": "ResourceModel: packaging_rm\\n ResourceGroup: packaging_rg\"",
+          "mandatory": "yes",
+          "name": "label",
+          "format": "string",
+          "indexing_strategy": [
+            "label"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique identifier for the ResourceModel",
+          "notation": "{1, 2, 3, ....n}",
+          "example": "1",
+          "mandatory": "no",
+          "name": "identification",
+          "format": "integer",
+          "indexing_strategy": [
+            "identification"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique external identifier for the ResourceModel",
+          "notation": "{'static_model': ['label']}",
+          "example": "{'static_model':['packaging_rg']}",
+          "mandatory": "no",
+          "name": "external_identifications",
+          "format": "string_dict",
+          "indexing_strategy": [
+            "external_identifications"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "States the resources that can be used for the process execution",
+          "notation": "ResourceModel",
+          "example": "_rm",
+          "mandatory": "yes",
+          "name": "resource_groups",
+          "format": "string_list",
+          "function": "label_list",
+          "indexing_strategy": [
+            "_resource_groups"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "A list of resource(s) participating in the process.",
+          "notation": "list[Resource]",
+          "example": "[_r, _r, ..]",
+          "mandatory": "yes",
+          "name": "resources",
+          "format": "string_list",
+          "function": "label_list",
+          "indexing_strategy": [
+            "resources"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "A list of most active resource(s) in the process (normally one resource)",
+          "notation": "list[Resource]",
+          "example": "[_r]",
+          "mandatory": "yes",
+          "name": "main_resources",
+          "format": "string_list",
+          "function": "label_list",
+          "indexing_strategy": [
+            "main_resources"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "TransitionModel",
+      "classes": [
+        "TransitionModel"
+      ],
+      "filter": "filter_process_models",
+      "start_row": 1,
+      "columns": [
+        {
+          "column_kind": "type",
+          "description": "description",
+          "notation": "notation",
+          "example": "example",
+          "mandatory": "mandatory",
+          "name": "index",
+          "format": "string"
+        },
+        {
+          "column_kind": "simple",
+          "description": "TransitionModel: describes the spatial position and resource assignment changes",
+          "notation": "TransitionModel: _tsm",
+          "example": "packaging_tsm",
+          "mandatory": "yes",
+          "name": "label",
+          "format": "string",
+          "indexing_strategy": [
+            "label"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique identifier for the TransitionModel",
+          "notation": "{1, 2, 3, ....n}",
+          "example": "1",
+          "mandatory": "no",
+          "name": "identification",
+          "format": "integer",
+          "indexing_strategy": [
+            "identification"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique external identifier for the TransitionModel",
+          "notation": "{'static_model': ['label']}",
+          "example": "{'static_model':['packaging_tsm']}",
+          "mandatory": "no",
+          "name": "external_identifications",
+          "format": "string_dict",
+          "indexing_strategy": [
+            "external_identifications"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "All possible origin resources of the transition",
+          "notation": "list[Resource]",
+          "example": "[_r, _r, ..]",
+          "mandatory": "no",
+          "name": "possible_origins",
+          "format": "string_list",
+          "function": "label_list",
+          "indexing_strategy": [
+            "_possible_origins"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "All possible destination resources of the transition",
+          "notation": "list[Resource]",
+          "example": "[_r, _r, ..]",
+          "mandatory": "no",
+          "name": "possible_destinations",
+          "format": "string_list",
+          "function": "label_list",
+          "indexing_strategy": [
+            "_possible_destinations"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "TransformationModel",
+      "classes": [
+        "EntityTransformationNode",
+        "TransformationModel"
+      ],
+      "filter": "filter_process_models",
+      "start_row": 1,
+      "columns": [
+        {
+          "column_kind": "type",
+          "description": "description",
+          "notation": "notation",
+          "example": "example",
+          "mandatory": "mandatory",
+          "name": "index",
+          "format": "string"
+        },
+        {
+          "column_kind": "simple",
+          "description": "EntityTransformationNode: Contains parents and children nodes, entity type, amount, quality, transformation type and io-behavior \nTransformationModel: Contains the root nodes, which is a list of EntityTransformationNode",
+          "notation": "EntityTransformationNode: _etn \n TransformationModel: _tfm",
+          "example": "EntityTransformationNode: packaging_finished_etn \n TransformationModel: packaging_tfm",
+          "mandatory": "yes",
+          "name": "label",
+          "format": "string",
+          "indexing_strategy": [
+            "label"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique identifier for the TransformationModel",
+          "notation": "{1, 2, 3, ....n}",
+          "example": "1",
+          "mandatory": "no",
+          "name": "identification",
+          "format": "integer",
+          "indexing_strategy": [
+            "identification"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Unique external identifier for the TransformationModel",
+          "notation": "{'static_model': ['label']}",
+          "example": "{'static_model':['packaging_tfm']}",
+          "mandatory": "no",
+          "name": "external_identifications",
+          "format": "string_dict",
+          "indexing_strategy": [
+            "external_identifications"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "All root nodes of the transformation graph",
+          "notation": "list[EntityTransformationNode]",
+          "example": "[_etn, _etn, ...]",
+          "mandatory": "yes",
+          "name": "root_nodes",
+          "format": "string_list",
+          "function": "label_list",
+          "indexing_strategy": [
+            "_root_nodes"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "A list of parent nodes (graph)",
+          "notation": "EntityTransformationNode",
+          "example": "_etn",
+          "mandatory": "no",
+          "name": "parents",
+          "format": "string_list",
+          "function": "label_list",
+          "indexing_strategy": [
+            "parents"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "A list of children nodes (graph)",
+          "notation": "EntityTransformationNode",
+          "example": "_etn",
+          "mandatory": "no",
+          "name": "children",
+          "format": "string_list",
+          "function": "label_list",
+          "indexing_strategy": [
+            "children"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "EntityType EntityTransformationNode",
+          "notation": "entity_type: _et",
+          "example": "EntityTransformationNode_et",
+          "mandatory": "yes",
+          "name": "entity_type",
+          "format": "dt_object",
+          "indexing_strategy": [
+            "entity_type"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Quality of the resource that affects the entities processed by the resource.",
+          "notation": "Between 0 and 1",
+          "example": "0.7",
+          "mandatory": "yes",
+          "name": "quality",
+          "format": "float",
+          "indexing_strategy": [
+            "quality"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Number of entities required to execute the transformation.",
+          "notation": "0 to ...",
+          "example": "10",
+          "mandatory": "yes",
+          "name": "amount",
+          "format": "float",
+          "indexing_strategy": [
+            "amount"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Transformation types of the node",
+          "notation": "MAIN_ENTITY, BLANK, SUB_PART, DISASSEMBLY, INGREDIENT, SUPPORT, UNSUPPORT, QUALITY_INSPECTION",
+          "example": "",
+          "mandatory": "yes",
+          "name": "transformation_type",
+          "format": "transformation_type",
+          "indexing_strategy": [
+            "transformation_type"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Input output behaviour of the node",
+          "notation": "CREATED, EXIST, DESTROYED",
+          "example": "",
+          "mandatory": "yes",
+          "name": "io_behaviour",
+          "format": "io_behaviour",
+          "indexing_strategy": [
+            "io_behaviour"
+          ]
+        }
+      ]
+    }
+  ]
+}

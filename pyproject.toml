@@ -1,21 +1,57 @@
-[tool.poetry]
-name = "ofact"
-version = "0.1.0"
-description = ""
-packages = [{ include = "ofact" }]
-authors = ["CSc <christian.schwede@hsbi.de>", "AFr <adrian.freiter@isst.fraunhofer.de>"]
-readme = "README.md"
-
-[tool.poetry.dependencies]
-
-# #### base packages - digital twin model ##############################################################################
-python = "^3.10"
-numpy = "^1.26.4"
-pandas = "^2.2.0"
-dill = "^0.3.8"
-openpyxl = "^3.1.2"
-
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = [
+    "setuptools>=61.0",
+    "wheel",
+    "build"
+    ]
+build-backend = "setuptools.build_meta"
 
+[project]
+name = "ofact"
+dynamic = ["version", "dependencies"]
+description = "Digital Twin Framwork for Production and Logistics Systems"
+authors = [{ name = "Christian Schwede" },
+           { name = "Adrian Freiter" }]
+maintainers = [{ name = "Adrian Freiter" }]
+license = {text = "Apache 2.0"}
+readme = "README.md"
+keywords = ["ofact"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache 2.0 License",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Topic :: Scientific/Engineering  :: Artificial Intelligence",
+    "Topic :: Manufacturing/Logistics :: AutoModelling"
+]
+
+[project.urls]
+Homepage = "https://github.com/OpenFactoryTwin/ofact-intern"
+Repository = "https://github.com/OpenFactoryTwin/ofact-intern"
+
+[project.scripts]
+ofact = "ofact.cli:cli"
+
+[tool.setuptools]
+packages = ["ofact"]
+
+[tool.setuptools.dynamic]
+version = {attr = "ofact.__version__"}
+dependencies = {file = "requirements.txt"}
+
+[tool.ruff]
+lint.select = ["E", "F"]
+lint.ignore = ["E501"]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+
+[tool.ruff.lint.isort]
+known-first-party = ["ofact"]

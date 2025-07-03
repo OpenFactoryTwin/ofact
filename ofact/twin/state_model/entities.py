@@ -61,8 +61,8 @@ import numpy as np
 
 # Imports Part 3: Project Imports
 from ofact.twin.state_model.basic_elements import (DigitalTwinObject, DynamicDigitalTwinObject, ProcessExecutionTypes,
-                                                   InstantiationFromDict, prints_visible)
-from ofact.twin.state_model.probabilities import ProbabilityDistribution
+                                                   prints_visible)
+from ofact.twin.state_model.probabilities import ProbabilityDistribution, SingleValueDistribution
 from ofact.twin.state_model.serialization import Serializable
 
 if TYPE_CHECKING:
@@ -73,12 +73,11 @@ logging.debug("DigitalTwin/entities")
 
 
 class Plant(DigitalTwinObject, Serializable):
-    drop_before_serialization = ['work_calendar']
 
     def __init__(self,
                  name: str,
                  corners: list[tuple[int, int]],
-                 current_time: datetime = datetime.min,
+                 current_time: datetime = datetime(1970, 1, 1),
                  work_calendar: Optional[WorkCalender] = None,
                  identification: Optional[int] = None,
                  external_identifications: dict[object, list[object]] = None,
@@ -113,76 +112,8 @@ class Plant(DigitalTwinObject, Serializable):
 
         return plant_copy
 
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = False) -> Union[dict | str]:
-        """
-        Creates a dict representation of the object.
-        Also serialize the object in attributes by calling the function on them.
 
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-            Defaults to True.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-            Then the static model id is used. Defaults to False.
-        use_label: Whether to only use the label for the object.
-            Can be necessary if circular references are used.
-        use_label_for_situated_in: Whether to only use the label for the situated_in attribute.
-
-        Returns
-        -------
-        The dict representation of the entity type or the static model id.
-        """
-        # using the provided `dict_serialize` method by the super class to initialize the `object_dict`
-        # with it's version and type
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             deactivate_id_filter=deactivate_id_filter,
-                                             use_label=use_label,
-                                             use_label_for_situated_in=use_label_for_situated_in)
-        if isinstance(object_dict, str):
-            return object_dict
-
-        for key, value in object_dict.items():
-            if key == 'current_time' and value is not None:
-                try:
-                    object_dict[key] = value.timestamp()
-                except OSError:
-                    # Thrown if the timestamp is out of range for example year is smaller 1970
-                    object_dict[key] = None
-
-        # Check if attributes are missing
-        Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                    ignore=self.drop_before_serialization,
-                                                    dictionary=object_dict,
-                                                    use_ignore=True)
-
-        return object_dict
-
-    def to_json(self, human_readable=False, serialize_private=False) -> str:
-        """
-        Converts the dict representation of a class instance to the json representation.
-
-        Parameters
-        ----------
-        human_readable: Whether to use indentation for the json string
-        serialize_private: Whether to export private attributes (double underscore)
-
-        Returns
-        -------
-        json_string: The json representation as string.
-        """
-        # TODO: Check for inheritance of method.
-        indent = 4 if human_readable else None
-        object_dict = self.dict_serialize(serialize_private=serialize_private)
-        json_string = json.dumps(object_dict, indent=indent)
-        return json_string
-
-
-class EntityType(DigitalTwinObject, Serializable):
-    version = '1.0.0'
-    drop_before_serialization = []
+class EntityType(DigitalTwinObject):
 
     def __init__(self,
                  name: str,
@@ -270,80 +201,31 @@ class EntityType(DigitalTwinObject, Serializable):
 
         return False
 
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Creates a dict representation of the object.
-        Also serialize the object in attributes by calling the function on them.
+    def completely_filled(self):
+        not_completely_filled_attributes = []
+        if self.identification is None:
+            not_completely_filled_attributes.append("identification")
+        if not isinstance(self.name, str):
+            not_completely_filled_attributes.append("name")
 
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-        Defaults to True.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-        Then the static model id is used. Defaults to False.
-        use_label: If set to true, only the static_model_id is returned for this object. Defaults to False.
-        use_label_for_situated_in: Whether to only use the label for the situated_in attribute.
-
-        Returns
-        -------
-        object_dict: The dict representation of the entity type or the static model id.
-        """
-        if use_label:
-            return self.get_static_model_id()
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             deactivate_id_filter=deactivate_id_filter)
-        if isinstance(object_dict, str):
-            return object_dict
-        for key, value in object_dict.items():
-            # The super_entity_type has its own entry
-            # and should not be exported as an own dict
-            if key == 'super_entity_type' and value is not None and hasattr(value, 'get_static_model_id'):
-                object_dict[key] = value.get_static_model_id()
-            elif isinstance(value, self.__class__):
-                object_dict[key] = value.dict_serialize()
-
-        # Check if attributes are missing
-        Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                    ignore=self.drop_before_serialization,
-                                                    dictionary=object_dict,
-                                                    use_ignore=True)
-        return object_dict
-
-    def to_json(self, human_readable=False, serialize_private=False) -> str:
-        """
-        Converts the dict representation of a class instance to the json representation.
-
-        Parameters
-        ----------
-        human_readable: If set to True, the json string is returned with indentation.
-        serialize_private: passed to dict_serialize
-
-        Returns
-        -------
-        json_string: The json representation as string.
-        """
-        # TODO: Check for inheritance of method.
-        indent = 4 if human_readable else None
-        object_dict = self.dict_serialize(serialize_private=serialize_private)
-        json_string = json.dumps(object_dict, indent=indent)
-        return json_string
+        if not_completely_filled_attributes:
+            completely_filled = False
+        else:
+            completely_filled = True
+        return completely_filled, not_completely_filled_attributes
 
 
-class Entity(DynamicDigitalTwinObject, Serializable):
-    drop_before_serialization = ['dynamic_attributes']
-    further_serializable = ['_entity_type', '_process_execution', ]
+class Entity(DynamicDigitalTwinObject):
 
     def __init__(self,
                  name: str,
                  entity_type: Union[EntityType, PartType],
                  situated_in: Optional[Resource] = None,
                  quality: float = 1,
+                 inspected_quality: Optional[float] = None,
                  identification: Optional[int] = None,
                  process_execution: Optional[ProcessExecution] = None,
-                 current_time: datetime = datetime.min,
+                 current_time: datetime = datetime(1970, 1, 1),
                  external_identifications: dict[object, list[object]] = None,
                  domain_specific_attributes: Optional[dict[str, Optional[object]]] = None):
         """
@@ -357,11 +239,16 @@ class Entity(DynamicDigitalTwinObject, Serializable):
         entity_type: type of the entity
         situated_in: A resource where the entity can be situated in, if not assigned, the absolute position
         of the physical body in the plant is used
-        quality: between 0 and 1 of an entity
+        quality: determines the quality of the entity that is a float between 0 and 1 (0 means bad, 1 means good)
+        inspected_quality: While the quality is a hidden value used for simulation,
+        the inspected quality is a snapshot of the real quality value.
+        On the physical shop floor, only these snapshots are available.
+        To ensure realistic behavior, the inspected quality should be used for decisions.
         """
         self._entity_type: Union[EntityType, PartType] = entity_type
         self._situated_in: Optional[Resource] = situated_in
         self._quality: float = quality
+        self._inspected_quality: Optional[float] = inspected_quality
         super().__init__(identification=identification, process_execution=process_execution, current_time=current_time,
                          external_identifications=external_identifications,
                          domain_specific_attributes=domain_specific_attributes)
@@ -371,7 +258,7 @@ class Entity(DynamicDigitalTwinObject, Serializable):
         entity_type_name = self.get_entity_type_name()
         situated_in_name = self.get_situated_in_name()
         return (f"Entity with ID '{self.identification}' and name {self.name}'; '{entity_type_name}', "
-                f"'{situated_in_name}', '{self._quality}'")
+                f"'{situated_in_name}', '{self._quality}', '{self._inspected_quality}'")
 
     @abstractmethod
     def duplicate(self, external_name=False):
@@ -402,7 +289,8 @@ class Entity(DynamicDigitalTwinObject, Serializable):
         if isinstance(entity_type, EntityType):
             self._entity_type = entity_type
         else:
-            raise ValueError(f"[{self.__class__.__name__}] The new entity_type is not an instance of EntityType")
+            raise ValueError(f"[{self.__class__.__name__}] "
+                             f"The new entity_type {entity_type} is not an instance of EntityType")
 
     def change_entity_type(self, entity_type, process_execution: Optional[ProcessExecution] = None,
                            sequence_already_ensured: bool = False):
@@ -425,8 +313,10 @@ class Entity(DynamicDigitalTwinObject, Serializable):
             raise ValueError(f"[{self.__class__.__name__}] The new situated_in is not a Resource or "
                              f"a class derived from Resource | {self.__dict__}")
 
-    def change_situated_in(self, situated_in, process_execution: Optional[ProcessExecution] = None,
+    def change_situated_in(self, situated_in: Optional[Resource], process_execution: Optional[ProcessExecution] = None,
                            sequence_already_ensured: bool = False):
+        """Change situated in of a resource and add the change to the dynamic attributes"""
+
         self.situated_in = situated_in
         if process_execution:
             self.update_attributes(process_execution=process_execution,
@@ -456,7 +346,17 @@ class Entity(DynamicDigitalTwinObject, Serializable):
         if process_execution:
             self.update_attributes(process_execution=process_execution,
                                    current_time=process_execution.executed_end_time,
-                                   quality=self.quality, sequence_already_ensured=sequence_already_ensured)
+                                   quality=self._quality, sequence_already_ensured=sequence_already_ensured)
+
+    @property
+    def inspected_quality(self):
+        return self._inspected_quality
+
+    def inspect_quality(self, process_execution: Optional[ProcessExecution] = None):
+        self._inspected_quality = self._quality
+
+    def reset_inspected_quality(self, process_execution: Optional[ProcessExecution] = None):
+        self._inspected_quality = None
 
     def get_entity_type_name(self):
         if self._entity_type is not None:
@@ -500,7 +400,7 @@ class Entity(DynamicDigitalTwinObject, Serializable):
             not_completely_filled_attributes.append("entity_type")
         if not isinstance(self.situated_in, Entity):
             not_completely_filled_attributes.append("situated_in")
-        if not isinstance(self.quality, float):
+        if not isinstance(self._quality, float):
             not_completely_filled_attributes.append("quality")
 
         if not_completely_filled_attributes:
@@ -508,71 +408,6 @@ class Entity(DynamicDigitalTwinObject, Serializable):
         else:
             completely_filled = True
         return completely_filled, not_completely_filled_attributes
-
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Creates a dict representation of the object.
-        Also serialize the object in attributes by calling the function on them.
-
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-        Defaults to True.
-        use_label: Whether to use the label as only identifier of the object. Then a string is returned.
-        use_label_for_situated_in: If set to true, only the static model id is used for the situated_in attribute
-        of this class.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-        Then the static model id is used. Defaults to False.
-
-        Returns
-        -------
-        object_dict: The dict representation of the entity type or the static model id.
-        If use_label is set to True a str is returned.
-        """
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             use_label=use_label,
-                                             deactivate_id_filter=deactivate_id_filter)
-        if isinstance(object_dict, str):
-            return object_dict
-
-        for key, value in object_dict.items():
-            if key == '_situated_in' and value is not None:
-                if use_label_for_situated_in:
-                    object_dict[key] = value.get_static_model_id()
-                else:
-                    object_dict[key] = value.dict_serialize()
-            elif key in self.further_serializable and value is not None:
-                object_dict[key] = value.dict_serialize()
-
-        # Check if attributes are missing
-        Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                    ignore=self.drop_before_serialization,
-                                                    dictionary=object_dict,
-                                                    use_ignore=True)
-        return object_dict
-
-    def to_json(self, human_readable=False, serialize_private=False) -> str:
-        """
-        Converts the dict representation of a class instance to the json representation.
-
-        Parameters
-        ----------
-        human_readable: If set to True, the json string is returned with indentation.
-        serialize_private: Whether to drop private attributes in the dict.
-
-        Returns
-        -------
-        json_string: The json representation as string.
-        """
-
-        # TODO: Check for inheritance of method.
-        indent = 4 if human_readable else None
-        object_dict = self.dict_serialize(serialize_private=serialize_private)
-        json_string = json.dumps(object_dict, indent=indent)
-        return json_string
 
 
 class PartType(EntityType):
@@ -687,13 +522,14 @@ class Part(Entity):
                  entity_type: Union[PartType, EntityType],
                  situated_in: Optional[Resource] = None,
                  quality: float = 1,
+                 inspected_quality: Optional[float] = None,
                  unit: Optional[str] = None,
                  part_of: Optional[Part] = None,
                  parts: Optional[list[Part]] = None,
                  part_removable: Optional[list[bool]] = None,
                  identification: Optional[int] = None,
                  process_execution: Optional[ProcessExecution] = None,
-                 current_time: datetime = datetime.min,
+                 current_time: datetime = datetime(1970, 1, 1),
                  external_identifications: Optional[dict[object, list[object]]] = None,
                  domain_specific_attributes: Optional[dict[str, Optional[object]]] = None):
         """
@@ -723,7 +559,8 @@ class Part(Entity):
         self.part_removable: list[bool] = part_removable
 
         super().__init__(identification=identification, name=name, entity_type=entity_type, situated_in=situated_in,
-                         quality=quality, process_execution=process_execution, current_time=current_time,
+                         quality=quality, inspected_quality=inspected_quality,
+                         process_execution=process_execution, current_time=current_time,
                          external_identifications=external_identifications,
                          domain_specific_attributes=domain_specific_attributes)
 
@@ -733,8 +570,8 @@ class Part(Entity):
         part_of_name = self.get_part_of_name()
         part_names = self.get_part_names()
         return (f"Part with ID '{self.identification}' and name {self.name}'; '{entity_type_name}', "
-                f"'{situated_in_name}', '{self._quality}', '{self.unit}', '{part_of_name}', '{part_names}', "
-                f"'{self.part_removable}")
+                f"'{situated_in_name}', '{self._quality}', '{self._inspected_quality}', '{self.unit}', "
+                f"'{part_of_name}', '{part_names}', '{self.part_removable}")
 
     def duplicate(self, external_name=False):
         """The duplicate of an entity has different to the duplicate of other digital_twin objects also different
@@ -806,8 +643,13 @@ class Part(Entity):
             raise ValueError(f"[{self.__class__.__name__}] check_part_removable"
                              f"The part {part.identification} is part_of {self.identification}")
 
-    def add_part(self, part, removable: bool, process_execution: Optional[ProcessExecution] = None,
-                 sequence_already_ensured: bool = False):
+    def add_entity(self, entity, removable: bool, process_execution: Optional[ProcessExecution] = None,
+                   sequence_already_ensured: bool = False):
+        return self._add_part(entity, removable, process_execution, sequence_already_ensured)
+
+
+    def _add_part(self, part, removable: bool, process_execution: Optional[ProcessExecution] = None,
+                   sequence_already_ensured: bool = False):
         """
         Add a part to self (part is appended)
 
@@ -858,9 +700,20 @@ class Part(Entity):
         else:
             raise ValueError(f"[{self.__class__.__name__}] The part is not a instance of Part")
 
-    def get_disassembled_parts(self, part_entity_type, amount, process_execution: Optional[ProcessExecution] = None,
+    def get_disassembled_parts(self, part_entity_type: EntityType | PartType, amount: int,
+                               process_execution: Optional[ProcessExecution] = None,
                                sequence_already_ensured: bool = False):
-        """Disassemble (amount) parts with the part_entity_type"""
+        """
+        Disassemble (amount) parts with the part_entity_type.
+
+        Parameters
+        ----------
+        part_entity_type: entity_type of the subparts to be disassembled
+        amount: amount of parts to be disassembled
+        process_execution: process_execution that is responsible for the disassembly
+        sequence_already_ensured: says if the process execution sequence is time chronological or not
+        """
+
         sub_parts = [sub_part
                      for idx, sub_part in enumerate(self.parts)
                      if part_entity_type.check_entity_type_match_lower(sub_part.entity_type)
@@ -873,7 +726,7 @@ class Part(Entity):
                              f"in process: '{process_name}' \n"
                              f"Share available: {len(sub_parts)} / {amount}")
 
-        # last in fist out priniciple
+        # last in fist out principle
         sub_parts_to_disassemble = sub_parts[-int(amount):]
 
         # disassembly
@@ -910,56 +763,6 @@ class Part(Entity):
         else:
             completely_filled = True
         return completely_filled, not_completely_filled_attributes
-
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Creates a dict representation of the object.
-        Also serialize the object in attributes by calling the function on them.
-
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-        Defaults to True.
-        use_label_for_situated_in: If set to true, only the static model id is used for the situated_in attribute
-        of this class.
-        use_label: If set to true, only the static_model_id is returned for this object.
-        Defaults to False.
-        use_label_for_situated_in: Whether to only use the label for the situated_in attribute.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-        Then the static model id is used. Defaults to False.
-
-        Returns
-        -------
-        object_dict: The dict representation of the entity type or the static model id.
-        """
-        if use_label:
-            return self.get_static_model_id()
-        # TODO: Check whether using the param from the function works with the exporter
-        #   otherwise this should be fixed anyways but is more complicated
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             use_label_for_situated_in=True,
-                                             deactivate_id_filter=deactivate_id_filter)
-        if isinstance(object_dict, str):
-            return object_dict
-
-        further_serializable = ['part_of']
-        further_serializable_list = ['parts']
-        for key, value in object_dict.items():
-
-            if key in further_serializable and value is not None:
-                object_dict[key] = value.dict_serialize()
-            elif key in further_serializable_list and value is not None:
-                object_dict[key] = Serializable.serialize_list(value)
-
-        # Check if attributes are missing
-        Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                    ignore=self.drop_before_serialization,
-                                                    dictionary=object_dict,
-                                                    use_ignore=True)
-        return object_dict
 
 
 def _check_intersection_rectangles(left_top1, left_top2, right_bottom1, right_bottom2) -> bool:
@@ -1010,13 +813,12 @@ def _get_corner_bottom_right(physical_body):
     return corner_bottom_right
 
 
-class PhysicalBody(DynamicDigitalTwinObject, Serializable):
-    drop_before_serialization = ['dynamic_attributes']
-
+class PhysicalBody(DynamicDigitalTwinObject):
+    
     def __init__(self,
-                 position: tuple[int, int],
-                 length: int,
-                 width: int,
+                 position: tuple[int, int] = (0, 0),
+                 length: int = 1,
+                 width: int = 1,
                  identification: Optional[int] = None,
                  external_identifications: Optional[dict[object, list[object]]] = None,
                  domain_specific_attributes: Optional[dict[str, Optional[object]]] = None):
@@ -1025,7 +827,7 @@ class PhysicalBody(DynamicDigitalTwinObject, Serializable):
 
         Parameters
         ----------
-        position: X and Y coordinates of the center of the physical body
+        position: X and Y coordinates specify the center of the physical body
         length: Extension in Y axis
         width: Extension in X axis
         """
@@ -1110,72 +912,14 @@ class PhysicalBody(DynamicDigitalTwinObject, Serializable):
 
         return intersection
 
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Creates a dict representation of the object.
-        Also serialize the object in attributes by calling the function on them.
-
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-        Defaults to True.
-        use_label_for_situated_in: If set to true, only the static model id is used for the situated_in attribute
-        of this class.
-        use_label: If set to true, only the static_model_id is returned for this object.
-        Defaults to False.
-        use_label_for_situated_in: Whether to only use the label for the situated_in attribute.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-        Then the static model id is used. Defaults to False.
-
-        Returns
-        -------
-        object_dict: The dict representation of the entity type or the static model id.
-        """
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             deactivate_id_filter=deactivate_id_filter,
-                                             use_label=use_label,
-                                             use_label_for_situated_in=use_label_for_situated_in)
-
-        # Check if attributes are missing
-        Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                    ignore=self.drop_before_serialization,
-                                                    dictionary=object_dict,
-                                                    use_ignore=True)
-
-        return object_dict
-
-    def to_json(self, human_readable=False, serialize_private=False) -> str:
-        """
-        Converts the dict representation of a class instance to the json representation.
-
-        Parameters
-        ----------
-        human_readable: If set to True, the json string is returned with indentation.
-        serialize_private: Whether to drop private attributes in the dict.
-
-        Returns
-        -------
-        json_string: The json representation as string.
-        """
-
-        # TODO: Check for inheritance of method.
-        indent = 4 if human_readable else None
-        object_dict = self.dict_serialize(serialize_private=serialize_private)
-        json_string = json.dumps(object_dict, indent=indent)
-        return json_string
-
 
 class Resource(Entity, metaclass=ABCMeta):
-    drop_before_serialization = ['dynamic_attributes']
-
+    
     def __init__(self,
                  name: str,
                  entity_type: EntityType,
-                 plant: Plant,
-                 costs_per_second: float,
+                 plant: Optional[Plant] = None,
+                 costs_per_second: float = 0,
                  position: Optional[tuple[int, int]] = None,
                  length: Optional[int] = None,
                  width: Optional[int] = None,
@@ -1183,9 +927,10 @@ class Resource(Entity, metaclass=ABCMeta):
                  process_execution_plan: Optional[ProcessExecutionPlan] = None,
                  situated_in: Optional[Resource] = None,
                  quality: float = 1,
+                 inspected_quality: Optional[float] = None,
                  identification: Optional[int] = None,
                  process_execution: Optional[ProcessExecution] = None,
-                 current_time: Optional[datetime] = datetime.min,
+                 current_time: Optional[datetime] = datetime(1970, 1, 1),
                  external_identifications: Optional[dict[object, list[object]]] = None,
                  domain_specific_attributes: Optional[dict[str, Optional[object]]] = None):
         """
@@ -1206,10 +951,10 @@ class Resource(Entity, metaclass=ABCMeta):
         attribute physical_body: position and extension of the resource
         """
         super().__init__(identification=identification, name=name, entity_type=entity_type, situated_in=situated_in,
-                         quality=quality, process_execution=process_execution, current_time=current_time,
+                         quality=quality, inspected_quality=inspected_quality,
+                         process_execution=process_execution, current_time=current_time,
                          external_identifications=external_identifications,
                          domain_specific_attributes=domain_specific_attributes)
-        Serializable.__init__(self)
         self.plant: Plant = plant
         self._process_execution_plan: Optional[ProcessExecutionPlan] = process_execution_plan
         self.costs_per_second: Optional[float] = costs_per_second
@@ -1219,7 +964,9 @@ class Resource(Entity, metaclass=ABCMeta):
         elif length is not None and width is not None:  # position should also be set
             physical_body = PhysicalBody(position=position, length=length, width=width)
         else:
-            physical_body = None  # should be enforced later
+            physical_body = PhysicalBody(position=(0, 0),  # initialization with standard values
+                                         length=1,
+                                         width=1)
             if prints_visible:
                 print(f"[{self.__class__.__name__:20}] Warning: "
                       f"It should be ensured that the physical body is set later in the instantiation process")
@@ -1233,8 +980,8 @@ class Resource(Entity, metaclass=ABCMeta):
         width = self.get_width()
         length = self.get_length()
         return (f"Resource with ID '{self.identification}' and name {self.name}'; '{entity_type_name}', "
-                f"'{situated_in_name}', '{self._quality}', '{plant_name}', '{self.costs_per_second}', "
-                f"'{position}', '{width}', '{length}'")
+                f"'{situated_in_name}', '{self._quality}', '{self._inspected_quality}', '{plant_name}', "
+                f"'{self.costs_per_second}', '{position}', '{width}', '{length}'")
 
     def duplicate(self, external_name=False):
         """The duplicate of an entity has different to the duplicate of other digital_twin objects also different
@@ -1364,15 +1111,15 @@ class Resource(Entity, metaclass=ABCMeta):
         return []
 
     @abstractmethod
-    def add_entity(self, entity: Entity, process_execution: Optional[ProcessExecution] = None,
+    def add_entity(self, entity: Entity, removable: bool, process_execution: Optional[ProcessExecution] = None,
                    sequence_already_ensured: bool = False):
         """
         Add an entity to the resource "storage".
         """
         pass
 
-    def add_entities(self, entities: list[Entity], process_execution: Optional[ProcessExecution] = None,
-                     sequence_already_ensured: bool = False):
+    def add_entities(self, entities: list[Entity], removable: bool = True,
+                     process_execution: Optional[ProcessExecution] = None,  sequence_already_ensured: bool = False):
         """
         Add entities to the resource "storage".
         """
@@ -1380,7 +1127,9 @@ class Resource(Entity, metaclass=ABCMeta):
         not_added_entities = []
         for entity in entities:
             if entity != self:
-                added = self.add_entity(entity=entity, process_execution=process_execution,
+                added = self.add_entity(entity=entity,
+                                        removable=removable,
+                                        process_execution=process_execution,
                                         sequence_already_ensured=sequence_already_ensured)
             else:
                 added = False
@@ -1427,10 +1176,10 @@ class Resource(Entity, metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_available_entities(self, entity_type: EntityType):
+    def get_available_entities(self, entity_type: Optional[EntityType], at: Optional[datetime] = None):
         """
-        Returns all available entities (used for example for planning).
-        Afterward an entity can be removed for usage with the remove_entity method.
+        Returns all available entities (Used, for example, for planning).
+        Afterward, an entity can be removed for usage with the remove_entity method.
         """
         pass
 
@@ -1528,79 +1277,17 @@ class Resource(Entity, metaclass=ABCMeta):
             completely_filled = True
         return completely_filled, not_completely_filled_attributes
 
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Creates a dict representation of the object.
-        Also serialize the object in attributes by calling the function on them.
-
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-        Defaults to True.
-        use_label_for_situated_in: If set to true, only the static model id is used for the situated_in attribute
-        of this class.
-        use_label: If set to true, only the static_model_id is returned for this object. Defaults to False.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-        Then the static model id is used. Defaults to False.
-
-        Returns
-        -------
-        The dict representation of the entity type or the static model id.
-        """
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             use_label_for_situated_in=use_label_for_situated_in,
-                                             use_label=use_label,
-                                             deactivate_id_filter=deactivate_id_filter)
-        if isinstance(object_dict, str):
-            return object_dict
-
-        further_serializable = ['plant', '_process_execution_plan', '_physical_body']
-        for key, value in object_dict.items():
-
-            if key in further_serializable and value is not None and not isinstance(value, dict):
-                object_dict[key] = value.dict_serialize()
-
-        # Check if attributes are missing
-        Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                    ignore=self.drop_before_serialization,
-                                                    dictionary=object_dict,
-                                                    use_ignore=True)
-        return object_dict
-
-    def to_json(self, human_readable=False, serialize_private=False) -> str:
-        """
-        Converts the dict representation of a class instance to the json representation.
-
-        Parameters
-        ----------
-        human_readable: If set to True, the json string is returned with indentation.
-        serialize_private: Whether to drop private attributes in the dict.
-
-        Returns
-        -------
-        json_string: The json representation as string.
-        """
-
-        # TODO: Check for inheritance of method.
-        indent = 4 if human_readable else None
-        object_dict = self.dict_serialize(serialize_private=serialize_private)
-        json_string = json.dumps(object_dict, indent=indent)
-        return json_string
-
 
 class StationaryResource(Resource):
 
     def __init__(self,
                  name: str,
                  entity_type: EntityType,
-                 plant: Plant,
-                 costs_per_second: float,
-                 entry_edge: list[tuple[int, int]],
-                 exit_edge: list[tuple[int, int]],
-                 efficiency: ProbabilityDistribution,
+                 plant: Optional[Plant] = None,
+                 costs_per_second: float = 0,
+                 entry_edge: Optional[list[tuple[int, int]]] = None,
+                 exit_edge: Optional[list[tuple[int, int]]] = None,
+                 efficiency: ProbabilityDistribution = None,
                  position: Optional[tuple[int, int]] = None,
                  length: Optional[int] = None,
                  width: Optional[int] = None,
@@ -1608,9 +1295,10 @@ class StationaryResource(Resource):
                  process_execution_plan: Optional[ProcessExecutionPlan] = None,
                  situated_in: Optional[Resource] = None,
                  quality: float = 1,
+                 inspected_quality: Optional[float] = None,
                  identification: Optional[int] = None,
                  process_execution: Optional[ProcessExecution] = None,
-                 current_time: Optional[datetime] = datetime.min,
+                 current_time: Optional[datetime] = datetime(1970, 1, 1),
                  external_identifications: Optional[dict[object, list[object]]] = None,
                  domain_specific_attributes: Optional[dict[str, Optional[object]]] = None):
         """
@@ -1627,11 +1315,18 @@ class StationaryResource(Resource):
         Stacked stationary resources have to be entered/left first by entering the parent and then the children
         resources (both entries/ exits can be on the same place)
         """
+        if entry_edge is None:
+            entry_edge = []
+        if exit_edge is None:
+            exit_edge = []
+        if efficiency is None:
+            efficiency = SingleValueDistribution(1)
         self._efficiency: ProbabilityDistribution = efficiency
         super().__init__(identification=identification, name=name, entity_type=entity_type, plant=plant,
                          costs_per_second=costs_per_second, position=position, length=length, width=width,
                          physical_body=physical_body,
                          process_execution_plan=process_execution_plan, situated_in=situated_in, quality=quality,
+                         inspected_quality=inspected_quality,
                          process_execution=process_execution, current_time=current_time,
                          external_identifications=external_identifications,
                          domain_specific_attributes=domain_specific_attributes)
@@ -1647,8 +1342,8 @@ class StationaryResource(Resource):
         length = self.get_length()
         efficiency_parameters = self.get_efficiency_parameters()
         return (f"StationaryResource with ID '{self.identification}' and name {self.name}'; '{entity_type_name}', "
-                f"'{situated_in_name}', '{self._quality}', '{plant_name}', '{self.costs_per_second}', "
-                f"'{position}', '{width}', '{length}', "
+                f"'{situated_in_name}', '{self._quality}', '{self._inspected_quality}', '{plant_name}', "
+                f"'{self.costs_per_second}', '{position}', '{width}', '{length}', "
                 f"'{efficiency_parameters}', '{self.entry_edge}', '{self.exit_edge}'")
 
     def duplicate(self, external_name=False):
@@ -1701,7 +1396,7 @@ class StationaryResource(Resource):
         return performance
 
     # @abstractmethod
-    def add_entity(self, entity: Entity, process_execution: Optional[ProcessExecution] = None,
+    def add_entity(self, entity: Entity, removable: bool = True, process_execution: Optional[ProcessExecution] = None,
                    sequence_already_ensured: bool = False):
         """
         Add an entity to the resource "storage".
@@ -1722,10 +1417,10 @@ class StationaryResource(Resource):
         pass
 
     # @abstractmethod
-    def get_available_entities(self, entity_type: EntityType):
+    def get_available_entities(self, entity_type: Optional[EntityType], at: Optional[datetime] = None):
         """
         Returns an available entity (used, for example, for planning).
-        Afterward the entity can be removed for usage with the remove_entity method.
+        Afterward, the entity can be removed for usage with the remove_entity method.
         """
         pass
 
@@ -1758,7 +1453,7 @@ class StationaryResource(Resource):
         completely_filled, not_completely_filled_attributes = super().completely_filled()
 
         if not isinstance(self._efficiency, ProbabilityDistribution):
-            not_completely_filled_attributes.append("plant")
+            not_completely_filled_attributes.append("efficiency")
         if self.entry_edge is None:
             not_completely_filled_attributes.append("entry_edge")
         if self.exit_edge is None:
@@ -1770,64 +1465,20 @@ class StationaryResource(Resource):
             completely_filled = True
         return completely_filled, not_completely_filled_attributes
 
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Creates a dict representation of the object.
-        Also serialize the object in attributes by calling the function on them.
-
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-        Defaults to True.
-        use_label_for_situated_in: If set to true, only the static model id is used for the situated_in attribute
-        of this class.
-        use_label: If set to true, only the static_model_id is returned for this object. Defaults to False.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-        Then the static model id is used. Defaults to False.
-
-        Returns
-        -------
-        object_dict: The dict representation of the entity type or the static model id.
-        """
-        # TODO: Check whether the param from the function can be used
-        #   This should be possible but needs to be checked
-        #   before removing the use_label_for_situated_in=True statement.
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             use_label_for_situated_in=True,
-                                             use_label=use_label,
-                                             deactivate_id_filter=deactivate_id_filter)
-        if isinstance(object_dict, str):
-            return object_dict
-        further_serializable = ['_efficiency']
-        for key, value in object_dict.items():
-            if key in further_serializable and value is not None:
-                object_dict[key] = value.dict_serialize()
-
-        # Check if attributes are missing
-        Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                    ignore=self.drop_before_serialization,
-                                                    dictionary=object_dict,
-                                                    use_ignore=True)
-
-        return object_dict
-
 
 class Storage(StationaryResource):
 
     def __init__(self,
                  name: str,
                  entity_type: EntityType,
-                 plant: Plant,
-                 costs_per_second: float,
-                 entry_edge: list[tuple[int, int]],
-                 exit_edge: list[tuple[int, int]],
-                 efficiency: ProbabilityDistribution,
                  capacity: int,
                  allowed_entity_type: EntityType,
-                 stored_entities: list[Entity],
+                 plant: Optional[Plant] = None,
+                 costs_per_second: float = 0,
+                 entry_edge: Optional[list[tuple[int, int]]] = None,
+                 exit_edge: Optional[list[tuple[int, int]]] = None,
+                 efficiency: ProbabilityDistribution = None,
+                 stored_entities: list[Entity] = None,
                  position: Optional[tuple[int, int]] = None,
                  length: Optional[int] = None,
                  width: Optional[int] = None,
@@ -1835,9 +1486,10 @@ class Storage(StationaryResource):
                  process_execution_plan: Optional[ProcessExecutionPlan] = None,
                  situated_in: Optional[Resource] = None,
                  quality: float = 1,
+                 inspected_quality: Optional[float] = None,
                  identification: Optional[int] = None,
                  process_execution: Optional[ProcessExecution] = None,
-                 current_time: Optional[datetime] = datetime.min,
+                 current_time: Optional[datetime] = datetime(1970, 1, 1),
                  external_identifications: Optional[dict[object, list[object]]] = None,
                  domain_specific_attributes: Optional[dict[str, Optional[object]]] = None):
         """
@@ -1852,12 +1504,19 @@ class Storage(StationaryResource):
         (where the allowed_entity_type is the super_entity_type of the entity)
         stored_entities: List of entities that are currently stored and match the allowed_entity_type
         """
+        if entry_edge is None:
+            entry_edge = []
+        if exit_edge is None:
+            exit_edge = []
+        if stored_entities is None:
+            stored_entities = []
         self.stored_entities: list[Entity] = stored_entities
         super().__init__(identification=identification, name=name, entity_type=entity_type, plant=plant,
                          costs_per_second=costs_per_second, position=position, length=length, width=width,
                          physical_body=physical_body,
                          entry_edge=entry_edge, exit_edge=exit_edge, efficiency=efficiency,
                          process_execution_plan=process_execution_plan, situated_in=situated_in, quality=quality,
+                         inspected_quality=inspected_quality,
                          process_execution=process_execution, current_time=current_time,
                          external_identifications=external_identifications,
                          domain_specific_attributes=domain_specific_attributes)
@@ -1875,8 +1534,8 @@ class Storage(StationaryResource):
         stored_entities_length = len(self.stored_entities)
         allowed_entity_type_name = self.get_allowed_entity_type_name()
         return (f"Storage with ID '{self.identification}' and name {self.name}'; '{entity_type_name}', "
-                f"'{situated_in_name}', '{self._quality}', '{plant_name}', '{self.costs_per_second}', "
-                f"'{position}', '{width}', '{length}', "
+                f"'{situated_in_name}', '{self._quality}', '{self._inspected_quality}', '{plant_name}', "
+                f"'{self.costs_per_second}', '{position}', '{width}', '{length}', "
                 f"'{efficiency_parameters}', '{self.entry_edge}', '{self.exit_edge}', "
                 f"'{stored_entities_length}', '{self.capacity}', '{allowed_entity_type_name}'")
 
@@ -1910,7 +1569,7 @@ class Storage(StationaryResource):
         number_of_stored_entities = len(self.stored_entities)
         return number_of_stored_entities
 
-    def add_entity(self, entity: Entity, process_execution: Optional[ProcessExecution] = None,
+    def add_entity(self, entity: Entity, removable: bool = True, process_execution: Optional[ProcessExecution] = None,
                    sequence_already_ensured: bool = False) -> bool:
         """
         The method is used to store an entity in the storage. In advance, it is checked whether the entity is allowed to
@@ -1925,7 +1584,7 @@ class Storage(StationaryResource):
         -------
         True if storing-process was successful respectively False if not
         """
-        if entity.entity_type.check_entity_type_match(self.allowed_entity_type):
+        if self.allowed_entity_type.check_entity_type_match_lower(entity.entity_type):
             if entity in self.stored_entities:
                 return True
 
@@ -2007,11 +1666,45 @@ class Storage(StationaryResource):
         else:
             return False
 
-    def get_available_entities(self, entity_type: EntityType):
-        if entity_type.check_entity_type_match_lower(self.allowed_entity_type):
-            return self.stored_entities
+    def get_available_entities(self, entity_type: Optional[EntityType], at: Optional[datetime] = None):
+        """
+        The method is used to find all entities in the storage which have the respective entity_type.
+
+        Parameters
+        ----------
+        entity_type: specify an entity
+        at: datetime the available entities are checked
+
+        Returns
+        -------
+        The entities if available respectively None if not
+        """
+
+        if entity_type is not None:
+            if not self.allowed_entity_type.check_entity_type_match_lower(entity_type):
+                return []
+
+        if at is None:
+            available_entities = self.stored_entities
         else:
-            return []
+            available_entities = self._get_available_entities_at(at)
+
+        available_entities = \
+            [entity
+             for entity in available_entities
+             if entity_type.check_entity_type_match_lower(entity.entity_type)]
+
+        return available_entities
+
+    def _get_available_entities_at(self, at: datetime):
+        return self.dynamic_attributes.get_attribute_at(req_time_stamp=at,
+                                                        attribute="stored_entities")
+
+    def get_incoming_and_outgoing_entities_history(self, start_time_stamp: datetime, end_time_stamp: datetime):
+        return self.dynamic_attributes.get_changes_attribute_raw(attribute="stored_entities",
+                                                                 start_time_stamp=start_time_stamp,
+                                                                 end_time_stamp=end_time_stamp,
+                                                                 include_initial_entries=True)
 
     def get_available_entity(self, entity_type: EntityType, random_=False) -> Optional[Entity]:
         """
@@ -2026,11 +1719,25 @@ class Storage(StationaryResource):
         -------
         The entity if available respectively None if not
         """
-        if self.stored_entities and entity_type.check_entity_type_match_lower(self.allowed_entity_type):
+        if (self.stored_entities and
+                self.allowed_entity_type.check_entity_type_match_lower(entity_type)):
             if random_:
                 available_entity = random.choice(self.stored_entities)
             else:
                 available_entity = self.stored_entities[0]
+
+            if not available_entity.entity_type.check_entity_type_match_lower(entity_type):
+                # different entities stored in the storage (material and sub materials)
+                available_entities = \
+                    [entity
+                     for entity in self.stored_entities
+                     if entity_type.check_entity_type_match_lower(entity.entity_type)]
+
+                if random_:
+                    available_entity = random.choice(available_entities)
+                else:
+                    available_entity = available_entities[0]
+
             if prints_visible:
                 print(f"[{self.__class__.__name__:20}] "
                       f"The entity '{entity_type.name}' is available in the storage '{self.name}'")
@@ -2076,80 +1783,8 @@ class Storage(StationaryResource):
             completely_filled = True
         return completely_filled, not_completely_filled_attributes
 
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Creates a dict representation of the object.
-        Also serialize the object in attributes by calling the function on them.
 
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-        Defaults to True.
-        use_label_for_situated_in: If set to true, only the static model id is used for the situated_in attribute
-        of this class.
-        use_label: If set to true, only the static_model_id is returned for this object. Defaults to False.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-        Then the static model id is used. Defaults to False.
-
-        Returns
-        -------
-        object_dict: The dict representation of the entity type or the static model id.
-        """
-        if use_label:
-            return self.get_static_model_id()
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             use_label_for_situated_in=use_label_for_situated_in,
-                                             deactivate_id_filter=deactivate_id_filter)
-        if isinstance(object_dict, str):
-            return object_dict
-
-        further_serializable = ['stored_entities', 'allowed_entity_type']
-        for key, value in object_dict.items():
-            if key == "_situated_in":
-                if hasattr(value, "dict_serialize"):
-                    # TODO: This should already been serialized with the object dict itself.
-                    # Usually this should work if
-                    object_dict[key] = value.dict_serialize(use_label=True)
-                object_dict[key] = value
-            if key in further_serializable and value is not None:
-                if isinstance(value, list):
-                    object_dict[key] = Serializable.serialize_list(value, use_label=True)
-                else:
-                    object_dict[key] = value.dict_serialize()
-
-        # Check if attributes are missing
-        Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                    ignore=self.drop_before_serialization,
-                                                    dictionary=object_dict,
-                                                    use_ignore=True)
-
-        return object_dict
-
-    def to_json(self, human_readable=False, serialize_private=False) -> str:
-        """
-        Converts the dict representation of a class instance to the json representation.
-
-        Parameters
-        ----------
-        human_readable: If set to True, the json string is returned with indentation.
-        serialize_private: Whether to drop private attributes in the dict.
-
-        Returns
-        -------
-        json_string: The json representation as string.
-        """
-
-        # TODO: Check for inheritance of method.
-        indent = 4 if human_readable else None
-        object_dict = self.dict_serialize(serialize_private=serialize_private)
-        json_string = json.dumps(object_dict, indent=indent)
-        return json_string
-
-
-def _get_storage_place_entity_type(all_storage_places, entity_type) -> Optional[list[Storage]]:
+def _get_storage_place_entity_type(all_storage_places, entity_type: EntityType) -> Optional[list[Storage]]:
     """Determine storage places with the entity_type"""
     storage_places = None
     if entity_type in all_storage_places:
@@ -2165,11 +1800,10 @@ def _get_storage_place_entity_type(all_storage_places, entity_type) -> Optional[
     return storage_places
 
 
-class StoragePlaces(InstantiationFromDict, Serializable):
-    drop_before_serialization = []
+class StoragePlaces(Serializable):
 
     def __init__(self,
-                 storage_places: dict[EntityType, list[Storage]],
+                 storage_places: dict[EntityType, list[Storage]] | list[Storage],
                  capacity: int,
                  name: str,
                  situated_in: Optional[Resource] = None):
@@ -2186,12 +1820,20 @@ class StoragePlaces(InstantiationFromDict, Serializable):
         attribute number_of_stored_entities: sum of the stored_entities in the storages
         """
 
-        if situated_in:
+        if isinstance(situated_in, Resource):
             if isinstance(storage_places, str):
                 raise Exception(f"Storage Places {name} - {storage_places}")
 
-            for storage_place_lst in list(storage_places.values()):
-                for storage in storage_place_lst:
+            if isinstance(storage_places, dict):
+                storage_places_list = [storage
+                                       for storage_place_lst in list(storage_places.values())
+                                       for storage in storage_place_lst]
+            else:
+                storage_places_list = storage_places.copy()
+                self.get_storage_places_dict(storage_places_list)
+
+            if storage_places_list:
+                for storage in storage_places_list:
                     if not isinstance(storage, Storage):
                         continue  # case, when the storage is represented by his Digital Twin Object identification
                     if storage.situated_in is None:
@@ -2202,8 +1844,32 @@ class StoragePlaces(InstantiationFromDict, Serializable):
         self.number_of_stored_entities = self._determine_number_of_stored_entities()
         self.name: str = name
 
+    def get_storage_places_dict(self, storage_places_list: list[Storage]):
+        storage_places = {}
+        for storage in storage_places_list:
+            if not isinstance(storage, Storage):
+                break  # storages aren't set until now
+            if not isinstance(storage.allowed_entity_type, EntityType):
+                break  # entity types aren't set until now
+
+            storage_places.setdefault(storage.allowed_entity_type,
+                                      []).append(storage)
+            if storage.allowed_entity_type.super_entity_type is not None:
+                storage_places.setdefault(storage.allowed_entity_type.super_entity_type,
+                                          []).append(storage)
+
+        return storage_places
+
     def __str__(self):
         return f"StoragePlaces name {self.name}'; '{self.capacity}', '{self.number_of_stored_entities}'"
+
+    def representation(self):
+        """The representation of the object is unambiguous"""
+        items = ("%s = %r" % (k, v)
+                 for k, v in self.__dict__.items())
+        object_representation = "<%s: {%s}>" % (self.__class__.__name__, ', '.join(items))
+        return object_representation
+
 
     @property
     def storage_places(self):
@@ -2211,6 +1877,12 @@ class StoragePlaces(InstantiationFromDict, Serializable):
 
     @storage_places.setter
     def storage_places(self, _storage_places):
+        if not isinstance(_storage_places, dict):
+            if not isinstance(_storage_places, list):
+                raise ValueError(f"The storage places should be of type dict ...")
+
+            _storage_places = self.get_storage_places_dict(_storage_places)
+
         self._storage_places = _storage_places
 
     def get_storages_lst(self, storage_places=None):
@@ -2249,8 +1921,9 @@ class StoragePlaces(InstantiationFromDict, Serializable):
         return storage_places_duplicate_for_instantiation
 
     def duplicate(self, without_situated_in=True, external_name=False):
+        storage_places_attribute = self.duplicate_for_instantiation(without_situated_in, external_name)
         storage_places_duplicate = copy(self)
-        storage_places_duplicate._storage_places = self.duplicate_for_instantiation(without_situated_in, external_name)
+        storage_places_duplicate._storage_places = storage_places_attribute
 
         return storage_places_duplicate
 
@@ -2272,11 +1945,9 @@ class StoragePlaces(InstantiationFromDict, Serializable):
             storages_without_entity_type = _get_storage_place_entity_type(self._storage_places, entity_type)
             return storages_without_entity_type
         else:
-            return [storage
-                    for lst in list(self._storage_places.values())
-                    for storage in lst]
+            return self.get_all_storages()
 
-    def add_entity(self, entity: Entity, process_execution: Optional[ProcessExecution] = None,
+    def add_entity(self, entity: Entity, removable: bool = True, process_execution: Optional[ProcessExecution] = None,
                    sequence_already_ensured: bool = False):
         """
         Used to store an entity in the storage_places.
@@ -2298,7 +1969,9 @@ class StoragePlaces(InstantiationFromDict, Serializable):
             return False
 
         for storage_place in storage_places:
-            stored_entity = storage_place.add_entity(entity=entity, process_execution=process_execution,
+            stored_entity = storage_place.add_entity(entity=entity,
+                                                     removable=removable,
+                                                     process_execution=process_execution,
                                                      sequence_already_ensured=sequence_already_ensured)
 
             if stored_entity:
@@ -2387,15 +2060,19 @@ class StoragePlaces(InstantiationFromDict, Serializable):
 
         return False
 
-    def get_available_entities(self, entity_type: EntityType):
+    def get_available_entities(self, entity_type: Optional[EntityType], at: Optional[datetime] = None):
         """Return available entities that match the entity_type"""
-        storage_places = _get_storage_place_entity_type(self._storage_places, entity_type)
+        if entity_type is not None:
+            storage_places = _get_storage_place_entity_type(self._storage_places, entity_type)
+        else:
+            storage_places = self.get_all_storages()
+
         if storage_places is None:
             return None
 
         available_entities = []
         for relevant_storage_place in storage_places:
-            available_entities_batch = relevant_storage_place.get_available_entities(entity_type)
+            available_entities_batch = relevant_storage_place.get_available_entities(entity_type=entity_type, at=at)
             available_entities.extend(available_entities_batch)
 
         return available_entities
@@ -2429,12 +2106,15 @@ class StoragePlaces(InstantiationFromDict, Serializable):
         logging.debug(debug_str)
         raise Exception(debug_str)
 
-    def get_possible_entity_types_to_store(self):
+    def get_possible_entity_types_to_store(self):  # ToDo: memo?
         """Returns a list with possible entity types which can be stored in the storage_places."""
-        allowed_entity_types = []
-        for storage_place_entity_type, storage_places in self._storage_places.items():
-            for storage_place in storage_places:
-                allowed_entity_types.append(*storage_place.get_possible_entity_types_to_store())
+        allowed_entity_types = (
+                set(storage_place_entity_type
+                    for storage_place_entity_type, storage_places in self._storage_places.items()
+                    for storage_place in storage_places
+                    for entity_type in storage_place.get_possible_entity_types_to_store()) |
+                set(self._storage_places.keys()))
+
         return allowed_entity_types
 
     def check_entity_type_storable(self, entity_type):
@@ -2472,70 +2152,21 @@ class StoragePlaces(InstantiationFromDict, Serializable):
         storage_entity_types = list(self._storage_places.keys())
         if storage_entity_types:
             sub_digital_twin_objects.setdefault(EntityType, []).extend(storage_entity_types)
-        storages_nested = list(self._storage_places.values())
-        if storages_nested:
-            storages = reduce(concat, storages_nested)
-            sub_digital_twin_objects.setdefault(Storage, []).extend(storages)
+
+        all_storages = self.get_all_storages()
+        if all_storages:
+            sub_digital_twin_objects.setdefault(Storage, []).extend(all_storages)
 
         return sub_digital_twin_objects
 
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Creates a dict representation of the object.
-        Also serialize an object in attributes by calling the function on them.
+    def get_all_storages(self):
+        storages_nested = list(self._storage_places.values())
+        if storages_nested:
+            storages = reduce(concat, storages_nested)
+        else:
+            storages = []
 
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-        Defaults to True.
-        use_label: If set to true, only the static_model_id is returned for this object. Defaults to False.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-        Then the static model id is used. Defaults to False.
-        use_label_for_situated_in: If set to true, only the static model id is used for the situated_in attribute
-        of this class.
-
-        Returns
-        -------
-        object_dict: the dict representation of the entity type or the static model id.
-        """
-        object_dict = super().dict_serialize(serialize_private=serialize_private)
-
-        for key, value in object_dict.items():
-            if key == '_storage_places' and value is not None and isinstance(value, dict):
-                object_dict[key] = Serializable.serialize_dict(use_label=True,
-                                                               dictionary=value,
-                                                               use_label_for_situated_in=True)
-
-        # Check if attributes are missing
-        Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                    ignore=self.drop_before_serialization,
-                                                    dictionary=object_dict,
-                                                    use_ignore=True)
-
-        return object_dict
-
-    def to_json(self, human_readable=False, serialize_private=False) -> str:
-        """
-        Converts the dict representation of a class instance to the json representation.
-
-        Parameters
-        ----------
-        human_readable: If set to True, the json string is returned with indentation.
-        serialize_private: Whether to drop private attributes in the dict.
-
-        Returns
-        -------
-        json_string: The json representation as string.
-        """
-
-        # TODO: Check for inheritance of method.
-        indent = 4 if human_readable else None
-        object_dict = self.dict_serialize(serialize_private=serialize_private)
-        json_string = json.dumps(object_dict, indent=indent)
-        return json_string
+        return storages
 
 
 class WorkStation(StationaryResource):
@@ -2543,12 +2174,12 @@ class WorkStation(StationaryResource):
     def __init__(self,
                  name: str,
                  entity_type: EntityType,
-                 plant: Plant,
-                 costs_per_second: Optional[float],
-                 entry_edge: list[tuple[int, int]],
-                 exit_edge: list[tuple[int, int]],
-                 efficiency: ProbabilityDistribution,
-                 buffer_stations: dict[EntityType, list[Storage]],
+                 plant: Optional[Plant] = None,
+                 costs_per_second: float = 0,
+                 entry_edge: Optional[list[tuple[int, int]]] = None,
+                 exit_edge: Optional[list[tuple[int, int]]] = None,
+                 efficiency: ProbabilityDistribution = None,
+                 buffer_stations: dict[EntityType, list[Storage]] = None,
                  position: Optional[tuple[int, int]] = None,
                  length: Optional[int] = None,
                  width: Optional[int] = None,
@@ -2556,10 +2187,11 @@ class WorkStation(StationaryResource):
                  process_execution_plan: Optional[ProcessExecutionPlan] = None,
                  situated_in: Optional[Resource] = None,
                  quality: float = 1,
+                 inspected_quality: Optional[float] = None,
                  capacity: int = 1,  # maybe None could be for unlimited capacity
                  identification: Optional[int] = None,
                  process_execution: Optional[ProcessExecution] = None,
-                 current_time: Optional[datetime] = datetime.min,
+                 current_time: Optional[datetime] = datetime(1970, 1, 1),
                  external_identifications: Optional[dict[object, list[object]]] = None,
                  domain_specific_attributes: Optional[dict[str, Optional[object]]] = None):
         """
@@ -2571,17 +2203,26 @@ class WorkStation(StationaryResource):
         The selection is done by allowed_entity_type of the storage
         dict[EntityType (from the entities that can be stored in the storages in the value), list[Storage]]
         """
+        if entry_edge is None:
+            entry_edge = []
+        if exit_edge is None:
+            exit_edge = []
+        if buffer_stations is None:
+            buffer_stations = {}
         super().__init__(identification=identification, name=name, entity_type=entity_type, plant=plant,
                          costs_per_second=costs_per_second, position=position, length=length, width=width,
                          physical_body=physical_body,
                          entry_edge=entry_edge, exit_edge=exit_edge, efficiency=efficiency,
                          process_execution_plan=process_execution_plan, situated_in=situated_in, quality=quality,
+                         inspected_quality=inspected_quality,
                          process_execution=process_execution, current_time=current_time,
                          external_identifications=external_identifications,
                          domain_specific_attributes=domain_specific_attributes)
 
-        self._buffer_stations: StoragePlaces = StoragePlaces(storage_places=buffer_stations, capacity=capacity,
-                                                             name=self.name, situated_in=self)
+        self._buffer_stations: StoragePlaces = StoragePlaces(storage_places=buffer_stations,
+                                                             capacity=capacity,
+                                                             name=self.name,
+                                                             situated_in=self)
 
     def __str__(self):
         entity_type_name = self.get_entity_type_name()
@@ -2592,8 +2233,8 @@ class WorkStation(StationaryResource):
         length = self.get_length()
         efficiency_parameters = self.get_efficiency_parameters()
         return (f"WorkStation with ID '{self.identification}' and name {self.name}'; '{entity_type_name}', "
-                f"'{situated_in_name}', '{self._quality}', '{plant_name}', '{self.costs_per_second}', "
-                f"'{position}', '{width}', '{length}', "
+                f"'{situated_in_name}', '{self._quality}', '{self._inspected_quality}', '{plant_name}', "
+                f"'{self.costs_per_second}', '{position}', '{width}', '{length}', "
                 f"'{efficiency_parameters}', '{self.entry_edge}', '{self.exit_edge}'")
 
     @property
@@ -2632,6 +2273,9 @@ class WorkStation(StationaryResource):
 
         return work_station_copy
 
+    def change_position_initially(self):
+        pass  # as change_position
+
     def get_storages(self, entity_type=None):
         """Return buffer_stations or storage_places associated with entity_types
         if the object has a respective attribute"""
@@ -2641,7 +2285,7 @@ class WorkStation(StationaryResource):
         """Return buffer_stations or storage_places if the object has a respective attribute"""
         return self._buffer_stations.get_storages_without_entity_types(entity_type)
 
-    def add_entity(self, entity: Entity, process_execution: Optional[ProcessExecution] = None,
+    def add_entity(self, entity: Entity, removable: bool = True, process_execution: Optional[ProcessExecution] = None,
                    sequence_already_ensured: bool = False):
         """
         The method is used to store an entity in the work_station.
@@ -2654,7 +2298,10 @@ class WorkStation(StationaryResource):
         -------
         True if the storing process was successful respectively False if not
         """
-        return self._buffer_stations.add_entity(entity, process_execution, sequence_already_ensured)
+        return self._buffer_stations.add_entity(entity=entity,
+                                                removable=removable,
+                                                process_execution=process_execution,
+                                                sequence_already_ensured=sequence_already_ensured)
 
     def remove_entity(self, entity: Entity, process_execution: Optional[ProcessExecution] = None,
                       sequence_already_ensured: bool = False):
@@ -2675,8 +2322,8 @@ class WorkStation(StationaryResource):
         """See descriptions Resource"""
         return self._buffer_stations.check_entity_stored(entity)
 
-    def get_available_entities(self, entity_type: EntityType):
-        return self._buffer_stations.get_available_entities(entity_type)
+    def get_available_entities(self, entity_type: Optional[EntityType], at: Optional[datetime] = None):
+        return self._buffer_stations.get_available_entities(entity_type=entity_type, at=at)
 
     def get_available_entity(self, entity_type: EntityType):
         """
@@ -2717,60 +2364,18 @@ class WorkStation(StationaryResource):
             completely_filled = True
         return completely_filled, not_completely_filled_attributes
 
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Creates a dict representation of the object.
-        Also serialize the object in attributes by calling the function on them.
-
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-        Defaults to True.
-        use_label_for_situated_in: If set to true, only the static model id is used for the situated_in attribute
-        of this class.
-        use_label: If set to true, only the static_model_id is returned for this object. Defaults to False.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-        Then the static model id is used. Defaults to False.
-
-        Returns
-        -------
-        object_dict: The dict representation of the entity type or the static model id.
-        """
-        if use_label:
-            return self.get_static_model_id()
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             deactivate_id_filter=deactivate_id_filter,
-                                             use_label=use_label,
-                                             use_label_for_situated_in=use_label_for_situated_in)
-        if isinstance(object_dict, str):
-            return object_dict
-        for key, value in object_dict.items():
-            if key == '_buffer_stations' and value is not None and not isinstance(value, dict):
-                object_dict[key] = value.dict_serialize()
-
-        # Check if attributes are missing
-        Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                    ignore=self.drop_before_serialization,
-                                                    dictionary=object_dict,
-                                                    use_ignore=True)
-
-        return object_dict
-
 
 class Warehouse(StationaryResource):
 
     def __init__(self,
                  name: str,
                  entity_type: EntityType,
-                 plant: Plant,
-                 costs_per_second: float,
-                 entry_edge: list[tuple[int, int]],
-                 exit_edge: list[tuple[int, int]],
-                 efficiency: ProbabilityDistribution,
-                 storage_places: dict[EntityType, list[Storage]],
+                 plant: Optional[Plant] = None,
+                 costs_per_second: float = 0,
+                 entry_edge: Optional[list[tuple[int, int]]] = None,
+                 exit_edge: Optional[list[tuple[int, int]]] = None,
+                 efficiency: ProbabilityDistribution = None,
+                 storage_places: dict[EntityType, list[Storage]] = None,
                  position: Optional[tuple[int, int]] = None,
                  length: Optional[int] = None,
                  width: Optional[int] = None,
@@ -2778,10 +2383,11 @@ class Warehouse(StationaryResource):
                  process_execution_plan: Optional[ProcessExecutionPlan] = None,
                  situated_in: Optional[Resource] = None,
                  quality: float = 1,
+                 inspected_quality: Optional[float] = None,
                  capacity: int = 1,
                  identification: Optional[int] = None,
                  process_execution: Optional[ProcessExecution] = None,
-                 current_time: Optional[datetime] = datetime.min,
+                 current_time: Optional[datetime] = datetime(1970, 1, 1),
                  external_identifications: Optional[dict[object, list[object]]] = None,
                  domain_specific_attributes: Optional[dict[str, Optional[object]]] = None):
         """
@@ -2792,11 +2398,18 @@ class Warehouse(StationaryResource):
         storage_places: the places where the entities are stored
         dict[EntityType (from the entities that can be stored in the storages in the value), list[Storage]]
         """
+        if entry_edge is None:
+            entry_edge = []
+        if exit_edge is None:
+            exit_edge = []
+        if storage_places is None:
+            storage_places = {}
         super().__init__(identification=identification, name=name, entity_type=entity_type, plant=plant,
                          costs_per_second=costs_per_second, position=position, length=length, width=width,
                          physical_body=physical_body,
                          entry_edge=entry_edge, exit_edge=exit_edge, efficiency=efficiency,
                          process_execution_plan=process_execution_plan, situated_in=situated_in, quality=quality,
+                         inspected_quality=inspected_quality,
                          process_execution=process_execution, current_time=current_time,
                          external_identifications=external_identifications,
                          domain_specific_attributes=domain_specific_attributes)
@@ -2812,8 +2425,8 @@ class Warehouse(StationaryResource):
         length = self.get_length()
         efficiency_parameters = self.get_efficiency_parameters()
         return (f"Warehouse with ID '{self.identification}' and name {self.name}'; '{entity_type_name}', "
-                f"'{situated_in_name}', '{self._quality}', '{plant_name}', '{self.costs_per_second}', "
-                f"'{position}', '{width}', '{length}', "
+                f"'{situated_in_name}', '{self._quality}', '{self._inspected_quality}', '{plant_name}', "
+                f"'{self.costs_per_second}', '{position}', '{width}', '{length}', "
                 f"'{efficiency_parameters}', '{self.entry_edge}', '{self.exit_edge}'")
 
     @property
@@ -2865,7 +2478,7 @@ class Warehouse(StationaryResource):
         """Add a storage_place to the warehouse"""
         self._storage_places.add_storage_place(storage)
 
-    def add_entity(self, entity: Entity, process_execution: Optional[ProcessExecution] = None,
+    def add_entity(self, entity: Entity, removable: bool = True, process_execution: Optional[ProcessExecution] = None,
                    sequence_already_ensured: bool = False):
         """
         The method is used to store an entity in the warehouse.
@@ -2878,7 +2491,10 @@ class Warehouse(StationaryResource):
         -------
         True if storing process was successful respectively False if not
         """
-        return self._storage_places.add_entity(entity, process_execution, sequence_already_ensured)
+        return self._storage_places.add_entity(entity=entity,
+                                               removable=removable,
+                                               process_execution=process_execution,
+                                               sequence_already_ensured=sequence_already_ensured)
 
     def remove_entity(self, entity: Entity, process_execution: Optional[ProcessExecution] = None,
                       sequence_already_ensured: bool = False):
@@ -2899,9 +2515,9 @@ class Warehouse(StationaryResource):
         """See descriptions Resource"""
         return self._storage_places.check_entity_stored(entity)
 
-    def get_available_entities(self, entity_type: EntityType):
+    def get_available_entities(self, entity_type: Optional[EntityType], at: Optional[datetime] = None):
         """Get the available entities stored in the storage_places of the warehouse"""
-        return self._storage_places.get_available_entities(entity_type)
+        return self._storage_places.get_available_entities(entity_type=entity_type, at=at)
 
     def get_available_entity(self, entity_type: EntityType):
         """
@@ -2942,63 +2558,24 @@ class Warehouse(StationaryResource):
             completely_filled = True
         return completely_filled, not_completely_filled_attributes
 
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Creates a dict representation of the object.
-        Also serialize the object in attributes by calling the function on them.
-
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-        Defaults to True.
-        use_label_for_situated_in: If set to true, only the static model id is used for the situated_in attribute
-        of this class.
-        use_label: If set to true, only the static_model_id is returned for this object. Defaults to False.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-        Then the static model id is used. Defaults to False.
-
-        Returns
-        ----------
-        The dict representation of the entity type or the static model id.
-        """
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             deactivate_id_filter=deactivate_id_filter,
-                                             use_label=use_label,
-                                             use_label_for_situated_in=use_label_for_situated_in)
-        if isinstance(object_dict, str):
-            return object_dict
-        for key, value in object_dict.items():
-            if key == '_storage_places' and value is not None and not isinstance(value, dict):
-                object_dict[key] = value.dict_serialize()
-
-        # Check if attributes are missing
-        Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                    ignore=self.drop_before_serialization,
-                                                    dictionary=object_dict,
-                                                    use_ignore=True)
-        return object_dict
-
 
 class ConveyorBelt(StationaryResource):
 
     def __init__(self,
                  name: str,
                  entity_type: EntityType,
-                 plant: Plant,
-                 costs_per_second: float,
-                 entry_edge: list[(int, int)],
-                 exit_edge: list[(int, int)],
-                 efficiency: ProbabilityDistribution,
-                 capacity: int,
                  allowed_entity_types: list[EntityType],
-                 entities_on_transport: list[Entity],
-                 flow_direction: int,
                  origin: Storage,
                  destination: Storage,
                  conveyor_length: float,
+                 capacity: int = 1,
+                 plant: Optional[Plant] = None,
+                 entities_on_transport: list[Entity] = None,
+                 flow_direction: int = 1,
+                 costs_per_second: float = 0,
+                 entry_edge: Optional[list[tuple[int, int]]] = None,
+                 exit_edge: Optional[list[tuple[int, int]]] = None,
+                 efficiency: ProbabilityDistribution = None,
                  position: Optional[tuple[int, int]] = None,
                  length: Optional[int] = None,
                  width: Optional[int] = None,
@@ -3007,9 +2584,10 @@ class ConveyorBelt(StationaryResource):
                  situated_in: Optional[Resource] = None,
                  pitch: float = 1,
                  quality: float = 1,
+                 inspected_quality: Optional[float] = None,
                  identification: Optional[int] = None,
                  process_execution: Optional[ProcessExecution] = None,
-                 current_time: Optional[datetime] = datetime.min,
+                 current_time: Optional[datetime] = datetime(1970, 1, 1),
                  external_identifications: Optional[dict[object, list[object]]] = None,
                  domain_specific_attributes: Optional[dict[str, Optional[object]]] = None):
         """
@@ -3035,12 +2613,19 @@ class ConveyorBelt(StationaryResource):
         - different time_intervals/ pitch possible, if the conveyor_belt speed could be different
         """
         self.flow_direction = flow_direction
+        if entities_on_transport is None:
+            entities_on_transport = []
         self.entities_on_transport: list[Entity] = entities_on_transport
+        if entry_edge is None:
+            entry_edge = []
+        if exit_edge is None:
+            exit_edge = []
         super().__init__(identification=identification, name=name, entity_type=entity_type, plant=plant,
                          costs_per_second=costs_per_second, position=position, length=length, width=width,
                          physical_body=physical_body,
                          entry_edge=entry_edge, exit_edge=exit_edge, efficiency=efficiency,
                          process_execution_plan=process_execution_plan, situated_in=situated_in, quality=quality,
+                         inspected_quality=inspected_quality,
                          process_execution=process_execution, current_time=current_time,
                          external_identifications=external_identifications,
                          domain_specific_attributes=domain_specific_attributes)
@@ -3067,8 +2652,8 @@ class ConveyorBelt(StationaryResource):
         length = self.get_length()
         efficiency_parameters = self.get_efficiency_parameters()
         return (f"ConveyorBelt with ID '{self.identification}' and name {self.name}'; '{entity_type_name}', "
-                f"'{situated_in_name}', '{self._quality}', '{plant_name}', '{self.costs_per_second}', "
-                f"'{position}', '{width}', '{length}', "
+                f"'{situated_in_name}', '{self._quality}', '{self._inspected_quality}', '{plant_name}', "
+                f"'{self.costs_per_second}', '{position}', '{width}', '{length}', "
                 f"'{efficiency_parameters}', '{self.entry_edge}', '{self.exit_edge}'")
 
     # @property
@@ -3095,7 +2680,7 @@ class ConveyorBelt(StationaryResource):
 
         return conveyor_belt_copy
 
-    def add_entity(self, entity: Entity, process_execution: Optional[ProcessExecution] = None,
+    def add_entity(self, entity: Entity, removable: bool = True, process_execution: Optional[ProcessExecution] = None,
                    sequence_already_ensured: bool = False) -> bool:
         """
         The method is used to store an entity in the non_stationary_resource. In advance, it is checked
@@ -3193,11 +2778,46 @@ class ConveyorBelt(StationaryResource):
         else:
             return False
 
-    def get_available_entities(self, entity_type: EntityType):
+    def get_available_entities(self, entity_type: Optional[EntityType], at: Optional[datetime] = None):
         """
         Not used for the ConveyorBelt.
         """
         pass
+
+    def get_available_entities(self, entity_type: Optional[EntityType], at: Optional[datetime] = None):
+        """
+        The method is used to find all entities in the storage which have the respective entity_type.
+
+        Parameters
+        ----------
+        entity_type: specify an entity
+        at: datetime the available entities are checked
+
+        Returns
+        -------
+        The entities if available respectively None if not
+        """
+
+        if entity_type is not None:
+            allowed = [entity_type.check_entity_type_match_lower(allowed_entity_type)
+                       for allowed_entity_type in self.allowed_entity_types]
+            if not allowed:
+                return []
+
+        if at is None:
+            return self.entities_on_transport
+        else:
+            return self._get_available_entities_at(at)
+
+    def _get_available_entities_at(self, at: datetime):
+        return self.dynamic_attributes.get_attribute_at(req_time_stamp=at,
+                                                        attribute="entities_on_transport")
+
+    def get_incoming_and_outgoing_entities_history(self, start_time_stamp: datetime, end_time_stamp: datetime):
+        return self.dynamic_attributes.get_changes_attribute_raw(attribute="entities_on_transport",
+                                                                 start_time_stamp=start_time_stamp,
+                                                                 end_time_stamp=end_time_stamp,
+                                                                 include_initial_entries=True)
 
     def get_available_entity(self, entity_type: EntityType):
         """
@@ -3245,59 +2865,16 @@ class ConveyorBelt(StationaryResource):
             completely_filled = True
         return completely_filled, not_completely_filled_attributes
 
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Creates a dict representation of the object.
-        Also serialize the object in attributes by calling the function on them.
-
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-            Defaults to True.
-        use_label_for_situated_in: If set to true, only the static model id is used for the situated_in attribute
-            of this class.
-        use_label: If set to true, only the static_model_id is returned for this object. Defaults to False.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-            Then the static model id is used. Defaults to False.
-
-        The dict representation of the entity type or the static model id.
-        """
-        further_serializable_list = ['entities_on_transport', 'allowed_entity_types']
-        further_serializable = ['origin', 'destination']
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             deactivate_id_filter=deactivate_id_filter,
-                                             use_label=use_label,
-                                             use_label_for_situated_in=use_label_for_situated_in)
-        if use_label:
-            return object_dict
-        for key, value in object_dict.items():
-            if key in further_serializable and value is not None:
-                object_dict[key] = value.dict_serialize()
-            elif key in further_serializable_list and value is not None:
-                object_dict[key] = Serializable.serialize_list(value)
-
-        # Check if attributes are missing
-        Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                    ignore=self.drop_before_serialization,
-                                                    dictionary=object_dict,
-                                                    use_ignore=True)
-
-        return object_dict
-
 
 class NonStationaryResource(Resource):
-    drop_before_serialization = []
 
     def __init__(self,
                  name: str,
                  entity_type: EntityType,
-                 plant: Plant,
-                 costs_per_second: float,
-                 orientation: float,
-                 storage_places: dict[EntityType, list[Storage]],
+                 plant: Optional[Plant] = None,
+                 costs_per_second: float = 0,
+                 orientation: float = 0,
+                 storage_places: dict[EntityType, list[Storage]] = None,
                  position: Optional[tuple[int, int]] = None,
                  length: Optional[int] = None,
                  width: Optional[int] = None,
@@ -3305,10 +2882,11 @@ class NonStationaryResource(Resource):
                  process_execution_plan: Optional[ProcessExecutionPlan] = None,
                  situated_in: Optional[Resource] = None,
                  quality: float = 1,
+                 inspected_quality: Optional[float] = None,
                  capacity: int = 1,
                  identification: Optional[int] = None,
                  process_execution: Optional[ProcessExecution] = None,
-                 current_time: Optional[datetime] = datetime.min,
+                 current_time: Optional[datetime] = datetime(1970, 1, 1),
                  external_identifications: Optional[dict[object, list[object]]] = None,
                  domain_specific_attributes: Optional[dict[str, Optional[object]]] = None):
         """
@@ -3321,11 +2899,14 @@ class NonStationaryResource(Resource):
         storage_places: the places where the entities are stored
         dict[EntityType (from the entities that can be stored in the storages in the value), list[Storage]]
         """
+        if storage_places is None:
+            storage_places = {}
         self._orientation = orientation
         super().__init__(identification=identification, name=name, entity_type=entity_type, plant=plant,
                          costs_per_second=costs_per_second, position=position, length=length, width=width,
                          physical_body=physical_body,
                          process_execution_plan=process_execution_plan, situated_in=situated_in, quality=quality,
+                         inspected_quality=inspected_quality,
                          process_execution=process_execution, current_time=current_time,
                          external_identifications=external_identifications,
                          domain_specific_attributes=domain_specific_attributes)
@@ -3341,8 +2922,8 @@ class NonStationaryResource(Resource):
         width = self.get_width()
         length = self.get_length()
         return (f"NonStationaryResource with ID '{self.identification}' and name {self.name}'; '{entity_type_name}', "
-                f"'{situated_in_name}', '{self._quality}', '{plant_name}', '{self.costs_per_second}', "
-                f"'{position}', '{width}', '{length}'")
+                f"'{situated_in_name}', '{self._quality}', '{self._inspected_quality}', '{plant_name}', "
+                f"'{self.costs_per_second}', '{position}', '{width}', '{length}'")
 
     def duplicate(self, external_name=False):
         """The duplicate of an entity has different to the duplicate of other digital_twin objects also different
@@ -3429,7 +3010,7 @@ class NonStationaryResource(Resource):
         """Return buffer_stations or storage_places if the object has a respective attribute"""
         return self._storage_places.get_storages_without_entity_types(entity_type)
 
-    def add_entity(self, entity: Entity, process_execution: Optional[ProcessExecution] = None,
+    def add_entity(self, entity: Entity, removable: bool = True, process_execution: Optional[ProcessExecution] = None,
                    sequence_already_ensured: bool = False):
         """
         The method is used to store an entity in the non_stationary_resource.
@@ -3442,7 +3023,10 @@ class NonStationaryResource(Resource):
         ----------
         True if storing process was successful respectively False if not
         """
-        return self._storage_places.add_entity(entity, process_execution, sequence_already_ensured)
+        return self._storage_places.add_entity(entity=entity,
+                                               removable=removable,
+                                               process_execution=process_execution,
+                                               sequence_already_ensured=sequence_already_ensured)
 
     def remove_entity(self, entity: Entity, process_execution: Optional[ProcessExecution] = None,
                       sequence_already_ensured: bool = False):
@@ -3463,8 +3047,8 @@ class NonStationaryResource(Resource):
         """See descriptions Resource"""
         return self._storage_places.check_entity_stored(entity)
 
-    def get_available_entities(self, entity_type: EntityType):
-        return self._storage_places.get_available_entities(entity_type)
+    def get_available_entities(self, entity_type: Optional[EntityType], at: Optional[datetime] = None):
+        return self._storage_places.get_available_entities(entity_type=entity_type, at=at)
 
     def get_available_entity(self, entity_type: EntityType):
         """
@@ -3507,82 +3091,20 @@ class NonStationaryResource(Resource):
             completely_filled = True
         return completely_filled, not_completely_filled_attributes
 
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Creates a dict representation of the object.
-        Also serialize the object in attributes by calling the function on them.
-
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-        Defaults to True.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-        Then the static model id is used. Defaults to False.
-        use_label_for_situated_in: No functionality only for use in automatic serialization.
-        use_label: Whether to use the label of the object or not. Defaults to False.
-
-        Returns
-        -------
-        The dict representation of the entity type or the static model id.
-        """
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             deactivate_id_filter=deactivate_id_filter,
-                                             use_label=use_label,
-                                             use_label_for_situated_in=use_label_for_situated_in)
-        if isinstance(object_dict, str):
-            return object_dict
-
-        further_serializable = ['_storage_places']
-        for key, value in object_dict.items():
-            if key in further_serializable and value is not None and isinstance(value, StoragePlaces):
-                object_dict[key] = value.dict_serialize()
-
-        # Check if attributes are missing
-        Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                    ignore=self.drop_before_serialization,
-                                                    dictionary=object_dict,
-                                                    use_ignore=True)
-
-        return object_dict
-
-    def to_json(self, human_readable=False, serialize_private=False) -> str:
-        """
-        Converts the dict representation of a class instance to the json representation.
-
-        Parameters
-        ----------
-        human_readable: If set to True the json string is returned with indentation.
-        serialize_private: Whether to drop private attributes in the dict.
-
-        Returns
-        -------
-        The json representation as string.
-        """
-
-        # TODO: Check for inheritance of method.
-        indent = 4 if human_readable else None
-        object_dict = self.dict_serialize(serialize_private=serialize_private)
-        json_string = json.dumps(object_dict, indent=indent)
-        return json_string
-
 
 class ActiveMovingResource(NonStationaryResource):
-    drop_before_serialization = ['dynamic_attributes']
 
     def __init__(self,
                  name: str,
                  entity_type: EntityType,
-                 plant: Plant,
-                 costs_per_second: float,
-                 orientation: float,
-                 speed: float,
-                 energy_consumption: float,
-                 energy_capacity: float,
-                 energy_level: float,
-                 storage_places: dict[EntityType, list[Storage]],
+                 plant: Optional[Plant] = None,
+                 costs_per_second: float = 0,
+                 orientation: float = 0,
+                 speed: float | ProbabilityDistribution = SingleValueDistribution(1),  # ToDo: should only be a probability distribution
+                 energy_consumption: float = 0,
+                 energy_capacity: float = 0,
+                 energy_level: float = 0,
+                 storage_places: dict[EntityType, list[Storage]] = None,
                  position: Optional[tuple[int, int]] = None,
                  length: Optional[int] = None,
                  width: Optional[int] = None,
@@ -3590,9 +3112,10 @@ class ActiveMovingResource(NonStationaryResource):
                  process_execution_plan: Optional[ProcessExecutionPlan] = None,
                  situated_in: Optional[Resource] = None,
                  quality: float = 1,
+                 inspected_quality: Optional[float] = None,
                  identification: Optional[int] = None,
                  process_execution: Optional[ProcessExecution] = None,
-                 current_time: Optional[datetime] = datetime.min,
+                 current_time: Optional[datetime] = datetime(1970, 1, 1),
                  external_identifications: Optional[dict[object, list[object]]] = None,
                  domain_specific_attributes: Optional[dict[str, Optional[object]]] = None):
         """
@@ -3606,15 +3129,18 @@ class ActiveMovingResource(NonStationaryResource):
         energy_capacity: Max. energy capacity in units
         energy_level: Current energy level in units
         """
+        if storage_places is None:
+            storage_places = {}
         self._energy_level: float = energy_level
         super().__init__(identification=identification, name=name, entity_type=entity_type, plant=plant,
                          costs_per_second=costs_per_second, position=position, length=length, width=width,
                          physical_body=physical_body, orientation=orientation, storage_places=storage_places,
                          process_execution_plan=process_execution_plan, situated_in=situated_in, quality=quality,
+                         inspected_quality=inspected_quality,
                          process_execution=process_execution, current_time=current_time,
                          external_identifications=external_identifications,
                          domain_specific_attributes=domain_specific_attributes)
-        self.speed: float = speed
+        self.speed: float | ProbabilityDistribution = speed
         self.energy_consumption: float = energy_consumption
         self.energy_capacity: float = energy_capacity
 
@@ -3626,8 +3152,8 @@ class ActiveMovingResource(NonStationaryResource):
         width = self.get_width()
         length = self.get_length()
         return (f"ActiveMovingResource with ID '{self.identification}' and name {self.name}'; '{entity_type_name}', "
-                f"'{situated_in_name}', '{self._quality}', '{plant_name}', '{self.costs_per_second}', "
-                f"'{position}', '{width}', '{length}', "
+                f"'{situated_in_name}', '{self._quality}', '{self._inspected_quality}', '{plant_name}', "
+                f"'{self.costs_per_second}', '{position}', '{width}', '{length}', "
                 f"'{self.speed}', '{self.energy_consumption}', '{self.energy_capacity}', '{self.energy_level}'")
 
     def copy(self):
@@ -3685,68 +3211,15 @@ class ActiveMovingResource(NonStationaryResource):
             completely_filled = True
         return completely_filled, not_completely_filled_attributes
 
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Creates a dict representation of the object.
-        Also serialize the object in attributes by calling the function on them.
-
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-        Defaults to True.
-        use_label_for_situated_in: If set to true, only the static model id is used for the situated_in attribute
-        of this class.
-        use_label: Whether to use the label of the object or not. Defaults to False.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-        Then the static model id is used. Defaults to False.
-
-        Returns
-        -------
-        The dict representation of the entity type or the static model id.
-        """
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             use_label=use_label,
-                                             use_label_for_situated_in=use_label_for_situated_in,
-                                             deactivate_id_filter=deactivate_id_filter)
-
-        # Check if attributes are missing
-        if isinstance(object_dict, dict):
-            Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                        ignore=self.drop_before_serialization,
-                                                        dictionary=object_dict,
-                                                        use_ignore=True)
-        return object_dict
-
-    def to_json(self, human_readable=False, serialize_private=False) -> str:
-        """
-        Converts the dict representation of a class instance to the json representation.
-
-        Parameters
-        ----------
-        human_readable: If set to True the json string is returned with indentation.
-        serialize_private: Whether to drop private attributes in the dict.
-
-        The json representation as string.
-        """
-
-        # TODO: Check for inheritance of method.
-        indent = 4 if human_readable else None
-        object_dict = self.dict_serialize(serialize_private=serialize_private)
-        json_string = json.dumps(object_dict, indent=indent)
-        return json_string
-
 
 class PassiveMovingResource(NonStationaryResource):
 
     def __init__(self,
                  name: str,
                  entity_type: EntityType,
-                 plant: Plant,
-                 orientation: float,
-                 storage_places: dict[EntityType, list[Storage]],
+                 plant: Optional[Plant] = None,
+                 orientation: float = 0,
+                 storage_places: dict[EntityType, list[Storage]] = None,
                  costs_per_second: Optional[float] = None,
                  position: Optional[tuple[int, int]] = None,
                  length: Optional[int] = None,
@@ -3756,25 +3229,29 @@ class PassiveMovingResource(NonStationaryResource):
                  process_execution_plan: Optional[ProcessExecutionPlan] = None,
                  situated_in: Optional[Resource] = None,
                  quality: float = 1,
+                 inspected_quality: Optional[float] = None,
                  identification: Optional[int] = None,
                  process_execution: Optional[ProcessExecution] = None,
-                 current_time: Optional[datetime] = datetime.min,
+                 current_time: Optional[datetime] = datetime(1970, 1, 1),
                  external_identifications: Optional[dict[object, list[object]]] = None,
                  domain_specific_attributes: Optional[dict[str, Optional[object]]] = None):
         """
         PassiveMovingResource is a NonStationaryResource that is used to support a transport process. It cannot move by
-        itself, but it can carry parts. These can be been married to each other to enable a better transport.
-        For this purpose these PassiveMovingResources are married to the ActiveMovingResources.
+        itself, but it can carry parts. These can be married to each other to enable consistent transport.
+        For this purpose, these PassiveMovingResources are married to the ActiveMovingResources.
         Example apps_tech: Bin, Box, Palette
 
         Parameters
         ----------
         service_life: lifetime of a PassiveMovingResource (number of usages) - if not used None (not mandatory)
         """
+        if storage_places is None:
+            storage_places = {}
         super().__init__(identification=identification, name=name, entity_type=entity_type, plant=plant,
                          costs_per_second=costs_per_second, position=position, length=length, width=width,
                          physical_body=physical_body, orientation=orientation, storage_places=storage_places,
                          process_execution_plan=process_execution_plan, situated_in=situated_in, quality=quality,
+                         inspected_quality=inspected_quality,
                          process_execution=process_execution, current_time=current_time,
                          external_identifications=external_identifications,
                          domain_specific_attributes=domain_specific_attributes)
@@ -3788,8 +3265,8 @@ class PassiveMovingResource(NonStationaryResource):
         width = self.get_width()
         length = self.get_length()
         return (f"PassiveMovingResource with ID '{self.identification}' and name {self.name}'; '{entity_type_name}', "
-                f"'{situated_in_name}', '{self._quality}', '{plant_name}', '{self.costs_per_second}', "
-                f"'{position}', '{width}', '{length}', '{self.service_life}'")
+                f"'{situated_in_name}', '{self._quality}', '{self._inspected_quality}', '{plant_name}', "
+                f"'{self.costs_per_second}', '{position}', '{width}', '{length}', '{self.service_life}'")
 
     def copy(self):
         """Copy the object with the same identification."""
@@ -3809,37 +3286,3 @@ class PassiveMovingResource(NonStationaryResource):
         else:
             completely_filled = True
         return completely_filled, not_completely_filled_attributes
-
-    def dict_serialize(self, serialize_private: bool = True,
-                       deactivate_id_filter: bool = False,
-                       use_label: bool = False,
-                       use_label_for_situated_in: bool = True) -> Union[dict | str]:
-        """
-        Creates a dict representation of the object.
-        Also serialize the object in attributes by calling the function on them.
-
-        Parameters
-        ----------
-        serialize_private: Whether to serialize the private attributes.
-        Defaults to True.
-        use_label_for_situated_in: If set to true, only the static model id is used for the situated_in attribute
-        of this class.
-        use_label: Whether to use the label of the object or not. Defaults to False.
-        deactivate_id_filter: Whether to check if an obj has already been serialized.
-        Then the static model id is used. Defaults to False.
-
-        Returns
-        -------
-        The dict representation of the entity type or the static model id.
-        """
-        object_dict = super().dict_serialize(serialize_private=serialize_private,
-                                             use_label=use_label,
-                                             deactivate_id_filter=deactivate_id_filter,
-                                             use_label_for_situated_in=use_label_for_situated_in)
-        # Check if attributes are missing
-        if not isinstance(object_dict, str):
-            Serializable.warn_if_attributes_are_missing(list(self.__dict__.keys()),
-                                                        ignore=self.drop_before_serialization,
-                                                        dictionary=object_dict,
-                                                        use_ignore=True)
-        return object_dict

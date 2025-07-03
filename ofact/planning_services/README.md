@@ -1,19 +1,16 @@
-# Planning Services
-
 <div align="center">
-    
+    <h3>Model Generation</h3>
     <img src="docs/assets/imgs/planning_services.png" width="300" height="600" />
-    <h3>Planning Services</h3>
 </div>
 
-## Model Generation
+# Model Generation
 
 - tbd.
 
-## Scenario Generation
+# Scenario Generation
 
 - tbd.
 
-## Scenario Analytics
+# Scenario Analytics
 
 - tbd.

@@ -47,10 +47,13 @@ from typing import TYPE_CHECKING, Union, Optional, Type, Any, get_type_hints
 
 # Imports Part 2: PIP Imports
 import numpy as np
+import pandas as pd
 
+from ofact.helpers import datetime_to_timestamp, Singleton
 # Imports Part 3: Project Imports
-from ofact.twin.state_model.helpers.helpers import handle_bool, handle_str, handle_numerical_value, get_clean_attribute_name
-from ofact.twin.state_model.serialization import InstantiationFromDict
+from ofact.twin.state_model.helpers.helpers import (handle_bool, handle_str, handle_numerical_value,
+                                                    get_clean_attribute_name)
+from ofact.twin.state_model.serialization import Serializable
 
 if TYPE_CHECKING:
     from ofact.twin.state_model.processes import ProcessExecution
@@ -74,7 +77,7 @@ def _get_operator(type_):
     return operator
 
 
-class DomainSpecificAttributes(InstantiationFromDict):
+class DomainSpecificAttributes(Serializable):
     """
     Parameters
     ----------
@@ -165,6 +168,13 @@ class DomainSpecificAttributes(InstantiationFromDict):
         return (f"DomainSpecificAttributes of type: '{self.type_}' with attributes: '{self.attributes}'; "
                 f"cross_domain_attributes_definition: '{self.cross_domain_attributes_definition}'")
 
+    def __repr__(self):
+        """The representation of the object is unambiguous"""
+        items = ("%s = %r" % (k, v)
+                 for k, v in self.__dict__.items())
+        object_representation = "<%s: {%s}>" % (self.__class__.__name__, ', '.join(items))
+        return object_representation
+
 
 def _create_new_dt_object_label(static_model_original_label):
     """
@@ -213,16 +223,29 @@ def _create_new_dt_object_name(name):
     return name_with_number
 
 
-class DigitalTwinObject(InstantiationFromDict, metaclass=ABCMeta):
-    next_id: int = 0
+# class UniqueID(Singleton):
+#
+#     # Note: maybe the id arises from different DT - models which should not the problem
+#     # But it could be the case that the next_id is set from the loading of a new model that is lower than the next_id of
+#     # another model - then, the ids are not unique anymore
+#     # ToDo: the next_id should be model dependent (relevant for more than one digital twin state model)
+#
+#     next_id = 0
+#
+#     @staticmethod
+#     def get_next_id() -> int:
+#         next_id = UniqueID.next_id
+#         UniqueID.next_id += 1
+#         return next_id
 
-    # Note: maybe the id arises from different DT - models which should not the problem
-    # But it could be the case that the next_id is set from the loading of a new model that is lower than the next_id of
-    # another model - then, the ids are not unique anymore
-    # ToDo: the next_id should be model dependent (relevant for more than one digital twin state model)
+
+class DigitalTwinObject(Serializable, metaclass=ABCMeta):
+
+    next_id = - 1
 
     @staticmethod
     def get_next_id() -> int:
+        DigitalTwinObject.next_id += 1
         return DigitalTwinObject.next_id
 
     def __init__(self,
@@ -240,8 +263,7 @@ class DigitalTwinObject(InstantiationFromDict, metaclass=ABCMeta):
         domain_specific_attributes: a list of domain_specific_attributes
         """
         if identification is None:
-            self.identification: int = self.get_next_id()
-            DigitalTwinObject.next_id += 1
+            self.identification: int = DigitalTwinObject.get_next_id()
         else:
             self.identification: int = identification
 
@@ -315,7 +337,7 @@ class DigitalTwinObject(InstantiationFromDict, metaclass=ABCMeta):
         the duplicated object
         """
         digital_twin_object_copy = self.copy()
-        digital_twin_object_copy.identification = DigitalTwinObject.next_id
+        digital_twin_object_copy.identification = DigitalTwinObject.get_next_id()
         digital_twin_object_duplicate = digital_twin_object_copy
         if "static_model" in digital_twin_object_duplicate.external_identifications and external_name:
             static_model_original_label = digital_twin_object_duplicate.external_identifications["static_model"][0]
@@ -324,8 +346,6 @@ class DigitalTwinObject(InstantiationFromDict, metaclass=ABCMeta):
                 new_name = _create_new_dt_object_name(digital_twin_object_duplicate.name)
                 digital_twin_object_duplicate.name = new_name
             digital_twin_object_duplicate.external_identifications["static_model"][0] = new_label
-
-        DigitalTwinObject.next_id += 1
 
         return digital_twin_object_duplicate
 
@@ -406,13 +426,45 @@ class DigitalTwinObject(InstantiationFromDict, metaclass=ABCMeta):
         else:
             return None
 
+    def representation(self):
+        """
+        The representation of the object is unambiguous
+        __repr__ is used since it leads to problems in the simulation
+        """
+        def nested_repr(obj, depth=0):
+            if depth > 2:
+                return "dr"  # depth reached
+
+            if isinstance(obj, DynamicAttributes):
+                return "da"  # dynamic attributes - would become to large
+            elif "Plan" in obj.__class__.__name__:  # ToDo: ...
+                return "pep"
+            elif isinstance(obj, datetime):
+                return obj.strftime("%Y-%m-%d %H:%M:%S.%f")
+            elif isinstance(obj, Serializable):
+                items = ("%s = %r" % (k, nested_repr(v, depth + 1))
+                         for k, v in obj.__dict__.items()
+                         if k != "identification" and k != "dynamic_attributes")
+                object_representation = "<%s: {%s}>" % (obj.__class__.__name__, ', '.join(items))
+            elif isinstance(obj, list) or isinstance(obj, tuple):
+                object_representation = [nested_repr(v, depth + 1)
+                                         for v in obj]
+            elif isinstance(obj, dict):
+                object_representation = {nested_repr(k, depth + 1): nested_repr(v, depth + 1)
+                                         for k, v in obj.items()}
+            else:
+                object_representation = obj
+
+            return object_representation
+
+        return nested_repr(self).strip()
+
 
 def _get_current_time_change_tracker(current_time):
     if isinstance(current_time, datetime):
         current_time = np.datetime64(current_time, "ns")
     elif current_time != current_time or current_time is None:
-        datetime_min = datetime.min
-        current_time = np.datetime64(datetime_min, "ns")
+        current_time = np.datetime64('1970-01-01', "ns")
 
     return current_time
 
@@ -431,7 +483,8 @@ class DynamicAttributeChangeTracking:
 
     def __init__(self, attribute_change_tracker_class: Union[(SingleObjectAttributeChangeTracker,
                                                               ListAttributeChangeTracker)],
-                 current_time, attribute_value: Any, process_execution: Optional[ProcessExecution]):
+                 current_time, attribute_value: Any, process_execution: Optional[ProcessExecution],
+                 from_serialized_object: bool = False):
         """
         Used for the tracking of dynamic attributes. In general, the digital twin is created for operative tasks,
         where only a few attribute changes are expected. But since, e.g., for learning tasks or analytic tasks,
@@ -455,7 +508,10 @@ class DynamicAttributeChangeTracking:
         attribute start_time_stamp_recent_changes: time stamp of the start of the recent changes
         (can be understood as the time stamp of the first entry)
         attribute distant_past_changes_filled: determines if the distant past is filled
+        from_serialized_object: if True, the attributes are set afterwards
         """
+        if from_serialized_object: # attributes are set afterwards
+            return
 
         self.attribute_change_tracker_class: Union[(Type[SingleObjectAttributeChangeTracker],
                                                     Type[ListAttributeChangeTracker])] = attribute_change_tracker_class
@@ -469,7 +525,7 @@ class DynamicAttributeChangeTracking:
         self.distant_past_changes: Union[SingleObjectAttributeChangeTracker, ListAttributeChangeTracker] = (
             self.attribute_change_tracker_class())
 
-        self.start_time_stamp_recent_changes: np.datetime64 = np.datetime64(datetime.min, "ns")
+        self.start_time_stamp_recent_changes: np.datetime64 = np.datetime64('1970-01-01', "ns")
         self.distant_past_changes_filled: bool = False
 
     def copy(self):
@@ -565,6 +621,33 @@ class DynamicAttributeChangeTracking:
 
         self.distant_past_changes_filled = True
 
+    def get_changes_raw(self, start_time_stamp: datetime, end_time_stamp: datetime,
+                        include_initial_entries: bool) -> pd.DataFrame:
+
+        start_time_stamp = _transform_time_stamp(start_time_stamp)
+        end_time_stamp = _transform_time_stamp(end_time_stamp)
+
+        change_histories_required_start = self._get_change_trackers_required(start_time_stamp)
+        change_histories_required_end = self._get_change_trackers_required(end_time_stamp)
+        change_histories_required = change_histories_required_start + change_histories_required_end
+
+        if "RECENT" in change_histories_required:
+            recent_changes: pd.DataFrame = (
+                self.recent_changes.get_changes_raw(start_time_stamp, end_time_stamp,
+                                                    include_initial_entries=include_initial_entries))
+        else:
+            recent_changes: pd.DataFrame = pd.DataFrame([], columns=self.recent_changes.changes.dtype.names)
+
+        if "DISTANT_PAST" in change_histories_required:
+            distant_past_changes: pd.DataFrame = (
+                self.distant_past_changes.get_changes_raw(start_time_stamp, end_time_stamp,
+                                                          include_initial_entries=include_initial_entries))
+            changes: pd.DataFrame = pd.concat([recent_changes, distant_past_changes])
+        else:
+            changes: pd.DataFrame = recent_changes
+
+        return changes
+
     def get_changes(self, start_time_stamp: datetime, end_time_stamp: datetime) -> dict:
 
         start_time_stamp = _transform_time_stamp(start_time_stamp)
@@ -575,7 +658,7 @@ class DynamicAttributeChangeTracking:
         change_histories_required = change_histories_required_start + change_histories_required_end
 
         if "RECENT" in change_histories_required:
-            recent_changes = self.recent_changes.get_changes(start_time_stamp, end_time_stamp)
+            recent_changes: dict = self.recent_changes.get_changes(start_time_stamp, end_time_stamp)
         else:
             recent_changes: dict = {}
 
@@ -626,10 +709,48 @@ class DynamicAttributeChangeTracking:
 
         return version_at_req_time_stamp
 
+    def dict_serialize(self) -> dict[str, object]:
+        if self.start_time_stamp_recent_changes != self.start_time_stamp_recent_changes:
+            start_time_stamp_recent_changes = -1
+        else:
+            start_time_stamp_recent_changes = int(self.start_time_stamp_recent_changes.astype('int64'))
+
+        dynamic_attributes_change_tracking_serialized = \
+            {"attribute_change_tracker_class": self.attribute_change_tracker_class.__name__,
+             "recent_changes": self.recent_changes.serialize(),
+             "distant_past_changes": self.distant_past_changes.serialize(),
+             "start_time_stamp_recent_changes": start_time_stamp_recent_changes,
+             "distant_past_changes_filled": self.distant_past_changes_filled}
+
+        return dynamic_attributes_change_tracking_serialized
+
+    @classmethod
+    def from_serialization(cls, attribute_dict: dict[str, object]) -> DynamicAttributeChangeTracking:
+        """Use to create the object from a serialized object"""
+
+        dynamic_attribute_change_tracking = (
+            DynamicAttributeChangeTracking(attribute_change_tracker_class=None,
+                                           current_time=None, attribute_value=None,
+                                           process_execution=None, from_serialized_object=True))
+
+        # update the object parameters
+        attribute_change_tracker_class = eval(attribute_dict["attribute_change_tracker_class"])
+        dynamic_attribute_change_tracking.attribute_change_tracker_class = attribute_change_tracker_class
+        dynamic_attribute_change_tracking.recent_changes = (
+            attribute_change_tracker_class.from_serialization(attribute_dict["recent_changes"]))
+        dynamic_attribute_change_tracking.distant_past_changes = (
+            attribute_change_tracker_class.from_serialization(attribute_dict["distant_past_changes"]))
+        dynamic_attribute_change_tracking.start_time_stamp_recent_changes = (
+            np.datetime64(attribute_dict["start_time_stamp_recent_changes"], "ns"))
+        dynamic_attribute_change_tracking.distant_past_changes_filled = attribute_dict["distant_past_changes_filled"]
+
+        return dynamic_attribute_change_tracking
+
 
 class AttributeChangeTracker:
 
-    def __init__(self, current_time, attribute_value, process_execution):
+    def __init__(self, current_time, attribute_value, process_execution: ProcessExecution,
+                 from_serialization: bool = False):
         """
         Used for attributes to track their changes over time.
 
@@ -646,6 +767,8 @@ class AttributeChangeTracker:
 
         Note: first instantiation in the Excel import could contain not complete values
         """
+        if from_serialization:
+            return
 
         self.changes = np.array([[current_time, attribute_value, process_execution]],
                                 dtype=[("Timestamp", "datetime64[ns]"),
@@ -700,6 +823,93 @@ class AttributeChangeTracker:
         """Return the changes of the attribute as numpy-array"""
         return self.changes
 
+    def serialize(self) -> dict:
+        def serialization_function(o):
+            if hasattr(o, "identification"):
+                return "id." + str(o.identification)
+            else:
+                return ""
+
+        serialization_function_v = np.vectorize(serialization_function)
+        changes = self.changes
+        changes_serialized = {name: []
+                              for name in changes.dtype.names}
+        if not changes.size:
+            return changes_serialized
+
+        for name in changes.dtype.names:
+            if name == "ProcessExecution" or name == "Value":
+                changes_serialized[name] = serialization_function_v(changes[name]).tolist()
+            elif name == "ChangeType":
+                changes_serialized[name] = changes[name].tolist()
+            elif name == "Timestamp":
+                time_stamp_array = changes["Timestamp"].astype('int64')
+                time_stamp_array[time_stamp_array != time_stamp_array] = -1
+                time_stamp_array = time_stamp_array / 1e9
+                changes_serialized[name] = time_stamp_array.tolist()
+            else:
+                raise NotImplementedError(f"The attribute '{name}' is not implemented")
+
+        return changes_serialized
+
+    def get_changes_raw(self, start_time_stamp: np.datetime64, end_time_stamp: np.datetime64,
+                        include_initial_entries: bool) -> pd.DataFrame:
+        """
+
+        Parameters
+        ----------
+        start_time_stamp
+        end_time_stamp
+        include_initial_entries
+        """
+
+        attribute_history = self.changes
+
+        first_values = attribute_history[attribute_history["Timestamp"] <= start_time_stamp]
+        if first_values.size == 0:
+            idx = 0
+        else:
+            idx = len(first_values)
+
+        if idx >= attribute_history.shape[0]:
+            idx -= 1
+
+        if attribute_history.size == 0:
+            return pd.DataFrame([], columns=attribute_history.dtype.names)
+
+        attribute_changes_first_time_stamp = (
+            self._get_attribute_state_at_start_time(attribute_history, idx, start_time_stamp))
+
+        if start_time_stamp is not None and end_time_stamp is not None:
+            entries = attribute_history[(start_time_stamp < attribute_history["Timestamp"]) &
+                                        (attribute_history["Timestamp"] < end_time_stamp)]
+            if entries.size == 0:
+                return pd.DataFrame([], columns=attribute_history.dtype.names)
+            attribute_changes_in_time_period = np.concatenate((attribute_changes_first_time_stamp, entries))
+
+        elif start_time_stamp is not None:
+            entries = attribute_history[start_time_stamp < attribute_history["Timestamp"]]
+            if entries.size == 0:
+                return pd.DataFrame([], columns=attribute_history.dtype.names)
+            attribute_changes_in_time_period = np.concatenate((attribute_changes_first_time_stamp, entries))
+
+        elif end_time_stamp is not None:
+            entries = attribute_history[attribute_history["Timestamp"] < end_time_stamp]
+            if entries.size == 0:
+                return pd.DataFrame([], columns=attribute_history.dtype.names)
+            attribute_changes_in_time_period = np.concatenate((attribute_history[0], entries))
+
+        else:
+            attribute_changes_in_time_period = attribute_history
+        attribute_changes_in_time_period_df = pd.DataFrame(attribute_changes_in_time_period,
+                                                           columns=attribute_history.dtype.names)
+
+        return attribute_changes_in_time_period_df
+
+    @abstractmethod
+    def _get_attribute_state_at_start_time(self, attribute_history, idx, req_time_stamp):
+        pass
+
     @abstractmethod
     def add_change(self, current_time, attribute_value, process_execution_plan, process_execution,
                    sequence_already_ensured: bool = False, **kwargs):
@@ -725,6 +935,13 @@ class AttributeChangeTracker:
     def get_version(self, req_time_stamp: int = None):
         return
 
+    @classmethod
+    def from_serialization(cls, changes):
+
+        attribute_change_tracker = cls(current_time=None, attribute_value=None, process_execution=None,
+                                       from_serialization=True)
+        attribute_change_tracker.changes = changes
+        return attribute_change_tracker
 
 single_object_attribute_change_tracker_data_type = [("Timestamp", "datetime64[ns]"),
                                                     ("Value", object),
@@ -735,7 +952,7 @@ class SingleObjectAttributeChangeTracker(AttributeChangeTracker):
     attribute_change_tracker_data_type = single_object_attribute_change_tracker_data_type
 
     def __init__(self, current_time: Optional[datetime] = None, attribute_value: Optional[Any] = None,
-                 process_execution: Optional[ProcessExecution] = None):
+                 process_execution: Optional[ProcessExecution] = None, from_serialization: bool = False):
         """
         Used for single object attributes such as quality value (float) to track their changes over time.
         Parameters
@@ -745,6 +962,9 @@ class SingleObjectAttributeChangeTracker(AttributeChangeTracker):
             - attribute_value: new value of the attribute
             - process_execution: responsible for the change
         """
+
+        if from_serialization:
+            return
 
         current_time = _get_current_time_change_tracker(current_time)
         if process_execution is None:
@@ -814,12 +1034,16 @@ class SingleObjectAttributeChangeTracker(AttributeChangeTracker):
         elif end_time_stamp is not None:
             entries = attribute_history[attribute_history["Timestamp"] < end_time_stamp]
             attribute_changes_in_time_period = dict(zip(entries["Timestamp"], entries["Value"]))
-            attribute_changes_in_time_period = dict(zip(attribute_history[0])) | attribute_changes_in_time_period
+            attribute_changes_first_time_stamp = {attribute_history["Timestamp"][0]: attribute_history["Value"][0]}
+            attribute_changes_in_time_period = attribute_changes_first_time_stamp | attribute_changes_in_time_period
 
         else:
             attribute_changes_in_time_period = attribute_history
 
         return attribute_changes_in_time_period
+
+    def _get_attribute_state_at_start_time(self, attribute_history, idx, req_time_stamp):
+        return np.array([attribute_history[idx]], dtype=attribute_history.dtype)
 
     def get_last_change_before(self, time_stamp: np.datetime64) -> [Optional[datetime], object]:
 
@@ -866,7 +1090,7 @@ class ListAttributeChangeTracker(AttributeChangeTracker):
     attribute_change_tracker_data_type = list_attribute_change_tracker_data_type
 
     def __init__(self, current_time: Optional[datetime] = None, attribute_value: Optional[Any] = None,
-                 process_execution: Optional[ProcessExecution] = None):
+                 process_execution: Optional[ProcessExecution] = None, from_serialization: bool = False):
         """
         Used for list attributes such as a list of stored entities (List[Entity]) to track their changes over time.
         It extends the single object change tracker with the additional column change_type
@@ -879,6 +1103,10 @@ class ListAttributeChangeTracker(AttributeChangeTracker):
             - process_execution: responsible for the change
         if None, the process_executions responsible for the list can be found in the history
         """
+
+        if from_serialization:
+            return
+
         change_type = 1
         if attribute_value is None:
             attribute_value = []
@@ -895,7 +1123,7 @@ class ListAttributeChangeTracker(AttributeChangeTracker):
 
         old_entries_popped = self.changes[:quantity_of_changes_to_pop]
         new_first_time_stamp = self.changes["Timestamp"][quantity_of_changes_to_pop - 1]
-        initial_list = self._create_list(new_first_time_stamp)
+        initial_list = self._create_list(self.changes, new_first_time_stamp)
 
         initial_current_time = None
         change_type = 1
@@ -947,7 +1175,7 @@ class ListAttributeChangeTracker(AttributeChangeTracker):
     def get_changes(self, start_time_stamp: np.datetime64, end_time_stamp: np.datetime64) -> dict:
 
         # list at the start_time_stamp
-        first_time_stamp_list = self._create_list(start_time_stamp)
+        first_time_stamp_list = self._create_list(self.changes, start_time_stamp)
         attribute_changes_in_time_period = {start_time_stamp: first_time_stamp_list}
 
         # list over time
@@ -985,23 +1213,28 @@ class ListAttributeChangeTracker(AttributeChangeTracker):
 
         return attribute_changes_in_time_period
 
+    def _get_attribute_state_at_start_time(self, attribute_history, idx, req_time_stamp):
+        relevant_initial_state_entries = self._create_list(attribute_history[:idx], req_time_stamp)
+
+        return attribute_history[:idx][np.isin(attribute_history[:idx]["Value"], relevant_initial_state_entries)]
+
     def get_last_change_before(self, time_stamp: datetime) -> [Optional[datetime], object]:
         raise NotImplementedError
 
     def get_latest_version(self):
-        latest_version_list = self._create_list(self.changes[-1][0])
+        latest_version_list = self._create_list(self.changes, self.changes[-1][0])
         return latest_version_list
 
     def get_version(self, req_time_stamp: int = None):
-        list_at_req_time_stamp = self._create_list(req_time_stamp)
+        list_at_req_time_stamp = self._create_list(self.changes, req_time_stamp)
         return list_at_req_time_stamp
 
-    def _create_list(self, req_time_stamp) -> list:
+    def _create_list(self, changes, req_time_stamp) -> list:
         if isinstance(req_time_stamp, datetime):
             req_time_stamp = np.datetime64(req_time_stamp, "ns")
 
         # self.changes = self.changes[self.changes["Timestamp"] == self.changes["Timestamp"]]  # exclude nan values
-        change_before = self.changes[self.changes["Timestamp"] <= req_time_stamp]
+        change_before = changes[changes["Timestamp"] <= req_time_stamp]
 
         changes_added = Counter(change_before[change_before["ChangeType"] == 1]["Value"])
         changes_removed = Counter(change_before[change_before["ChangeType"] == -1]["Value"])
@@ -1014,12 +1247,12 @@ class ListAttributeChangeTracker(AttributeChangeTracker):
         return changes_remain
 
 
-class DynamicAttributes(InstantiationFromDict):
+class DynamicAttributes(Serializable):
 
     def __init__(self,
                  attributes: dict[str: object],
                  process_execution: Optional[ProcessExecution] = None,
-                 current_time: datetime = datetime.min):
+                 current_time: datetime = datetime(1970, 1, 1)):
         """
         Used to work with attributes that change their values over time,
 
@@ -1036,7 +1269,7 @@ class DynamicAttributes(InstantiationFromDict):
           Real Use Cases?
         """
         if current_time is None or current_time == 0:
-            current_time = datetime.min
+            current_time = datetime(1970, 1, 1)
         self.time_stamps = [current_time]
 
         self.attributes: dict[str, DynamicAttributeChangeTracking] = \
@@ -1124,6 +1357,20 @@ class DynamicAttributes(InstantiationFromDict):
 
         return process_executions
 
+    def get_changes_attribute_raw(self, attribute: str, start_time_stamp: datetime, end_time_stamp: datetime,
+                                  include_initial_entries: bool = False):
+        """Get raw changes for the attribute in the period between start_time_stamp and end_time_stamp"""
+
+        if attribute not in self.attributes:
+            raise Exception("Attribute not in attributes")
+
+        attribute_change_tracker = self.attributes[attribute]
+        attribute_changes_in_time_period = (
+            attribute_change_tracker.get_changes_raw(start_time_stamp, end_time_stamp,
+                                                     include_initial_entries=include_initial_entries))
+
+        return attribute_changes_in_time_period
+
     def get_changes_attribute(self, attribute: str, start_time_stamp: datetime, end_time_stamp: datetime):
         """Get changes for the attribute in the period between start_time_stamp and end_time_stamp"""
 
@@ -1193,13 +1440,42 @@ class DynamicAttributes(InstantiationFromDict):
 
         return attribute_state_at_req_time_stamp
 
+    def dict_serialize(self,
+                       deactivate_id_filter: bool = False,
+                       use_reference: bool = False,
+                       drop_before_serialization: dict[str, list[str]] = None,
+                       further_serializable: dict[str, list[str]] = None,
+                       reference_type: str = "identification") -> Union[dict | str]:
+
+        def _get_timestamp(dt):
+            try:
+                return datetime_to_timestamp(dt)
+            except Exception as e:  # invalid datetime (before 1970)
+                return 0
+
+        time_stamps = [_get_timestamp(dt)
+                       for dt in self.time_stamps]
+        attributes_serialized = {attribute_name: attribute_value.dict_serialize()
+                                 for attribute_name, attribute_value in self.attributes.items()}
+        if isinstance(self.latest_requested_version, datetime):
+            latest_requested_version = _get_timestamp(self.latest_requested_version)
+        else:
+            latest_requested_version = self.latest_requested_version
+
+        dynamic_attributes_serialized = \
+            {"time_stamps": time_stamps,
+             "attributes": attributes_serialized,
+             "latest_requested_version": latest_requested_version}
+
+        return dynamic_attributes_serialized
+
 
 class DynamicDigitalTwinObject(DigitalTwinObject):
 
     def __init__(self,
                  identification: Optional[int] = None,
                  process_execution: Optional[ProcessExecution] = None,
-                 current_time: datetime = datetime.min,
+                 current_time: datetime = datetime(1970, 1, 1),
                  external_identifications: Optional[dict[object, list[object]]] = None,
                  domain_specific_attributes: Optional[dict[str, Optional[object]]] = None):
         """
@@ -1318,7 +1594,7 @@ class DynamicDigitalTwinObject(DigitalTwinObject):
 # (not possible to store it in processes because of circular calls)
 ProcessExecutionTypes = Enum('ProcessExecutionEventTypes',
                              'PLAN ACTUAL',
-                             module='DigitalTwin.model.processes',
+                             module='ofact.twin.state_model.processes',
                              qualname='ProcessExecution.EventTypes')
 
 if __name__ == "__main__":

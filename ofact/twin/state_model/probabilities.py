@@ -34,10 +34,10 @@ from random import random
 import numpy as np
 
 # Imports Part 3: Project Imports
-from ofact.twin.state_model.serialization import Serializable, InstantiationFromDict
+from ofact.twin.state_model.serialization import Serializable
 
 
-class ProbabilityDistribution(InstantiationFromDict, Serializable, metaclass=ABCMeta):
+class ProbabilityDistribution(Serializable, metaclass=ABCMeta):
 
     def __init__(self):
         pass
@@ -69,12 +69,24 @@ class ProbabilityDistribution(InstantiationFromDict, Serializable, metaclass=ABC
 
         return probability_distribution_copy
 
+    def representation(self):
+        """The representation of the object is unambiguous"""
+        items = ("%s = %r" % (k, v)
+                 for k, v in self.__dict__.items())
+        object_representation = "<%s: {%s}>" % (self.__class__.__name__, ', '.join(items))
+        return object_representation
+
 
 class SingleValueDistribution(ProbabilityDistribution):
 
     def __init__(self,
                  value: float):
         super().__init__()
+        if not isinstance(value, float):
+            try:
+                value = float(value)
+            except ValueError:
+                raise Exception(f"The value '{value}' is not of type float")
         self.value: float = value
 
     def copy(self):

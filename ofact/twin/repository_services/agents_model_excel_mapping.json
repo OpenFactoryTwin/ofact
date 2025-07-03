@@ -1,0 +1,348 @@
+{
+  "target_schema": "xlsx",
+  "reference_type": "label",
+  "sources": [
+    {
+      "source": "Agents Model",
+      "serialization_kind": "list",
+      "serialize_unique": false,
+      "classes": [
+        "OrderPoolAgent",
+        "OrderAgent",
+        "WorkStationAgent",
+        "SchedulingCoordinatorAgent",
+        "InformationServiceAgent",
+        "Preference"
+      ]
+    }
+  ],
+  "sheets": [
+    {
+      "name": "Agents Model",
+      "classes": [
+        "OrderPoolAgent",
+        "OrderAgent",
+        "WorkStationAgent",
+        "SchedulingCoordinatorAgent",
+        "InformationServiceAgent",
+        "Preference"
+      ],
+      "start_row": 1,
+      "columns": [
+        {
+          "column_kind": "type",
+          "description": "description",
+          "notation": "notation",
+          "example": "example",
+          "mandatory": "mandatory",
+          "name": "index",
+          "format": "string"
+        },
+        {
+          "column_kind": "simple",
+          "description": "Agents and Preferences",
+          "notation": "Agent: _a \n Preference: _preference",
+          "example": "Agent: resource_a \n Preference: packaging_preference",
+          "mandatory": "yes",
+          "name": "label",
+          "format": "string",
+          "indexing_strategy": [
+            "label"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Number of agents.",
+          "notation": "0 to ...",
+          "example": "10",
+          "mandatory": "yes",
+          "name": "amount",
+          "format": "float",
+          "indexing_strategy": [
+            "amount"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Name of the Agent/Preference",
+          "notation": "String based name",
+          "example": "resource_agent",
+          "mandatory": "yes",
+          "name": "name",
+          "format": "string",
+          "indexing_strategy": [
+            "name"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Information zu amount",
+          "notation": "Field: _value",
+          "example": "Field: example_amount",
+          "mandatory": "yes",
+          "name": "amount",
+          "format": "string",
+          "indexing_strategy": [
+            "amount"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Information zu name",
+          "notation": "Field: _value",
+          "example": "Field: example_name",
+          "mandatory": "yes",
+          "name": "name",
+          "format": "string",
+          "indexing_strategy": [
+            "name"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Agent password_xmpp_server for communication with other agents",
+          "notation": "string",
+          "example": "LCtBjPge9y6fCyjb",
+          "mandatory": "yes",
+          "name": "password_xmpp_server",
+          "format": "string",
+          "indexing_strategy": [
+            "password_xmpp_server"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Agent ip_address_xmpp_server for communication with other agents",
+          "notation": "127.0.0.1",
+          "example": "127.0.0.1",
+          "mandatory": "yes",
+          "name": "ip_address_xmpp_server",
+          "format": "string",
+          "indexing_strategy": [
+            "ip_address_xmpp_server"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "States if the agent has access to the state_model",
+          "notation": "True/False",
+          "example": "True",
+          "mandatory": "yes",
+          "name": "state_model",
+          "format": "state_model",
+          "indexing_strategy": [
+            "state_model"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "States if the agent has access to the organization",
+          "notation": "True/False",
+          "example": "True",
+          "mandatory": "yes",
+          "name": "organization",
+          "format": "organization",
+          "indexing_strategy": [
+            "organization"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "States if the agent has access to the organization",
+          "notation": "True/False",
+          "example": "True",
+          "mandatory": "yes",
+          "name": "change_handler",
+          "format": "change_handler",
+          "indexing_strategy": [
+            "change_handler"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "address_book to contact other agents",
+          "notation": "{entity/entity_type: agent_name}",
+          "example": "{'resource_r': 'resource_agent', resource_et': 'resource_agent'}",
+          "mandatory": "yes",
+          "name": "address_book",
+          "format": "string_dict",
+          "indexing_strategy": [
+            "address_book"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Transport and loading processes",
+          "notation": "{'transport_processes': [], 'loading_processes': []}",
+          "example": "{'transport_processes': [], 'loading_processes': []}",
+          "mandatory": "no",
+          "name": "processes",
+          "format": "string_dict",
+          "indexing_strategy": [
+            "processes"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Resources responsible for",
+          "notation": "[resource]",
+          "example": "[resource_r]",
+          "mandatory": "no",
+          "name": "resources",
+          "format": "string_list",
+          "function": "label_list",
+          "indexing_strategy": [
+            "resources"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Preferences of the resources responsible for",
+          "notation": "[resource_preference]",
+          "example": "[resource_preference]",
+          "mandatory": "no",
+          "name": "preferences",
+          "format": "string_list",
+          "function": "label_list",
+          "indexing_strategy": [
+            "preferences"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Possible processes the resources can process",
+          "notation": "True/False",
+          "example": "True",
+          "mandatory": "no",
+          "name": "possible_processes",
+          "format": "possible_processes",
+          "indexing_strategy": [
+            "possible_processes"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "",
+          "notation": "",
+          "example": "",
+          "mandatory": "no",
+          "name": "entity_type_to_store",
+          "format": "string_list",
+          "function": "label_list",
+          "indexing_strategy": [
+            "entity_type_to_store"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "",
+          "notation": "",
+          "example": "",
+          "mandatory": "yes",
+          "name": "entity_types_to_store",
+          "format": "string_dict",
+          "indexing_strategy": [
+            "entity_types_to_store"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "",
+          "notation": "True/False",
+          "example": "True",
+          "mandatory": "yes",
+          "name": "process_provider",
+          "format": "process_provider",
+          "indexing_strategy": [
+            "process_provider"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "",
+          "notation": "True/False",
+          "example": "True",
+          "mandatory": "yes",
+          "name": "entity_provider",
+          "format": "entity_provider",
+          "indexing_strategy": [
+            "entity_provider"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "",
+          "notation": "True/False",
+          "example": "True",
+          "mandatory": "yes",
+          "name": "transport_provider",
+          "format": "transport_provider",
+          "indexing_strategy": [
+            "transport_provider"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "",
+          "notation": "True/False",
+          "example": "True",
+          "mandatory": "yes",
+          "name": "transport_provider",
+          "format": "transport_provider",
+          "indexing_strategy": [
+            "transport_provider"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "",
+          "notation": "True/False",
+          "example": "True",
+          "mandatory": "yes",
+          "name": "value_added_processes",
+          "format": "value_added_processes",
+          "indexing_strategy": [
+            "value_added_processes"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "",
+          "notation": "True/False",
+          "example": "True",
+          "mandatory": "yes",
+          "name": "order_pool",
+          "format": "order_pool",
+          "indexing_strategy": [
+            "order_pool"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "Transport and loading processes",
+          "notation": "",
+          "example": "",
+          "mandatory": "no",
+          "name": "reference_objects",
+          "format": "string_list",
+          "function": "label_list",
+          "indexing_strategy": [
+            "reference_objects"
+          ]
+        },
+        {
+          "column_kind": "simple",
+          "description": "",
+          "notation": "0 to ...",
+          "example": "10",
+          "mandatory": "yes",
+          "name": "accepted_time_horizont",
+          "format": "float",
+          "indexing_strategy": [
+            "accepted_time_horizont"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -4,13 +4,51 @@
 #
 # toggle the comments on the versions to get an older, but guaranteed working version
 # (but you may integrate security issues and already fixed bugs with older versions)
-
+# TODO check if running and then add version numbers
 
 # STANDARD
 # python version tested: 3.10.13
 
-python==3.10
-numpy==1.26.4
+# python==3.12.6
+numpy==2.1.1
 pandas==2.2.2
+# polars==0.18.12
 dill==0.3.8
-openpyxl
+# timeboard==0.2.4 - for the workcalendar
+
+# #### data integration ################################################################################################
+openpyxl==3.1.2
+# debugging
+tqdm==4.66.4
+
+# #### agent control/ simulation #######################################################################################
+spade==3.3.3
+openfire-restapi==0.2.0
+
+# #### dashboard #######################################################################################################
+# ToDo: for newer versions currently a conflict with spade
+flask==2.2.5
+flask-cors==4.0.0
+
+# #### model learning ##################################################################################################
+# tqdm = "^4.66.1"
+# ToDo: torch and others
+
+# #### project Schmaus #################################################################################################
+# for agent control
+scipy==1.14.1
+# for the data integration adapters
+pyodbc==5.1.0
+python-dotenv==1.0.1
+
+# #### testing #########################################################################################################
+cerberus==1.3.5
+flask-restful==0.3.10
+
+# #### machine learning ################################################################################################
+#--find-links https://download.pytorch.org/whl/torch_stable.html
+#--index-url https://download.pytorch.org/whl/cu117
+#torch==2.0.1  # ToDo: 2.1 available - test them
+#torchmetrics
+#torchvision
+#torchaudio

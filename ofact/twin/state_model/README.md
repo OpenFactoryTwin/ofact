@@ -147,7 +147,7 @@ Each of them is a combination of different resources that are required to execut
 > 
 > Next to *'greater'* resources also tools can be part of a resource model.
 
-#### TRANSITION MODEL**
+#### TRANSITION MODEL
 
 The transition model outlines spatial position changes or resource assignments (e.g., from a box into the shelf).
 Therefore, it contains possible origins and destination. 
@@ -218,59 +218,87 @@ Bin and screws.
 > In the transformation model only the root nodes are stored.
 
 <div align="center">
-  <img src="docs/assets/imgs/TransformationModel - Legend.png" width="600" height="300" />
+  <img src="docs/assets/imgs/transformations legend.png" width="600" height="300" />
   <h3>Legend</h3>
 
 
-  <img src="docs/assets/imgs/TransformationModel - Basic Transformations.png" width="1000" height="600" />
-  <h3>Basic Transformation Model</h3>
+  <img src="docs/assets/imgs/transformations I.png" width="1000" height="600" />
+  <h3>Transformations I</h3>
 </div>
 
-> ***(1) Assembly:***
+> ***(1) Part Assembly:***
 > 
 > In the assembly, a subpart is added to the main entity. 
 > E.g., the gears are appended to the bicycle frame but can be disassembled later if necessary.
 > 
-> ***(2) Disassembly:***
+> ***(2) Part Disassembly:***
 > 
 > In the disassembly, a subpart is removed from the main entity.
 > E.g., the gears are removed from the bicycle frame (for example, because the bicycle has a defect).
 > 
-> ***(3) Blank Processing:***
+> ***(1) Equipment Assembly:***
+> 
+> In the assembly, equipment is added to the main entity. 
+> E.g., the drill bit is appended to the drill machine but can be disassembled later if necessary.
+> 
+> ***(2) Equipment Disassembly:***
+> 
+> In the disassembly, equipment is removed from the main entity.
+> E.g., the drill bit is removed from the drill machine (for example, because other equipment is required).
+> 
+> ***(5) Blank Processing:***
 > 
 > A blank is processed to a main entity. 
 > This means no additional materials are added to the entity, but the part properties change.
 > E.g., a handlebar rod is bend to a handlebar.
 > 
-> ***(4) Ingredient processing:***
+> ***(6) Ingredient processing:***
 > 
 > An ingredient (part) is added to the main entity. 
 > The ingredient cannot be removed.
 > E.g., a coating is added to the main part. 
 > 
-> ***(5) Support:***
+
+<div align="center">
+  <img src="docs/assets/imgs/transformations II.png" width="400" height="400" />
+  <h3>Transformation II</h3>
+</div>
+
+> ***(7) Support:***
 > 
 > The support is a carrier resource. 
 > Therefore, a part or a resource (main entity) is linked with its carrier resource.
 > E.g., a part is stored in a box or a box is stored on an AGV.
 > 
-> ***(6) Unsupport:***
+> ***(8) Unsupport:***
 > 
 > The unsupport is used to undo the support action.
 > E.g., a part is removed from a box, or a box is removed from an AGV it is situated in.
-
-<div align="center">
-  <img src="docs/assets/imgs/TransformationModel - Assembly with Support.png" width="400" height="400" />
-  <h3>Advanced Transformation (nested)</h3>
-</div>
-
-> ***(1) Assembly with support:***
+> 
+> ***(9) Assembly with support:***
 > 
 > In the assembly, a subpart is added to the main entity. 
 > Additionally, to this transformation, the main part is supported before the assembly.
 > Use Case: Required to describe the state that the carrier resource is used in the process.
 > E.g., the AGV is required as a carrier within the assembly process and in combination with the bicycle.
 > This means that it is not valid, that the bicycle frame is not on the AGV.
+> 
+> > ***(10) Quality Inspection:***
+> 
+> In the quality inspection, the quality of entity is checked that is associated with the entity transformation node.
+> E.g., the quality of the bicycle frame is checked.
+>
+> ***(9) (Incoming) goof supply:***
+> 
+> To model a goof supply (from outside the considered environment, e.g., from a supplying company), 
+> the io_behaviour CREATED is combined with the transformation_type MAIN_ENTITY.
+> E.g., the gear is delivered from the gear supplying company and stored in the incoming storage.
+> 
+> ***(10) Customer delivery:***
+> 
+> In contrast to the goof supply, the io_behaviour DESTROYED is combined with the transformation_type MAIN_ENTITY.
+> Meaning, the entity cannot be used anymore in the digital twin state model.
+> E.g., the bicycle frame is delivered to the customer and is removed from the outgoing storage.
 
 #### QUALITY MODEL
 

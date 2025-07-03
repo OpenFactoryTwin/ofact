@@ -24,7 +24,6 @@ located in the `twin` folder and containing the agent control and the state mode
 |                       | *model learning*      | provides possibilities to learn digital twin elements (e.g. process models, control rules)                                              |
 |                       | *repository_service*  | to persist the digital twin (mainly the state model) can changed as well as change the system state                                     |
 | **planning services** | *model_generation*    | used to create a static state model                                                                                                     |
-|                       |                       | GUI for the Factory Planner                                                                                                             |
 |                       | *scenario_generation* | provides the capabilities to create difference scenarios based on parameter variation                                                   |
 |                       | *scenario_analytics*  | provides the tools to determine KPI's based on the state model and visualize them                                                       |
 

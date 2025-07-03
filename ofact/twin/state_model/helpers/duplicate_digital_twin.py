@@ -13,15 +13,12 @@ under the License.
 SPDX-License-Identifier: Apache-2.0
 #############################################################
 
-Used to duplicate the digital twin model
+Used to duplicate the digital twin state model
 
 @contact persons: Adrian Freiter
 """
 
 from copy import deepcopy
-
-from ofact.twin.repository_services.light_digital_twin_model_mapper import (
-    DigitalTwinModelMapper, LightDigitalTwinModelMapper)
 
 
 def get_digital_twin_model_duplicate(digital_twin_model):
@@ -31,10 +28,12 @@ def get_digital_twin_model_duplicate(digital_twin_model):
         # should be much faster
         digital_twin_duplicated = deepcopy(digital_twin_model)
     except:  # to many references
-        digital_twin_model_mapper = DigitalTwinModelMapper(digital_twin_model=digital_twin_model)
-        digital_twin_model_light_dict = digital_twin_model_mapper.create_digital_twin_objects_as_key_value()
-        light_digital_twin_model_mapper = (
-            LightDigitalTwinModelMapper(digital_twin_model_light_dict=digital_twin_model_light_dict))
-        digital_twin_duplicated = light_digital_twin_model_mapper.get_digital_twin_model_by_key_value()
+        # digital_twin_model_mapper = DigitalTwinModelMapper(digital_twin_model=digital_twin_model)
+        # digital_twin_model_light_dict = digital_twin_model_mapper.create_digital_twin_objects_as_key_value()
+        # light_digital_twin_model_mapper = (
+        #     LightDigitalTwinModelMapper(digital_twin_model_light_dict=digital_twin_model_light_dict))
+        # digital_twin_duplicated = light_digital_twin_model_mapper.get_digital_twin_model_by_key_value()
+        raise NotImplementedError("Something went wrong when duplicating the digital twin model. "
+                                  "Deserialization required.")
 
     return digital_twin_duplicated

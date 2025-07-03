@@ -1,22 +1,23 @@
 from random import choice
 from typing import TYPE_CHECKING
 
-from ofact.planning_services.model_generation.twin_generator import get_digital_twin
-
 import ofact.twin.state_model.processes as p
 import ofact.twin.state_model.entities as e
+from ofact.planning_services.model_generation.persistence import deserialize_state_model, get_state_model_file_path
 
 if TYPE_CHECKING:
     from ofact.twin.state_model.sales import Feature
 
 
-digital_twin_file_name = "mini.xlsx"
-digital_twin_model = get_digital_twin(r"files/", digital_twin_file_name, path_to_model="", pickle_=False,
-                                      customer_generation_from_excel=True, order_generation_from_excel=True,
-                                      customer_amount=10, order_amount=10,)
+state_model_file_name = get_state_model_file_path(project_path=r"files/", state_model_file_name="mini.xlsx",
+                                                   path_to_model="")
+state_model_generation_settings = {"customer_generation_from_excel": True, "order_generation_from_excel": True,
+                                   "customer_amount": 10, "order_amount": 10}
+state_model = deserialize_state_model(source_file_path=state_model_file_name, persistence_format="xlsx",
+                                      state_model_generation_settings=state_model_generation_settings)
 
-orders = digital_twin_model.get_orders()
-feature_process_mapper = digital_twin_model.get_feature_process_mapper()
+orders = state_model.get_orders()
+feature_process_mapper = state_model.get_feature_process_mapper()
 
 
 def _create_work_order():

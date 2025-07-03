@@ -15,8 +15,8 @@ Examples of behavior that contribute to creating a positive and professional env
 
 - Using welcoming and inclusive language;
 - Actively encouraging all voices;
-- Help others bring their perspectives and listen actively. If you find yourself dominating a discussion, 
-    it is essential to encourage other voices to join in;
+- Helping others bring their perspectives and listening actively. If you find yourself dominating a discussion, 
+    it is especially important to encourage other voices to join in;
 - Being respectful of differing viewpoints and experiences;
 - Gracefully accepting constructive criticism;
 - Focusing on what is best for the community;
@@ -38,12 +38,12 @@ Examples of unacceptable behavior by Contributors include:
 - Personal insults, especially those using racist or sexist terms;
 - Excessive or unnecessary profanity;
 - Advocating for, or encouraging, any of the above behavior; and
-- Other conduct that could reasonably be considered inappropriate in a professional setting
+- Other conduct which could reasonably be considered inappropriate in a professional setting
 
 ## Handling of violations
 
-Reports should be directed to repository@openfactorytwin.org.
-The Conduct Committee’s role is to receive and address reported violations of this Code and ensure a fair and 
+Reports should be directed to {}. # ToDo email address
+It is the Conduct Committee’s role to receive and address reported violations of this Code and to ensure a fair and 
 speedy resolution.
 
 Contributors who do not follow this Code in good faith may face temporary or permanent repercussions as determined by 
