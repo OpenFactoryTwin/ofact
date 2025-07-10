@@ -3,12 +3,12 @@
 
 <div align="center">
 
-   <img src="docs/source/_static/ofact - logo.png" width="1395" height="679" />
+   <img src="ofact/docs/assets/imgs/ofact - logo.png" width="600" height="300" />
    <h3>Open Factory Twin</h3> 
    <h4>Open source Digital Twin Framework for Production and Logistics</h4>
 
   [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-
+  [![DOI](https://zenodo.org/badge/853263652.svg)](https://zenodo.org/doi/10.5281/zenodo.13734210)
 </div>
 
 <p align="center">
@@ -135,40 +135,14 @@ The following things are necessary to run this application:
 
 ### Quick Start
 
-The first release of the open factory twin contains the data model (digital twin state model component) 
-and therefore next to the agent control, one of the two core elements of the digital twin.
+The current release of the open factory twin contains 
+- the data model (state model component)
+- (auto) model generation
+- data integration
+- the agent control
+- scenario analytics
 The state model can be filled with two sample use cases that can be found in the `projects` folder:
 The models are provided in the `{project_name}/model/twin/` folder, modeled in Excel files.
-
-### Quick Start with Docker-Compose 
----
-
-**1. Build & Run Services**
-
-```bash
-docker-compose up --build
-```
-
-**2. Access Services**
-
-* **Jupyter:** [http://localhost:8888](http://localhost:8888)
-* **Voila:** [http://localhost:8866](http://localhost:8866)
-* **PyJabber (XMPP):** Port `5222`
-
-**3. Change Voila Notebook**
-Edit the file path in `docker-compose.yml`:
-
-```yaml
-command: >
-  sh -c "voila path/to/your_notebook.ipynb ..."
-```
-
-**4. Stop Services**
-
-```bash
-docker-compose down
-```
----
 
 #### Tutorial
 
@@ -224,8 +198,12 @@ For more details, see the `CONTRIBUTING.md` file.
 This work is licensed under the Apache 2.0 license. 
 See `LICENSE` file for more information.
 
-In the meantime, the project was created within the scope of
-the [Center of Excellence Logistics and It](https://ce-logit.com/).
+Parts of the project are created within the scope of
+the [Center of Excellence Logistics and It](https://ce-logit.com/) - Nationales Leistungszentrum Logistik und IT.
+
+<div align="center">
+   <img src="docs/assets/imgs/leistungszentrum-600x200-1.png" width="600" height="200" />
+</div>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -257,5 +235,5 @@ If you have any further questions, please do not hesitate to contact us:
 
 ## Notice
 The documentation part of this work is 
-licensed under the [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/legalcode) while the software part is 
-licensed under Apache 2.0.
+licensed under the [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/legalcode) 
+while the software part is licensed under Apache 2.0.
