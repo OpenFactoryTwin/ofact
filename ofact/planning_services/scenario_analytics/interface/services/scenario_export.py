@@ -34,6 +34,7 @@ if TYPE_CHECKING:
     from datetime import datetime
     from ofact.planning_services.scenario_analytics.interface.services.kpi_tables import SingleScenarioHandler
 
+
 file_directory_path_as_str = str(ROOT_PATH) + "/planning_services/scenario_analytics/interface/scenario_data/"
 
 
@@ -71,7 +72,7 @@ def build_scenario_overview_response(multi_scenarios_handler, export_path=""):
 
 def store_xlsx_sheets(orders: pd.DataFrame, products: pd.DataFrame, processes: pd.DataFrame, resources: pd.DataFrame,
                       resource_utilization: pd.DataFrame, resource_schedules: pd.DataFrame, order_traces: pd.DataFrame,
-                      scenario_descriptions: pd.DataFrame, file_directory_path_as_str_intern: str):
+                      resource_traces: pd.DataFrame, scenario_descriptions: pd.DataFrame, file_directory_path_as_str_intern: str):
     """Store the scenario data to Excel file sheets ..."""
 
     # standard kpi's
@@ -84,7 +85,7 @@ def store_xlsx_sheets(orders: pd.DataFrame, products: pd.DataFrame, processes: p
     resource_utilization.to_excel(file_directory_path_as_str_intern + "resource_utilization.xlsx", index=False)
     resource_schedules.to_excel(file_directory_path_as_str_intern + "resource_schedules.xlsx", index=False)
     order_traces.to_excel(file_directory_path_as_str_intern + "order_traces.xlsx", index=False)
-
+    resource_traces.to_excel(file_directory_path_as_str_intern + "resource_traces.xlsx", index=False)
     # scenario descriptions
     scenario_descriptions.to_excel(file_directory_path_as_str_intern + "scenario_descriptions.xlsx", index=False)
 
@@ -97,14 +98,15 @@ def build_scenario_export_response(scenarios: dict[str, list[str]], multi_scenar
         file_directory_path_as_str_intern = file_directory_path_as_str
 
     print("Scenarios export with scenarios:", scenarios, start_time, end_time)
-    (orders, products, processes, resources, resource_utilization, resource_schedules, order_traces,
+    scenarios = scenarios["scenarioIDs"]
+    (orders, products, processes, resources, resource_utilization, resource_schedules, order_traces, resource_traces,
      scenario_descriptions) = (
-        multi_scenarios_handler.get_kpi_for_scenarios(scenarios, multi_scenarios_handler, start_time, end_time))
+        multi_scenarios_handler.get_kpi_for_scenarios(scenarios, start_time, end_time))
 
-    store_xlsx_sheets(orders, products, processes, resources, resource_utilization, resource_schedules, order_traces,
+    store_xlsx_sheets(orders, products, processes, resources, resource_utilization, resource_schedules, order_traces, resource_traces,
                       scenario_descriptions, file_directory_path_as_str_intern)
     files = ["orders.xlsx", "products.xlsx", "processes.xlsx", "resources.xlsx", "resource_utilization.xlsx",
-             "resource_schedules.xlsx", "order_traces.xlsx", "scenario_descriptions.xlsx"]
+             "resource_schedules.xlsx", "order_traces.xlsx", "resource_traces.xlsx", "scenario_descriptions.xlsx"]
 
     # Zip the files into a single archive
     # project specific path would be better

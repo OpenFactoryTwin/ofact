@@ -487,7 +487,7 @@ class DynamicStateModelDeserialization(metaclass=Singleton):
     def _get_entity_transformation_node_object_instantiated(self, light_object):
         if light_object is not None:
             transformation_type = (
-                vars(EntityTransformationNode.TransformationTypes))[light_object["transformation_type"].split(".")[2]]
+                vars(EntityTransformationNode.TransformationTypes)[light_object["transformation_type"].split(".")[2]])
             io_behaviour = vars(EntityTransformationNode.IoBehaviours)[light_object["io_behaviour"].split(".")[2]]
             light_object["transformation_type"] = transformation_type
             light_object["io_behaviour"] = io_behaviour

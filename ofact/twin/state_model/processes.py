@@ -50,24 +50,23 @@ import pandas as pd
 
 # Imports Part 3: Project Imports
 from ofact.twin.state_model.basic_elements import (DigitalTwinObject, DynamicDigitalTwinObject, ProcessExecutionTypes,
-                                                   prints_visible)
-from ofact.twin.state_model.entities import Part, Resource, NonStationaryResource, StationaryResource, Storage, \
-    ActiveMovingResource
+                                                   SourceApplicationTypes, prints_visible)
+from ofact.twin.state_model.entities import Part, Resource, NonStationaryResource, StationaryResource, Storage
 from ofact.twin.state_model.helpers.helpers import convert_to_datetime
 from ofact.twin.state_model.process_models import (ProcessTimeModel, QualityModel, ResourceModel, ResourceGroup,
                                                    TransitionModel, EntityTransformationNode, TransformationModel,
                                                    EntityTransformationNodeIoBehaviours,
                                                    EntityTransformationNodeTransformationTypes)
 from ofact.twin.state_model.time import ProcessExecutionPlan, WorkCalender
-
+from ofact.twin.utils import setup_dual_logger
 if TYPE_CHECKING:
     from ofact.twin.state_model.model import StateModel
     from ofact.twin.state_model.entities import EntityType, PartType, Entity
     from ofact.twin.state_model.sales import Feature, Order
     from ofact.twin.state_model.process_models import DTModel
 
-logging.debug("DigitalTwin/processes")
-
+#logging.debug("DigitalTwin/processes")
+logging=setup_dual_logger()
 
 class ProcessController(DigitalTwinObject, metaclass=ABCMeta):
 
@@ -642,6 +641,7 @@ def _raise_transport_exception(origin, destination, transport_resource, process_
                 print(f"[{class_name:20}] Destination: {destination.situated_in.situated_in.name}")
 
     print(transport_resource.name)
+    print(process_execution.process.external_identifications['static_model'][0])
     print(transport_resource.process_execution_plan._time_schedule)
     debug_str = f"[{class_name}] The transport is only possible between stationary resources \n" \
                 f"PE connected ID: {process_execution.connected_process_execution.identification}"
@@ -703,7 +703,7 @@ def transport_entities(origin: StationaryResource, destination: StationaryResour
                 if new_position == transport_resource.get_position() and \
                         origin.get_position() != destination.get_position():
                     _raise_transport_exception2(transport_resource, process_execution, class_name)
-
+                    print('Transition Fehler')
             else:
                 new_position = (None, None)
 
@@ -2509,6 +2509,7 @@ class ProcessExecution(DigitalTwinObject):
     #  explicitly said here. an attribute will be set by execution that re-planning is necessary @Christian
 
     EventTypes = ProcessExecutionTypes
+    SourceApplicationTypes = SourceApplicationTypes
 
     def __init__(self,
                  event_type: EventTypes,
@@ -2522,7 +2523,7 @@ class ProcessExecution(DigitalTwinObject):
                  destination: Optional[Resource] = None,
                  resulting_quality: Optional[float] = None,
                  order: Optional[Order] = None,
-                 source_application: Optional[str] = None,
+                 source_application: Optional[SourceApplicationTypes] = None,
                  connected_process_execution: Optional[ProcessExecution] = None,
                  identification: Optional[int] = None,
                  external_identifications: Optional[dict[object, list[object]]] = None,
@@ -2556,6 +2557,7 @@ class ProcessExecution(DigitalTwinObject):
         """
         super().__init__(identification=identification, external_identifications=external_identifications,
                          domain_specific_attributes=domain_specific_attributes)
+        self.required_parts = None
         self._event_type: ProcessExecutionTypes = event_type
 
         self._executed_start_time: datetime = executed_start_time
@@ -2581,7 +2583,7 @@ class ProcessExecution(DigitalTwinObject):
 
         self._order: Optional[Order] = order
 
-        self.source_application: Optional[str] = source_application
+        self.source_application: Optional[SourceApplicationTypes] = source_application
         self._connected_process_execution: Optional[ProcessExecution] = connected_process_execution
 
     def __str__(self):
@@ -3771,7 +3773,9 @@ class ProcessExecution(DigitalTwinObject):
             if destination_needed is True or destination_needed is None:
                 not_completely_filled_attributes.append("destination")
         if not isinstance(self.source_application, str):
-            not_completely_filled_attributes.append("source_application")
+            if self.source_application is None:
+                pass
+                # not_completely_filled_attributes.append("source_application")
         if self.event_type == ProcessExecutionTypes.ACTUAL:
             if not isinstance(self.connected_process_execution, ProcessExecution):
                 not_completely_filled_attributes.append("connected_process_execution")

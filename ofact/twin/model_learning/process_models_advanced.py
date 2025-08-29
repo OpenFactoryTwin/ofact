@@ -72,7 +72,7 @@ def get_learning_model_parameters_dicts_from_file(learning_parameters_file_path,
             try:
                 parameter_value = literal_eval(parameter_value)
             except:
-                pass
+                parameter_value = parameter_value
         model_parameter_dict[parameter_name] = parameter_value
 
     return model_parameter_dict
@@ -186,7 +186,11 @@ class DTModelLearningExtension:
         e.g. load the model parameters (weights)"""
 
         print(f"[{self.model_name}] Set prediction model from path: '{self._prediction_model_path}'")
-        self._prediction_model = self._prediction_model_class(model_path=self._prediction_model_path)
+        init_parameters = {k: v
+                           for k, v in self._learning_parameters.items()
+                           if k in self._prediction_model_class.__init__.__annotations__}
+        init_parameters["model_path"] = self._prediction_model_path
+        self._prediction_model = self._prediction_model_class(**init_parameters)
 
     def save_prediction_model(self, model_path=None, persistent_saving: bool = False):
         """Use for saving the prediction model if given ..."""

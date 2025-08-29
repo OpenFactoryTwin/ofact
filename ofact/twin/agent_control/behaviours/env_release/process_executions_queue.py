@@ -16,7 +16,8 @@ if TYPE_CHECKING:
     pass
 
 logger = logging.getLogger("ProcessExecutionsQueue")
-
+from ofact.twin.utils import setup_dual_logger
+logging= setup_dual_logger()
 
 class ProcessExecutionsOnHoldHandling:
     """
@@ -34,28 +35,39 @@ class ProcessExecutionsOnHoldHandling:
     def __init__(self, agent):
         self.agent = agent
 
-    async def request_process_executions_available(self, round_ended=False):
-
+    async def request_process_executions_available(self, round_ended=False,order_id=0):
+        logging.debug(f'start request_process_executions_available', extra={"obj_id": self.agent.name})
         # get the new process_executions_components from the negotiation
         accepted_proposals, rejected_proposals = self.agent.NegotiationBehaviour.get_results()
-
+        logging.debug(f'Order ID: {order_id} if 0.1 request_process_executions_available',
+                      extra={"obj_id": self.agent.name})
         # print(self.agent.name, "Request ...", len(accepted_proposals), len(rejected_proposals))
 
         self._save_agreed_process_executions(accepted_proposals)
+        logging.debug(f'Order ID: {order_id} if 0.2 request_process_executions_available',
+                      extra={"obj_id": self.agent.name})
         self._handle_rejected_process_executions(rejected_proposals)
+        logging.debug(f'Order ID: {order_id} if 0.3 request_process_executions_available',
+                      extra={"obj_id": self.agent.name})
 
         if self.agent.new_process_executions_available is not None:
+            logging.debug(f'Order ID: {order_id} if 1 request_process_executions_available', extra={"obj_id": self.agent.name})
             if not self.agent.new_process_executions_available.is_set():
+                logging.debug(f'Order ID: {order_id}if 1.1 request_process_executions_available',
+                             extra={"obj_id": self.agent.name})
                 self.agent.new_process_executions_available.set()
 
         if self.agent.process_executions_on_hold or not round_ended:
+            logging.debug(f'Order ID: {order_id} if 2 request_process_executions_available', extra={"obj_id": self.agent.name})
             return
 
         if self.agent.reaction_expected:
+            logging.debug(f'Order ID: {order_id} if 3 request_process_executions_available', extra={"obj_id": self.agent.name})
             self.agent.reaction_expected = False
             await self.agent.change_handler.go_on(agent_name=self.agent.name)
 
         else:
+            logging.debug(f'Order ID: {order_id} else request_process_executions_available', extra={"obj_id": self.agent.name})
             self.agent.EnvInterface.pre_reaction = True
 
     def _handle_rejected_process_executions(self, rejected_proposals):

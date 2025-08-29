@@ -10,14 +10,17 @@ a simulation.
 from __future__ import annotations
 
 import asyncio
-from datetime import timedelta, datetime
-from typing import TYPE_CHECKING, Dict
+import time
 
+from ofact.twin.utils import setup_dual_logger
+logging=setup_dual_logger()
+from datetime import timedelta, datetime
+from typing import TYPE_CHECKING, Dict, Optional
+# Imports Part 2: PIP Imports
 import pandas as pd
 
-from ofact.twin.agent_control.basic import DigitalTwinAgent
-# Imports Part 2: PIP Imports
 # Imports Part 3: Project Imports
+from ofact.twin.agent_control.basic import DigitalTwinAgent
 from ofact.twin.agent_control.behaviours.basic import get_templates_tuple
 from ofact.twin.agent_control.behaviours.env_release.interface import ResourceEnvInterfaceBehaviour
 from ofact.twin.agent_control.behaviours.env_release.process_executions_queue import (
@@ -28,8 +31,7 @@ from ofact.twin.agent_control.behaviours.planning.process import ProcessRequest
 from ofact.twin.agent_control.behaviours.planning.process_group import ProcessGroupRequest
 from ofact.twin.agent_control.behaviours.planning.resource import ResourceRequest
 from ofact.twin.agent_control.behaviours.planning.resource_binding import ResourceBindingBehaviour
-from ofact.twin.agent_control.planning_services.process_execution_projection import \
-    ProcessExecutionsProjection
+from ofact.twin.agent_control.planning_services.process_execution_projection import ProcessExecutionsProjection
 from ofact.twin.agent_control.planning_services.routing import RoutingService
 from ofact.twin.agent_control.planning_services.storage_reservation import StorageReservation
 from ofact.twin.state_model.entities import (Resource, StationaryResource, Warehouse, WorkStation, Storage,
@@ -42,6 +44,8 @@ if TYPE_CHECKING:
     from ofact.twin.agent_control.behaviours.planning.tree.preference import Preference
     from ofact.twin.agent_control.organization import Agents
     from ofact.twin.state_model.entities import EntityType
+
+    from ofact.twin.state_model.basic_elements import SourceApplicationTypes
 
 
 class ResourceDigitalTwinAgent(DigitalTwinAgent):
@@ -67,7 +71,8 @@ class ResourceDigitalTwinAgent(DigitalTwinAgent):
     def __init__(self, name: str, organization: Agents, change_handler, password_xmpp_server: str,
                  ip_address_xmpp_server: str, address_book: dict, possible_processes: list[Process],
                  processes: dict[str: list[Process]], resources: list[Resource], entity_provider: dict,
-                 transport_provider: dict, preferences: list[Preference], state_model: StateModel):
+                 transport_provider: dict, preferences: list[Preference], state_model: StateModel,
+                 source_application: Optional[SourceApplicationTypes] = None):
         """
 
         :param name: the name of the agents
@@ -164,7 +169,7 @@ class ResourceDigitalTwinAgent(DigitalTwinAgent):
         self.notification_time_delta = timedelta(minutes=5)
         self.plan_horizont = 2000
         self.negotiation_time_limit_period: int = 200  # ToDo: instantiation  # period
-        self.source_application = "Test phase"
+        self.source_application = source_application
 
         # working variables
         self.process_execution_service_provider: dict[ProcessExecution: str] = {}
@@ -188,6 +193,9 @@ class ResourceDigitalTwinAgent(DigitalTwinAgent):
         self.ResourceBinding = ResourceBindingBehaviour()
 
         self.log = pd.DataFrame()
+
+    def set_source_application(self, source_application):
+        self.source_application = source_application
 
     def update_resource_related_variables(self, new_resources: list[Resource], preferences: list[Preference]):
 
@@ -346,12 +354,18 @@ class ResourceDigitalTwinAgent(DigitalTwinAgent):
                                       process_execution_id=process_execution_id, work_order_id=order_id,
                                       issue_id=issue_id, block_before=block_before)
 
-            if not successful:
 
+            if not successful:
                 i = 100
                 while i > 0:
                     print("Reservation was not successful ...")
                     i -= 1
+                logging.error('not successful',extra={"obj_id": self.name})
+                logging.error(f'start time : {start_time}, end time: {end_time}, blocker_name: {blocker_name}, '
+                              f'process_execution_id: {process_execution_id}, work_order_id: {order_id}, '
+                              f'issue_id: {issue_id}, block_before: {block_before}', extra={"obj_id": self.name})
+                time.sleep(15)
+
                 # debugging
                 print(self.name, "Reservation was not successful")
                 successful, clashing_blocker_names, clashing_process_execution_ids = \
@@ -534,13 +548,14 @@ class TransportAgent(ResourceDigitalTwinAgent):
     def __init__(self, name: str, organization: Agents, change_handler, password_xmpp_server: str,
                  ip_address_xmpp_server: str, address_book: dict, possible_processes: list[Process], processes,
                  entity_provider: dict, transport_provider,
-                 resources: list[Resource], preferences: list[Preference], state_model: StateModel):
+                 resources: list[Resource], preferences: list[Preference], state_model: StateModel,
+                 source_application: Optional[SourceApplicationTypes] = None):
         super().__init__(name=name, organization=organization, change_handler=change_handler,
                          password_xmpp_server=password_xmpp_server,
                          ip_address_xmpp_server=ip_address_xmpp_server, address_book=address_book,
                          entity_provider=entity_provider, transport_provider=transport_provider,
                          possible_processes=possible_processes, processes=processes, resources=resources,
-                         preferences=preferences, state_model=state_model)
+                         preferences=preferences, state_model=state_model, source_application=source_application)
 
         self.resource_location_mapping: dict[Resource, StationaryResource] = \
             self.create_initial_resource_location_mapping()
@@ -595,13 +610,14 @@ class WarehouseAgent(ResourceDigitalTwinAgent):
                  address_book: dict, transport_provider: dict, entity_provider: dict,
                  possible_processes: list[Process], processes, resources: list[Resource],
                  preferences: list[Preference],
-                 state_model: StateModel, entity_types_to_store):
+                 state_model: StateModel, entity_types_to_store,
+                 source_application: Optional[SourceApplicationTypes] = None):
         super().__init__(name=name, organization=organization, change_handler=change_handler,
                          password_xmpp_server=password_xmpp_server,
                          ip_address_xmpp_server=ip_address_xmpp_server, address_book=address_book,
                          entity_provider=entity_provider, transport_provider=transport_provider,
                          possible_processes=possible_processes, processes=processes, resources=resources,
-                         preferences=preferences, state_model=state_model)
+                         preferences=preferences, state_model=state_model, source_application=source_application)
 
         self.entity_types_to_store = entity_types_to_store
 
@@ -624,14 +640,15 @@ class WarehouseAgentIntern(WarehouseAgent):
                  address_book: dict, transport_provider: dict, entity_provider: dict,
                  possible_processes: list[Process], processes, resources: list[Resource],
                  preferences: list[Preference],
-                 state_model: StateModel, entity_types_to_store):
+                 state_model: StateModel, entity_types_to_store,
+                 source_application: Optional[SourceApplicationTypes] = None):
         super().__init__(name=name, organization=organization, change_handler=change_handler,
                          password_xmpp_server=password_xmpp_server,
                          ip_address_xmpp_server=ip_address_xmpp_server, address_book=address_book,
                          entity_provider=entity_provider, transport_provider=transport_provider,
                          possible_processes=possible_processes, processes=processes, resources=resources,
                          preferences=preferences, state_model=state_model,
-                         entity_types_to_store=entity_types_to_store)
+                         entity_types_to_store=entity_types_to_store, source_application=source_application)
 
         self.entity_provider = {entity: [resource for resource in resources if isinstance(resource, Warehouse)]
                                 for entity, resources in self.entity_provider.items()}
@@ -645,13 +662,14 @@ class WorkStationAgent(ResourceDigitalTwinAgent):
                  ip_address_xmpp_server: str, address_book: dict, entity_provider: dict, transport_provider,
                  possible_processes: list[Process], processes, resources: list[Resource],
                  preferences: list[Preference],
-                 state_model: StateModel):
+                 state_model: StateModel,
+                 source_application: Optional[SourceApplicationTypes] = None):
         super().__init__(name=name, organization=organization, change_handler=change_handler,
                          password_xmpp_server=password_xmpp_server,
                          ip_address_xmpp_server=ip_address_xmpp_server, address_book=address_book,
                          entity_provider=entity_provider, transport_provider=transport_provider,
                          possible_processes=possible_processes, processes=processes, resources=resources,
-                         preferences=preferences, state_model=state_model)
+                         preferences=preferences, state_model=state_model, source_application=source_application)
 
     def copy(self):
         agent_copy = super(WorkStationAgent, self).copy()
@@ -666,13 +684,14 @@ class WorkStationAgentIntern(WorkStationAgent):
                  ip_address_xmpp_server: str, address_book: dict, entity_provider: dict, transport_provider,
                  possible_processes: list[Process], processes, resources: list[Resource],
                  preferences: list[Preference],
-                 state_model: StateModel):
+                 state_model: StateModel,
+                 source_application: Optional[SourceApplicationTypes] = None):
         super().__init__(name=name, organization=organization, change_handler=change_handler,
                          password_xmpp_server=password_xmpp_server,
                          ip_address_xmpp_server=ip_address_xmpp_server, address_book=address_book,
                          entity_provider=entity_provider, transport_provider=transport_provider,
                          possible_processes=possible_processes, processes=processes, resources=resources,
-                         preferences=preferences, state_model=state_model)
+                         preferences=preferences, state_model=state_model, source_application=source_application)
 
         self.entity_provider = {entity: [resource
                                          for resource in resources

@@ -77,41 +77,42 @@ class ChangeHandler:
 
         Parameters
         ----------
-        digital_twin: the digital twin model that is changed
+        digital_twin: the state model that is changed
         environment: the simulation or data transformation/ integration that have an impact on the digital twin
         and pushes the changes, respectively, the changes can be pulled.
         agents: the agent's model that contains all agents available in the current scenario in use ...
         """
         self._environment: Union[Environment, EventDiscreteSimulation] = environment
-        self._digital_twin: StateModel = digital_twin
+        self._state_model: StateModel = digital_twin
         self._agents: Agents = agents
 
         self.observer = Observer()
-        self.observer.set_digital_twin(self._digital_twin)
+        self.observer.set_digital_twin(self._state_model)
 
-        self._subscriptions_entities: Dict[Entity: List[Literal]] = {}
-        self._subscriptions_ape: Dict[ProcessExecution: List[Literal]] = {}
-        self._agent_name_interface_behaviours: Dict[Literal: EnvInterfaceBehaviour] = {}
+        self._subscriptions_entities: dict[Entity: List[Literal]] = {}
+        self._subscriptions_order: dict[Order: List[Literal]] = {}
+        self._subscriptions_ape: dict[ProcessExecution: List[Literal]] = {}
+        self._agent_name_interface_behaviours: dict[Literal: EnvInterfaceBehaviour] = {}
 
         # self._partially_filled_objects = PartiallyFilledObjects()
-        self._batch_consistency_handler = BatchConsistencyHandler(self._digital_twin)
+        self._batch_consistency_handler = BatchConsistencyHandler(self._state_model)
         self._single_object_consistency_handler = SingleObjectConsistencyHandler()
 
         self._digital_twin_adding_methods_single = \
-            {EntityType: self._digital_twin.add_entity_type,
-             Customer: self._digital_twin.add_customer,
-             Order: self._digital_twin.add_order,
-             Part: self._digital_twin.add_part,
-             PassiveMovingResource: self._digital_twin.add_passive_moving_resource,
-             ActiveMovingResource: self._digital_twin.add_active_moving_resource,
-             Storage: self._digital_twin.add_stationary_resource}
+            {EntityType: self._state_model.add_entity_type,
+             Customer: self._state_model.add_customer,
+             Order: self._state_model.add_order,
+             Part: self._state_model.add_part,
+             PassiveMovingResource: self._state_model.add_passive_moving_resource,
+             ActiveMovingResource: self._state_model.add_active_moving_resource,
+             Storage: self._state_model.add_stationary_resource}
         self._digital_twin_adding_methods_batch = \
-            {Customer: self._digital_twin.add_customers,
-             Order: self._digital_twin.add_orders,
-             Part: self._digital_twin.add_parts,
-             PassiveMovingResource: self._digital_twin.add_passive_moving_resources,
-             ActiveMovingResource: self._digital_twin.add_active_moving_resources,
-             Storage: self._digital_twin.add_stationary_resources}
+            {Customer: self._state_model.add_customers,
+             Order: self._state_model.add_orders,
+             Part: self._state_model.add_parts,
+             PassiveMovingResource: self._state_model.add_passive_moving_resources,
+             ActiveMovingResource: self._state_model.add_active_moving_resources,
+             Storage: self._state_model.add_stationary_resources}
         self._re_trainable_process_controllers: List = _get_re_trainable_process_controllers(digital_twin)
 
 
@@ -231,6 +232,14 @@ class ChangeHandler:
             for feature in not_possible_features:
                 order.remove_feature(feature)
 
+    def plan_order_release(self, order, agent_name: Optional[Literal] = None,
+                           env_interface_behaviour: Optional[EnvInterfaceBehaviour] = None,
+                           order_subscription: bool = False):
+        if order_subscription:
+            self.subscribe_on_order(order, agent_name, env_interface_behaviour)
+
+        self._environment.plan_order_release(order=order)
+
     def add_planned_process_execution(self, planned_process_execution: ProcessExecution,
                                       agent_name: Optional[Literal] = None,
                                       env_interface_behaviour: Optional[EnvInterfaceBehaviour] = None,
@@ -259,7 +268,7 @@ class ChangeHandler:
         self._single_object_consistency_handler.ensure_process_execution_consistency(
             planned_process_execution, completely_filled_enforced)
 
-        self._digital_twin.add_process_execution(process_execution=planned_process_execution)
+        self._state_model.add_process_execution(process_execution=planned_process_execution)
 
         if ape_subscription:
             self.subscribe_on_ape(planned_process_execution, agent_name, env_interface_behaviour)
@@ -268,7 +277,14 @@ class ChangeHandler:
             process_execution=planned_process_execution, deviation_tolerance_time_delta=deviation_tolerance_time_delta,
             notification_time_delta=notification_time_delta)
 
-    def subscribe_on_ape(self, planned_process_execution, agent_name, env_interface_behaviour):
+    def subscribe_on_order(self, order: Order, agent_name: str,
+                           env_interface_behaviour: Optional[EnvInterfaceBehaviour]):
+        self._subscriptions_order.setdefault(order,
+                                             []).append(agent_name)
+        self._agent_name_interface_behaviours[agent_name] = env_interface_behaviour
+
+    def subscribe_on_ape(self, planned_process_execution: ProcessExecution, agent_name: str,
+                         env_interface_behaviour: Optional[EnvInterfaceBehaviour]):
         """Subscribe on the actual process_execution of the planned one"""
         self._subscriptions_ape.setdefault(planned_process_execution,
                                            []).append(agent_name)
@@ -285,6 +301,18 @@ class ChangeHandler:
         self._environment.set_current_time(new_current_time)
 
     # methods called from the change_handler
+    def reminder_for_order_release(self, order: Order):
+
+        logging.debug(f"{datetime.now().time()} | [{'ChangeHandler':35}] Remind for Order Release with ID: "
+                      f"'{order.external_identifications if order else None}'")
+
+        all_subscriber = self.get_subscribers_order(order)
+        # forward the actual process_execution to the agents subscribed to
+
+        for agent_name in all_subscriber:
+            env_interface_behaviour = self._agent_name_interface_behaviours[agent_name]
+            env_interface_behaviour.reminder_for_order_release(order=order)
+
     def add_actual_process_execution(self, actual_process_execution: ProcessExecution,
                                      completely_filled_enforced: bool = True):
         """
@@ -308,7 +336,7 @@ class ChangeHandler:
         self._single_object_consistency_handler.ensure_process_execution_consistency(
             actual_process_execution, completely_filled_enforced)
 
-        self._digital_twin.add_process_execution(process_execution=actual_process_execution)
+        self._state_model.add_process_execution(process_execution=actual_process_execution)
 
         self.observer.update_kpi()
         # determine process_execution_subscriber
@@ -327,6 +355,15 @@ class ChangeHandler:
             env_interface_behaviour.inform_actual_process_execution(
                 actual_process_execution=actual_process_execution)
 
+    def get_subscribers_order(self, order: Order):
+        if order in self._subscriptions_order:
+            order_subscribers = self._subscriptions_order[order]
+            del self._subscriptions_order[order]
+        else:
+            order_subscribers = []
+
+        return order_subscribers
+
     def get_subscribers_process_execution(self, planned_process_execution: ProcessExecution,
                                           actual_process_execution: ProcessExecution):
         """:return subscribers"""
@@ -337,7 +374,7 @@ class ChangeHandler:
         else:
             ape_subscribers = []
 
-        all_subscriber: List[Literal] = ape_subscribers
+        all_subscriber: List[Literal] = ape_subscribers  # for better reading
         # object_subscriber
         resources = actual_process_execution.get_resources()  # ToDo: maybe other entities relevant
         for resource in resources:

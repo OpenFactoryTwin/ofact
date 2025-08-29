@@ -21,8 +21,8 @@ path = os.getcwd()
 # Adjust ROOT_PATH based on the operating system and directory structure
 if platform.system() == "Windows":
     # Ensure ROOT_PATH is set to "D:\ofact-intern\ofact" for Windows
-    if "ofact" in path:
-        ROOT_PATH = os.path.join(path.rsplit("ofact", 1)[0], "ofact", "ofact")
+    if "ofact-intern" in path:
+        ROOT_PATH = os.path.join(path.rsplit("ofact-intern", 1)[0], "ofact-intern", "ofact")
     else:
         raise NotImplementedError(f"Entrance point unknown: {path}")
 else:

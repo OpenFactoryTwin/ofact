@@ -107,6 +107,17 @@ class EventDiscreteSimulation(Environment):
     def check_simulation_queue_empty(self):
         return self._planned_events_queue.empty()
 
+    def plan_order_release(self, order: Order):
+        """
+        Store a planned order in the planned events queue to release them later
+        and be sure that the order is released at the time (since the simulation stops).
+
+        Parameters
+        ----------
+        order: the planned order
+        """
+        self._planned_events_queue.store_order(order)
+
     def execute_process_execution(self, process_execution: ProcessExecution,
                                   deviation_tolerance_time_delta: Optional[timedelta] = None,
                                   notification_time_delta: Optional[timedelta] = None):
@@ -155,12 +166,16 @@ class EventDiscreteSimulation(Environment):
             if time_stamp is not None:
                 self._current_time = time_stamp
             # print("simulate ...")
-            process_execution_actual, time_stamp, objects_for_notification = (
+            process_execution_actual, order, time_stamp, objects_for_notification = (
                 self.simulate_until_next_stop(event_object, time_stamp, objects_for_notification,
                                               deviation_tolerance_time_delta, notification_time_delta))
 
+
             if process_execution_actual is not None:
                 process_executions_actual.append(process_execution_actual)
+
+            if order is not None:
+                self.change_handler.reminder_for_order_release(order=order)
 
             # check termination
             if self._simulation_end_arrived():
@@ -214,6 +229,7 @@ class EventDiscreteSimulation(Environment):
         """Simulate until actual process_execution is executed"""
 
         process_execution_actual = None
+        order = None
         while event_object is not None:
 
             if isinstance(event_object, ProcessExecution):
@@ -230,7 +246,10 @@ class EventDiscreteSimulation(Environment):
                  objects_for_notification) = (
                     self._planned_events_queue.pop_next_event(time_stamp))
 
-        return process_execution_actual, time_stamp, objects_for_notification
+            elif isinstance(event_object, Order):
+                break
+
+        return process_execution_actual, order, time_stamp, objects_for_notification
 
     def _handle_process_execution(self, process_execution: ProcessExecution, start_time,
                                   deviation_tolerance_time_delta: Optional[timedelta],
@@ -278,16 +297,17 @@ class EventDiscreteSimulation(Environment):
         all_required_entities_available = self.check_entities_availability(process_execution_plan, start_time,
                                                                            deviation_tolerance_time_delta,
                                                                            notification_time_delta, next_event)
+
         if not all_required_entities_available:
             if not next_event and not already_in_queue:
                 # remove entries from entity event queues
                 print("Remove entries from entity event queues")
                 self._remove_process_execution_from_entity_event_queue(process_execution_plan)
             return
-
+        start_time = start_time.replace(microsecond=0)  # ToDo: find better solution
         actual_process_execution = \
             self._create_actual_process_execution(plan_process_execution=process_execution_plan,
-                                                  source_application="Event discrete simulation",
+                                                  source_application=process_execution_plan.source_application,
                                                   executed_start_time=start_time,
                                                   time_execution=True, from_plan=self.from_plan, end_time=True)
 
@@ -356,7 +376,11 @@ class EventDiscreteSimulation(Environment):
                                                       time_now=start_time))
 
         possible_start_time_stamp64 = deepcopy(possible_start_time_stamp_resource)
+        reason = []
+        if possible_start_time_stamp64 is not None:
+            reason.append("RESOURCE")
         if possible_start_time_stamp_part is not None:
+            reason.append("PART")
             if possible_start_time_stamp64 is None:
                 possible_start_time_stamp64 = possible_start_time_stamp_part
             elif possible_start_time_stamp64 < possible_start_time_stamp_part:
@@ -376,10 +400,12 @@ class EventDiscreteSimulation(Environment):
                 return available
                 #pass  # ToDo: comparison with ... not implemented until now
             # right order in the queue
-            # possible_start_time_stamp = (
-            #     possible_start_time_stamp.replace(microsecond=possible_start_time_stamp.microsecond + 1))
+            # ToDo: find better solution
+            possible_start_time_stamp = (
+                possible_start_time_stamp.replace(microsecond=possible_start_time_stamp.microsecond + 1))
 
-            print(f"Shifting '{process_execution.get_process_name()}' from {start_time} to {possible_start_time_stamp}")
+            print(f"Shifting '{process_execution.get_process_name()} - {process_execution.identification}' "
+                  f"from {start_time} to {possible_start_time_stamp}")
             resources = process_execution.get_resources()
             possible_start_time_stamp = None
 
@@ -490,8 +516,6 @@ class EventDiscreteSimulation(Environment):
         part_found = False
         if resource is None:
             return part_found, possible_start_time_stamp_part
-        # if resource.process_execution_plan not in self._entity_events_queues:
-        #     resource = part.situated_in
 
         resource_events_queue = self._entity_events_queues[resource.process_execution_plan]
         part_found, possible_start_time_stamp_part = (
@@ -503,9 +527,9 @@ class EventDiscreteSimulation(Environment):
                                          deviation_tolerance_time_delta: Optional[timedelta]):
         """Handle the actual process execution"""
 
-        # print("Actual PE:", process_execution_actual.identification,
-        #       process_execution_actual.executed_start_time, process_execution_actual.executed_end_time,
-        #       process_execution_actual.get_name(), process_execution_actual.order.external_identifications)
+        print("Actual PE:",  # process_execution_actual.identification,
+              process_execution_actual.executed_start_time, process_execution_actual.executed_end_time,
+              process_execution_actual.get_name(), process_execution_actual.order.external_identifications)
 
         process_execution_actual.execute()
         end_time_deviation_from_plan = process_execution_actual.get_end_time_deviation_from_plan()
@@ -516,8 +540,8 @@ class EventDiscreteSimulation(Environment):
                     negative_deviation_to_handle_within_simulation = True
             else:
                 pass  # ToDo: inform the agent who will maybe take another option
-        # print("Process Name Execution:", process_execution_actual.process.name,
-        #       process_execution_actual.executed_start_time, process_execution_actual.executed_end_time)
+        print("Process Name Execution:", process_execution_actual.process.name,
+              process_execution_actual.executed_start_time, process_execution_actual.executed_end_time)
         self._remove_process_execution_from_entity_event_queue(process_execution_actual, resources_from_plan=False)
         if not negative_deviation_to_handle_within_simulation:
             return process_execution_actual

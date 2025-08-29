@@ -3,12 +3,12 @@
 
 <div align="center">
 
-   <img src="ofact/docs/assets/imgs/ofact - logo.png" width="600" height="300" />
+   <img src="docs/source/_static/ofact - logo.png" width="1395" height="679" />
    <h3>Open Factory Twin</h3> 
    <h4>Open source Digital Twin Framework for Production and Logistics</h4>
 
   [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-  [![DOI](https://zenodo.org/badge/853263652.svg)](https://zenodo.org/doi/10.5281/zenodo.13734210)
+
 </div>
 
 <p align="center">
@@ -130,7 +130,7 @@ file, located in the corresponding subfolders.
 
 The following things are necessary to run this application:
 
-- tested on Python 3.10 and 3.12
+- tested on Python 3.12
 - requirements.txt
 
 ### Quick Start
@@ -235,5 +235,5 @@ If you have any further questions, please do not hesitate to contact us:
 
 ## Notice
 The documentation part of this work is 
-licensed under the [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/legalcode) 
-while the software part is licensed under Apache 2.0.
+licensed under the [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/legalcode) while the software part is 
+licensed under Apache 2.0.

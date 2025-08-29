@@ -5,6 +5,7 @@
 # Imports Part 1: Standard Imports
 from __future__ import annotations
 
+import time
 import asyncio
 import logging
 from datetime import datetime
@@ -320,20 +321,17 @@ class Agents:
     async def ready_for_next_round(self, agent_name, until_end=False):
         """Used to sync the negotiation rounds
         - set the response: all_requests_submitted (the first agent is responsible to start the waiting)"""
-
         round_ = self.get_current_round()
 
         if round_ not in self.agent_callbacks:
             self.arise_round_id()
             round_ = self.get_current_round()
             self.agent_callbacks[round_] = self._get_agent_callbacks()
-
         self.agent_callbacks[round_] = {name: future_
                                         for name, future_ in self.agent_callbacks[round_].items()
                                         if not future_.done()}
         current_agent_callbacks = self.agent_callbacks[round_]
         pending = len(self.agent_callbacks[round_])
-
         if until_end:
             if agent_name not in self.skip_complete_round:
                 self.skip_complete_round.append(agent_name)
@@ -359,10 +357,10 @@ class Agents:
         except KeyError:
             raise Exception(current_agent_callbacks, agent_name)
         if current_agent_callbacks[agent_name].done():
+            #Jannik:This point is not reached
             await self.wait_on_other_requesters(current_agent_callbacks=current_agent_callbacks)
             round_, skip_complete_round = await self.ready_for_next_round(agent_name)
             return round_, skip_complete_round
-
         # record self as ready for the next round
         current_agent_callbacks[agent_name].set_result(None)
         # if the round is not finished - wait until the current round is finished and the next round can be started
@@ -372,9 +370,11 @@ class Agents:
         pending = len(self.agent_callbacks[round_])
         round_pending = pending and \
                         list(current_agent_callbacks.values()) != []
+
         if round_pending:
             # print(f"not finished: {current_agent_callbacks}")
             await self.wait_on_other_requesters(current_agent_callbacks=current_agent_callbacks)
+
         if self.skip_complete_round:
             if set(self.skip_complete_round) == set(self.responder_requester_agent_names):
                 skip_complete_round = True
@@ -410,13 +410,13 @@ class Agents:
         if not pending and self.wait_to_next_round is None:  # first caller
             loop = asyncio.get_running_loop()
             self.wait_to_next_round = loop.create_future()
-
         if not pending:
             await self.wait_to_next_round
-
-        for callback_to_await in list(current_agent_callbacks.values()):
+        #print('bevor await loop')
+        for keys, callback_to_await in current_agent_callbacks.items():
+#            print(f'loop Agent: {keys}')
             await callback_to_await
-
+        #print('after await loop')
         return round_
 
     def set_await_transport_proposal(self, round_):

@@ -67,10 +67,8 @@ class StorageReservation:
             self._round_offered_parts = {round_: set()}
 
         if self._round_offered_parts[round_]:
-            try:
-                available_entities = list(set(available_entities).difference(self._round_offered_parts[round_]))
-            except:
-                print
+            available_entities = list(set(available_entities).difference(self._round_offered_parts[round_]))
+
         unreserved_entities = []
         if available_entities:
             unreserved_entities = self._check_reservation(entities=available_entities)

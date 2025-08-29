@@ -103,7 +103,9 @@ def _determine_resource_demand_process(process, possible_resource_models, availa
         _get_limited_possible_resource_model_resource_models(resource_model_demands, origin_destination)
 
     if len(resource_model_demands) > 1:
-        raise Exception("More than one rm: ", len(resource_model_demands), process.name)
+        print("Warning - More than one rm: ", len(resource_model_demands), process.name)
+        rg, demands = resource_model_demands.popitem()
+        resource_model_demands = {rg: demands}
 
     return resource_model_complete, resource_model_demands
 
@@ -237,7 +239,14 @@ def _determine_origin_position(pe_origin, entities_used, possible_origins, proce
         return origin_position
 
     possible_origins = list(set(possible_origins))
-    origin_position = _get_origin_destination_position(entities_used, possible_origins, process.get_possible_origins())
+
+    try:
+        origin_position = _get_origin_destination_position(entities_used, possible_origins, process.get_possible_origins())
+    except:
+        raise Exception("Process:", process.name,
+                        [entity_used.name for entity_used in entities_used],
+                        [resource.name for resource in possible_origins],
+                        [r.name for r in process.get_possible_origins()])
 
     return origin_position
 
@@ -286,7 +295,9 @@ def _get_origin_destination_position(entities_used, possible_origins_destination
                         possible_origins_destinations_.append(possible_origin_destination)
 
                 if len(possible_origins_destinations_) != 1:
-                    raise NotImplementedError(possible_origins_destinations_stationary)
+                    raise NotImplementedError([resource.name for resource in possible_origins_destinations_stationary],
+                                              [resource.name for resource in possible_origins_destinations],
+                                              [resource.name for resource in possible_origins_destinations_process])
                 else:
                     possible_origins_destinations_stationary = possible_origins_destinations_
 

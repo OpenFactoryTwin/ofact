@@ -23,14 +23,15 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from ofact.helpers import colored_print, timestamp_to_datetime
-# Imports Part 2: PIP Imports
+
 # Imports Part 3: Project Imports
+from ofact.helpers import colored_print, timestamp_to_datetime
 from ofact.planning_services.scenario_analytics.interface.helpers import get_timestamp
+from ofact.planning_services.scenario_analytics.scenario_handling.multi import MultiScenariosHandler
+from ofact.planning_services.scenario_analytics.scenario_handling.single import SingleScenarioHandler
 
 if TYPE_CHECKING:
-    from ofact.planning_services.scenario_analytics.scenario_handling.single import SingleScenarioHandler
-    from ofact.planning_services.scenario_analytics.scenario_handling.multi import MultiScenariosHandler
+    pass
 
 
 # ==build response
@@ -89,7 +90,7 @@ def build_digital_twin_enrichment_response(get_digital_twin_updated_func,
 def set_new_kpi_calc(further_digital_twin, scenario, scenarios_dict: dict[str, SingleScenarioHandler]):
 
     if scenario not in scenarios_dict:
-        scenarios_dict[scenario] = SingleScenarioHandler()
+        scenarios_dict[scenario] = SingleScenarioHandler(state_model=further_digital_twin)
 
     scenarios_dict[scenario].set_up_scenario(state_model=further_digital_twin)
 

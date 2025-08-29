@@ -45,6 +45,7 @@ class PartRequest(PlanningRequest):
     def __init__(self):
         super(PartRequest, self).__init__()
         self.ability_to_transport = True
+
     async def process_request(self, negotiation_object_request: PartCallForProposal):
         """
         The request for a part is handled in several steps: (in some aspects it is similar to the resource request)

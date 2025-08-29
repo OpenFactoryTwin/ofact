@@ -204,7 +204,7 @@ class StateModelMatcher:
 
             for other_product in other_products:
                 for reference_product in reference_products:
-                    if (other_product.identification.check_entity_type_match(reference_product.identification) and
+                    if (other_product.entity_type.check_entity_type_match(reference_product.entity_type) and
                             other_product.identification not in other_id_reference_id_match):
                         other_id_reference_id_match[other_product.identification] = reference_product.identification
 

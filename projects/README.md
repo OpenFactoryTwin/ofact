@@ -13,7 +13,8 @@ Only the models are stored in an additional folder inside the project, since her
 |--------------|-----------------|-----------------------------------------------|
 | **projects** | *template*      | an example for the digital twin usage         |
 |              | *bicycle world* | Industrie 4.0 use case for a bicycle assembly |
-|              | ...             | *your project specific adaptions*             |
+|              | ...             | *your project specific                        
+ adaptions*   |
 
 ***
 

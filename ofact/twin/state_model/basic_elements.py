@@ -1590,12 +1590,33 @@ class DynamicDigitalTwinObject(DigitalTwinObject):
         return self.dynamic_attributes.get_last_change_of_attribute_before(attribute, time_stamp)
 
 
-# to provide the opportunity to import the enum also in the 'entities' file
-# (not possible to store it in processes because of circular calls)
-ProcessExecutionTypes = Enum('ProcessExecutionEventTypes',
-                             'PLAN ACTUAL',
-                             module='ofact.twin.state_model.processes',
-                             qualname='ProcessExecution.EventTypes')
+class ProcessExecutionTypes(Enum):
+    # to provide the opportunity to import the enum also in the 'entities' file
+    # (not possible to store it in processes because of circular calls)
+    PLAN = "PLAN"
+    ACTUAL = "ACTUAL"
+
+ProcessExecutionTypes.__module__ = 'ofact.twin.state_model.processes'
+ProcessExecutionTypes.__qualname__ = 'ProcessExecution.EventTypes'
+
+
+class TemplateEnum(Enum):
+    def __call__(self, *args, **kwargs):
+        try:
+            return self.value.format(*args, **kwargs)
+        except Exception as e:
+            raise ValueError(f"Formatting failed for {self}: {e}")
+
+
+class SourceApplicationTypes(TemplateEnum):
+    # to provide the opportunity to specify the origin/source application of the process
+    REAL_WORLD = "REAL_WORLD_{}"
+    SIMULATION = "SIMULATION_{}"
+
+
+SourceApplicationTypes.__module__ = 'ofact.twin.state_model.processes'
+SourceApplicationTypes.__qualname__ = 'ProcessExecution.SourceApplicationTypes'
+
 
 if __name__ == "__main__":
     pass

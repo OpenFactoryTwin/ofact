@@ -20,7 +20,9 @@ from typing import TYPE_CHECKING, Dict, Optional, List
 
 # Imports Part 3: Project Imports
 import numpy as np
+import pandas as pd
 
+from ofact.twin.settings import FILE_LOG_LEVEL, CONSOLE_LOG_LEVEL
 from ofact.twin.agent_control.behaviours.basic import DigitalTwinCyclicBehaviour
 from ofact.twin.agent_control.behaviours.negotiation.objects import CallForProposal, \
     ProcessCallForProposal, ProcessGroupCallForProposal
@@ -31,7 +33,8 @@ from ofact.twin.agent_control.helpers.communication_objects import ListCO, Objec
 from ofact.twin.agent_control.helpers.debug_str import get_debug_str
 from ofact.twin.agent_control.helpers.sort_process_executions import _get_sorted_process_executions
 from ofact.twin.agent_control.responsibilities import Responsibility
-from ofact.twin.state_model.entities import StationaryResource, NonStationaryResource, Storage, ConveyorBelt, ActiveMovingResource
+from ofact.twin.state_model.entities import StationaryResource, NonStationaryResource, Storage, ConveyorBelt, \
+    ActiveMovingResource
 from ofact.twin.state_model.processes import (WorkOrder, ProcessExecution, EntityTransformationNode, Process,
                                               ValueAddedProcess)
 
@@ -41,8 +44,11 @@ if TYPE_CHECKING:
     from ofact.twin.state_model.entities import EntityType, Entity
     from ofact.twin.state_model.sales import Order, Feature
 
+from ofact.twin.utils import setup_dual_logger
+
+
 # Module-Specific Constants
-logger = logging.getLogger("OrderManagement")
+# logger = logging.getLogger("OrderManagement")
 
 
 # ToDo: Replace the last_process_executions_tuple - Why is a tuple needed?
@@ -266,6 +272,11 @@ class OrderManagement(DigitalTwinCyclicBehaviour):
         self.current_round = 0
         self.phase = 0
 
+        self.negotiation_failed = 0
+        self.amount_negotiation = 0
+        self.last_pe = 0
+        self.time = pd.Timedelta(seconds=0)
+
         self.next_request = None
         self.availability_request_level = 1
 
@@ -274,6 +285,8 @@ class OrderManagement(DigitalTwinCyclicBehaviour):
 
         self.support_resource = None
         self.main_entity = None  # ToDo
+
+        self.logging = setup_dual_logger()
 
         # ToDo: Thought support - work order simulation wie bei dynamic attributes
 
@@ -431,11 +444,12 @@ class OrderManagement(DigitalTwinCyclicBehaviour):
     # #### ORDER MANAGEMENT ############################################################################################
 
     async def _organize_order(self):
+        self.logging.info(f'{self.agent.name} Organizing order', extra={"obj_id": self.agent.name})
         # set the next order
         await self._request_new_order()
-
+        print(f'{self.agent.name} Order request finished')
         order_or_datetime = await self._receive_new_order()
-
+        print(f'{self.agent.name} Order datetime {order_or_datetime}')
         if isinstance(order_or_datetime, datetime):
             return order_or_datetime
 
@@ -454,7 +468,8 @@ class OrderManagement(DigitalTwinCyclicBehaviour):
 
         print(get_debug_str(self.agent.name, self.__class__.__name__) +
               f" The order {order_str} was chosen to execute!")
-
+        self.logging.info(f'{self.agent.name} has chosen Order {order.identification} to execute!',
+                          extra={"obj_id": self.agent.name})
         # creation of the production order
         self.agent.current_work_order, self.agent.current_work_order_preference = \
             self.get_next_work_order(sales_order=self.agent.current_order)
@@ -680,7 +695,14 @@ class OrderManagement(DigitalTwinCyclicBehaviour):
 
         # Choose the next current value added process  # ToDo: (later) maybe parallel
         value_added_processes = self.get_next_value_added_processes()
-
+        if value_added_processes is not None:
+            self.logging.info(
+                f'Order ID:{self.agent.current_order.identification} Value added process selection: {value_added_processes[0].name}',
+                extra={"obj_id": self.agent.name})
+        else:
+            self.logging.info(
+                f'Order ID:{self.agent.current_order.identification} Value added process is {value_added_processes}',
+                extra={"obj_id": self.agent.name})
         return new_value_added_process, value_added_processes, self._old_value_added_process_execution
 
     def check_value_added_process_finished(self) -> bool:
@@ -799,6 +821,12 @@ class OrderManagement(DigitalTwinCyclicBehaviour):
         """
         # print(get_debug_str(self.agent.name, self.__class__.__name__) + f" Skip {amount} negotiation rounds")
         # until_end = False  # ToDo: maybe a Schmaus problem???
+
+        # if self.agent.current_order is not None:
+        #     self.logging.info(f'Order ID {self.agent.current_order.identification} skipped {amount} rounds', extra={"obj_id": self.agent.name})
+        # else:
+        #     self.logging.info(f'Order ID {self.agent.current_order} skipped {amount} rounds', extra={"obj_id": self.agent.name})
+
         for i in range(amount):
             # sync
             round_, skipped_to_end = \
@@ -953,7 +981,8 @@ class OrderManagement(DigitalTwinCyclicBehaviour):
         If one of the steps is not needed it is skipped elif not successfully achieved the whole process is aborted
         """
         # print(get_debug_str(self.agent.name, self.__class__.__name__) + " Start organization")
-
+        self.logging.info(f"Order ID: {self.agent.current_order.identification}, Organization started",
+                          extra={"obj_id": self.agent.name})
         requested_times = {}
         value_added_process = value_added_processes[0]
         preconditions = self.value_added_processes_preconditions[value_added_process]
@@ -970,6 +999,8 @@ class OrderManagement(DigitalTwinCyclicBehaviour):
 
         if (main_part_entity_type or support_entity_type) and main_organization_needed:
             # print(get_debug_str(self.agent.name, self.__class__.__name__) + " Main Loading")
+            self.logging.info(f"Order ID: {self.agent.current_order.identification}, Main Loading",
+                              extra={"obj_id": self.agent.name})
             # Main loading
             loading_successful, process_executions_loading_with_provider, planned_process_executions = \
                 await self._organize_main_loading(value_added_process=value_added_process,
@@ -1004,6 +1035,9 @@ class OrderManagement(DigitalTwinCyclicBehaviour):
         #     print(self.support_resource.name, start_time_transport)
         # VAP
         # print(get_debug_str(self.agent.name, self.__class__.__name__) + f" VAP")
+        self.logging.info(
+            f'Order ID: {self.agent.current_order.identification}, VAP {value_added_process.identification}',
+            extra={"obj_id": self.agent.name})
         (vap_successful, process_execution_batch_with_provider, value_added_process_execution,
          planned_process_executions_vap, accepted_time_period) = \
             await self._organize_value_added_process(
@@ -1012,6 +1046,14 @@ class OrderManagement(DigitalTwinCyclicBehaviour):
                 support_entity_type=support_entity_type, main_part_entity_type=main_part_entity_type)
 
         print(get_debug_str(self.agent.name, self.__class__.__name__) + f" VAP {vap_successful}")
+        if value_added_process_execution is not None:
+            self.logging.info(
+                f'Order ID: {self.agent.current_order.identification}, VAP:{value_added_process_execution.process.name} is {vap_successful}, PE:{value_added_process_execution.identification} ',
+                extra={"obj_id": self.agent.name})
+        else:
+            self.logging.info(
+                f'Order ID: {self.agent.current_order.identification}, VAP: {value_added_process_execution} is {vap_successful}',
+                extra={"obj_id": self.agent.name})
         if not vap_successful:
             requested_times["VAP"] = accepted_time_period
             await self._cancel_process_execution_batch(
@@ -1047,7 +1089,8 @@ class OrderManagement(DigitalTwinCyclicBehaviour):
             transport_successful = True
 
         print(get_debug_str(self.agent.name, self.__class__.__name__) + f" Transport {transport_successful}")
-
+        self.logging.info(f'Order ID: {self.agent.current_order.identification}, Transport {transport_successful}',
+                          extra={"obj_id": self.agent.name})
         if not transport_successful:
             requested_times["TRANSPORT"] = accepted_time_period
             await self._cancel_process_execution_batch(
@@ -1074,7 +1117,8 @@ class OrderManagement(DigitalTwinCyclicBehaviour):
         #     print(process_execution.executed_start_time, process_execution.executed_end_time)
 
         self._set_order_product(value_added_process_execution)
-
+        self.logging.info(f'Order ID: {self.agent.current_order.identification}, Organization ended',
+                          extra={"obj_id": self.agent.name})
         return True, requested_times
 
     def _get_process_executions_order(self, planned_process_executions=None):
@@ -1541,10 +1585,11 @@ class OrderManagement(DigitalTwinCyclicBehaviour):
             process_call_for_proposals, providers_dict, last_process_execution, accepted_time_period = \
                 self.value_added_process_call_for_proposals
 
+            transport_required = support_entity_type or main_part_entity_type
             preference, accepted_time_period = \
                 self._get_preference_value_added_process(process_call_for_proposals[0].process_execution,
                                                          last_process_execution,
-                                                         value_added_processes[0])
+                                                         value_added_processes[0], transport_required)
 
             self.value_added_process_call_for_proposals = \
                 process_call_for_proposals, providers_dict, last_process_execution, accepted_time_period
@@ -1585,13 +1630,15 @@ class OrderManagement(DigitalTwinCyclicBehaviour):
                                  parts_involved=parts_involved, resulting_quality=1, resources_used=[],
                                  main_resource=None, order=self.agent.current_work_order.order,
                                  source_application=self.agent.source_application)
-
+            transport_required = support_entity_type or main_part_entity_type
             preference, accepted_time_period = \
-                self._get_preference_value_added_process(process_execution, last_process_execution, value_added_process)
+                self._get_preference_value_added_process(process_execution, last_process_execution, value_added_process,
+                                                         transport_required)
             main_resource = value_added_process.get_resource_groups()[0].main_resources[0]
-            providers = [self.agent.address_book[main_resource]]
-
-            # print("Long Time", self.agent.name, self.agent.current_order, long_time_reservation)
+            try:
+                providers = [self.agent.address_book[main_resource]]
+            except KeyError:
+                raise Exception(main_resource.name, self.agent.name)
 
             process_call_for_proposal = self._get_process_call_for_proposal(process_execution, preference,
                                                                             long_time_reservation)
@@ -1635,6 +1682,8 @@ class OrderManagement(DigitalTwinCyclicBehaviour):
         else:
             long_time_reservation = {}
             self.reset_current_resource_binding = True
+        print("Set Support", self.agent.current_order.identification, value_added_process.name,
+              support_entity_type.name if support_entity_type is not None else None)
 
         if self.agent.current_order.products:
             available_parts = [part
@@ -1686,11 +1735,12 @@ class OrderManagement(DigitalTwinCyclicBehaviour):
 
         return parts_involved.copy(), long_time_reservation
 
-    def get_accepted_time_periods_vap(self, last_process_execution, value_added_process):
+    def get_accepted_time_periods_vap(self, last_process_execution, value_added_process, transport_required):
 
         start_time_period, lead_time = \
             self.determine_start_time_value_added_process(last_process_execution,
-                                                          value_added_process=value_added_process)
+                                                          value_added_process=value_added_process,
+                                                          transport_required=transport_required)
 
         start_time_period64 = np.datetime64(start_time_period.replace(microsecond=0))
 
@@ -1705,20 +1755,25 @@ class OrderManagement(DigitalTwinCyclicBehaviour):
             extension = None
 
         else:
-            extension = None
-            # extension = (self._requested_times_before["VAP"][1] - self._requested_times_before["VAP"][0] +
-            #              np.timedelta64(120, "s")).item().seconds
-        # print(self.agent.name, start_time_period64)
+            extension = (self._requested_times_before["VAP"][1] - self._requested_times_before["VAP"][0] +
+                         np.timedelta64(450, "s")).item().seconds
+
         accepted_time_periods = np.array([[start_time_period64, np.datetime64("NaT")]],
                                          dtype='datetime64[s]')
 
         return accepted_time_periods, extension
 
-    def _get_preference_value_added_process(self, process_execution, last_process_execution, value_added_process):
+    def _get_preference_value_added_process(self, process_execution, last_process_execution, value_added_process,
+                                            transport_required):
         """Determine the preference for the value_added_process"""
+        start_funtion = datetime.now()
+        if self.last_pe == value_added_process.identification:
+            self.negotiation_failed += 1
+        self.last_pe = value_added_process.identification
+        self.amount_negotiation += 1
 
         accepted_time_periods, extension = \
-            self.get_accepted_time_periods_vap(last_process_execution, value_added_process)
+            self.get_accepted_time_periods_vap(last_process_execution, value_added_process, transport_required)
 
         distance = process_execution.get_distance()
         time_slot_duration = int(np.ceil(round(process_execution.get_max_process_time(distance=distance), 1)))
@@ -1783,9 +1838,6 @@ class OrderManagement(DigitalTwinCyclicBehaviour):
 
         process_executions = []
 
-        if len(await_callbacks) > 1:
-            print("To long")
-
         for await_callback in await_callbacks:
             process_executions, best_time_slot_value_proposals = \
                 await self._get_process_executions(await_callback, requests)
@@ -1818,13 +1870,15 @@ class OrderManagement(DigitalTwinCyclicBehaviour):
 
         return successful, process_executions_with_provider, process_execution_to_block, process_executions
 
-    def determine_start_time_value_added_process(self, last_process_execution: ProcessExecution, value_added_process):
+    def determine_start_time_value_added_process(self, last_process_execution: ProcessExecution, value_added_process,
+                                                 transport_required):
         """
         Determine the start_time for the value_added_process with consideration of earlier processes
         :param value_added_process: the value_added_process done next
         :return: the possible start_time of the value_added_process
         """
-
+        if not transport_required:
+            return self.current_time64.item(), timedelta(0)
         alternative_transport_times = self._get_transport_time_alternatives(value_added_process, last_process_execution)
         if not alternative_transport_times:
             return self.current_time64.item(), timedelta(0)
@@ -1856,10 +1910,7 @@ class OrderManagement(DigitalTwinCyclicBehaviour):
         for possible_destination in possible_destinations:
             # print("Origin:",  last_process_execution.origin, last_process_execution.process.name,
             # possible_destination)
-            try:
-                origin.identification == possible_destination.identification
-            except:
-                print
+
             if origin.identification == possible_destination.identification:
                 alternative_transport_times.append(0)
                 continue
@@ -2367,7 +2418,7 @@ class OrderManagement(DigitalTwinCyclicBehaviour):
     async def bind_resource(self, resource_binding):
         """Bind a resource which means link the resource to the order
         because the resource is needed for more than one process"""
-        print(self.agent.name, "bind")
+
         provider = self.agent.address_book[resource_binding[0]]
         resource_binding_object = ObjectCO(resource_binding)
         self.agent.agents.store_communication_object(resource_binding_object)

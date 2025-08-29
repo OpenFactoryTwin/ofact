@@ -30,7 +30,7 @@ if "__main__" == __name__:
     from datetime import datetime
 
     scenario_name = "simulation_run0"
-    multi_scenarios_handler = get_multi_scenario_handler(r"files/updated_state_model.pkl",
+    multi_scenarios_handler = get_multi_scenario_handler(r"files/scenario_2_p_50.pkl",
                                                          scenario_name=scenario_name)
     single_scenario_handler = multi_scenarios_handler.get_scenario_handler_by_name(scenario_name)
     scenario_description = {ScenarioDescription.RESOURCE_SCHEDULE: "schedule.xlsm"}

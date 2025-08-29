@@ -33,7 +33,7 @@ from copy import deepcopy
 from datetime import datetime, timedelta
 from functools import wraps, reduce
 from operator import concat
-from typing import TYPE_CHECKING, Union, Optional, Type
+from typing import TYPE_CHECKING, Union, Optional, Type, Counter
 from types import NoneType
 # Imports Part 2: PIP Imports
 import dill as pickle
@@ -41,7 +41,7 @@ import numpy as np
 
 # Imports Part 3: Project Imports
 from ofact.twin.state_model.basic_elements import (DigitalTwinObject, DynamicAttributes, DynamicDigitalTwinObject,
-                                                   ProcessExecutionTypes, prints_visible)
+                                                   ProcessExecutionTypes, prints_visible, SourceApplicationTypes)
 from ofact.twin.state_model.entities import (Plant, PhysicalBody, EntityType, PartType, Entity, Part, Resource,
                                              StationaryResource, Storage, WorkStation, Warehouse, ConveyorBelt,
                                              NonStationaryResource, ActiveMovingResource, PassiveMovingResource)
@@ -71,6 +71,7 @@ if TYPE_CHECKING:
 EventTypes = ProcessExecutionTypes
 
 enums_used = {"Types": ProcessExecutionTypes,
+              "SourceApplicationTypes": SourceApplicationTypes,
               "TransformationTypes": EntityTransformationNodeTransformationTypes,
               "IoBehaviours": EntityTransformationNodeIoBehaviours}
 
@@ -1343,8 +1344,8 @@ class StateModel:
                 else:
                     raise NotImplementedError(f"The class_name: {class_name} with external_id: {external_id}")
 
-            if class_name == "Part":  # ToDo: should be replaced!
-                external_id = "_".join(external_id.split("_")[:-2]) + " " + external_id.split("_")[-2]
+            # if class_name == "Part":  # ToDo: should be replaced!
+            #     external_id = "_".join(external_id.split("_")[:-2]) + " " + external_id.split("_")[-2]
 
             if external_id in self._objects_by_external_identification[name_space][class_name]:
 
@@ -2021,7 +2022,7 @@ class StateModel:
                                                                   orders_with_delivery_date_actual])
 
         orders_list = orders_without_delivery_date_actual["Order"]
-        orders_without_delivery_date_actual=[]
+        orders_without_delivery_date_actual = []
         for order in orders_list:
             if type(order.delivery_date_actual) == NoneType:
                 orders_without_delivery_date_actual.append(order)
@@ -2124,6 +2125,7 @@ class StateModel:
         return estimated_order_lead_time_mean
 
     def get_estimated_order_lead_times(self, orders: Optional[list[Order]] = None):
+        """"""
         if orders is None:
             orders = self.get_orders()
         feature_value_added_processes = self.get_feature_process_mapper()
@@ -2133,6 +2135,7 @@ class StateModel:
         return lead_times
 
     def get_estimated_order_lead_time(self, order, feature_value_added_processes: dict = None):
+        """Return the estimated (estimated lead times of the value added processes) lead time required for the order."""
         # feature value_added_process required mapping
         if feature_value_added_processes is None:
             feature_value_added_processes = self.get_feature_process_mapper()
@@ -2150,9 +2153,45 @@ class StateModel:
 
         return timedelta(seconds=estimated_order_lead_time)
 
+    def get_estimated_lead_times_per_resource_types(self, orders: Optional[list[Order]] = None):
+        """Return the estimated lead times required per resource type for the order pool."""
+        if orders is None:
+            orders = self.get_orders()
+        feature_value_added_processes = self.get_feature_process_mapper()
 
+        lead_times_lst = [self.get_estimated_lead_times_per_resource_types_order(order, feature_value_added_processes)
+                          for order in orders]
+        resource_types_lead_times = dict(sum((Counter(d)
+                                              for d in lead_times_lst),
+                                             Counter()))
+        return resource_types_lead_times
+
+    def get_estimated_lead_times_per_resource_types_order(self, order, feature_value_added_processes = None):
+        """Return the estimated lead times required per resource type for the order."""
+        resource_types_lead_times = {}
+        if feature_value_added_processes is None:
+            feature_value_added_processes = self.get_feature_process_mapper()
+
+        value_added_processes_required = \
+            [value_added_processes
+             for feature in order.features_requested
+             for value_added_processes in feature_value_added_processes[feature]]
+
+        for value_added_process in value_added_processes_required:
+            value_added_process: ValueAddedProcess
+            resource_groups = value_added_process.get_resource_groups()
+
+            resource_group = resource_groups[0]  # ToDo: scale to more than one resource group
+            for resource_type in resource_group.resources:
+                if resource_type in resource_types_lead_times:
+                    resource_types_lead_times[resource_type] += value_added_process.get_estimated_process_lead_time()
+                else:
+                    resource_types_lead_times[resource_type] = value_added_process.get_estimated_process_lead_time()
+
+        return resource_types_lead_times
 
     def get_number_of_orders_finished(self):
+        """Return the number of finished orders from the state model order pool."""
         orders = self.get_orders()
         finished_orders = [order.is_finished()
                            for order in orders]

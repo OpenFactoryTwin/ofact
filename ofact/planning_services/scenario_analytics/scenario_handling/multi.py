@@ -29,13 +29,13 @@ from typing import TYPE_CHECKING, Optional
 import pandas as pd
 import numpy as np
 
+# Import Part 3: Project Imports
 from ofact.planning_services.scenario_analytics.scenario_handling.state_model_matcher import StateModelMatcher
 from ofact.planning_services.scenario_analytics.repository_services.kpi_data_controller import KPIDataBaseController
 from ofact.planning_services.scenario_analytics.repository_services.raw_data_controller import \
     ScenarioAnalyticsDataBaseController
-# Import Part 3: Project Imports
-from ofact.planning_services.scenario_analytics.scenario_handling.single import SingleScenarioHandler
 from ofact.planning_services.scenario_analytics.data_basis import ScenarioAnalyticsDataBase
+from ofact.planning_services.scenario_analytics.scenario_handling.single import SingleScenarioHandler
 
 if TYPE_CHECKING:
     from datetime import datetime
@@ -259,7 +259,7 @@ class MultiScenariosHandler:
         scenario_names = list(scenarios_dict.keys())
         return scenario_names
 
-    def get_kpi_for_scenarios(self, scenarios_to_consider, multi_scenario_handler, start_time=None, end_time=None):
+    def get_kpi_for_scenarios(self, scenarios_to_consider: list[str], start_time=None, end_time=None):
         """
         Get KPI for all scenarios. For each, the order, product, process, resource and resource view
         as well as additional information.
@@ -280,7 +280,7 @@ class MultiScenariosHandler:
         order_traces_dataframes, resource_traces_dataframes = [], []
         scenarios_dict = self.get_scenarios_dict()
         for scenario_name, scenario_handler in scenarios_dict.items():
-            if scenario_name not in scenarios_to_consider["scenarioIDs"]:
+            if scenario_name not in scenarios_to_consider:
                 continue
 
             orders_df, products_df, processes_df, resources_df, resource_utilization_df = (
@@ -328,7 +328,7 @@ class MultiScenariosHandler:
 
         delta_resource_utilization_columns = ['Capacity Utilization']
 
-        if len(scenarios_to_consider["scenarioIDs"]) > 1:
+        if len(scenarios_to_consider) > 1:
             order_dataframes[0].set_index("id", inplace=True)
             order_dataframes[1].set_index("id", inplace=True)
             for column in delta_orders_columns:
@@ -475,7 +475,7 @@ class MultiScenariosHandler:
                          scenarios: dict[str, list[str]] = None):
         (orders, products, processes, resources, resource_utilization, resource_schedules, order_traces,
          scenario_descriptions) = (
-            self.get_kpi_for_scenarios(scenarios, self, start_time, end_time))
+            self.get_kpi_for_scenarios(scenarios["scenarioIDs"], self, start_time, end_time))
 
         # setup table dict
         dict_df = {"KPI_ORDERS": orders,

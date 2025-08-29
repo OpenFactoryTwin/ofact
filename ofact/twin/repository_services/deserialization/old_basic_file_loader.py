@@ -15,9 +15,6 @@ SPDX-License-Identifier: Apache-2.0
 
 The file is used to instantiate the objects from an Excel file.
 
-Currently only for the agents model used.
-In further versions deprecated.
-
 @contact persons: Adrian Freiter
 """
 
@@ -578,11 +575,11 @@ class ObjectInstantiation:
             correction_dict[concerned_object].append(duplicated_object)
             self.add_existing_object({duplicate_element: duplicated_object})
 
-        if "twin" in creation_domain:
+        if creation_domain == "twin":
             if concerned_object.situated_in:
                 concerned_object.situated_in.add_entities(correction_dict[concerned_object])
 
-        elif "agents" in creation_domain:
+        elif creation_domain == "agents":
             for idx, duplicated_object in enumerate(correction_dict[concerned_object]):
                 agent_number = idx + 1
                 duplicated_object.adapt_duplicate(agent_number)

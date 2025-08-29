@@ -260,7 +260,8 @@ class SingleScenarioHandler:
 
         kpi_requested = ["number_of_pieces_absolute_objects", "number_of_pieces_relative_objects",
                          "customer", "order_status", "start_end_time",
-                         "delivery_reliability", "delivery_delay", "lead_time", "quality", "performance"]
+                         "delivery_reliability", "delivery_delay", "lead_time", "quality", "performance",
+                         "source"]
         order_view_df = self._get_view_df(start_time, end_time,
                                           order_ids_list, product_ids_list, process_ids_list, resource_ids_list,
                                           view, all, kpi_requested)
@@ -273,7 +274,8 @@ class SingleScenarioHandler:
 
         kpi_requested = ["number_of_pieces_absolute_objects", "number_of_pieces_relative_objects",
                          "target_quantity", "difference_percentage_products",
-                         "delivery_reliability", "lead_time", "quality", "inventory", "performance"]
+                         "delivery_reliability", "lead_time", "quality", "inventory", "performance",
+                         "source"]
         product_view_df = self._get_view_df(start_time, end_time,
                                             order_ids_list, product_ids_list, process_ids_list, resource_ids_list,
                                             view, all, kpi_requested)
@@ -285,7 +287,7 @@ class SingleScenarioHandler:
         view = "PROCESS"
 
         kpi_requested = ["number_of_pieces_absolute_pe", "number_of_pieces_relative_pe",
-                         "delivery_reliability", "lead_time", "quality", "performance"]
+                         "delivery_reliability", "lead_time", "quality", "performance", "source"]
         process_view_df = self._get_view_df(start_time, end_time,
                                             order_ids_list, product_ids_list, process_ids_list, resource_ids_list,
                                             view, all, kpi_requested)
@@ -298,7 +300,8 @@ class SingleScenarioHandler:
 
         kpi_requested = ["number_of_pieces_absolute_pe", "number_of_pieces_relative_pe",
                          "delivery_reliability", "lead_time", "quality", "inventory", "performance", "utilisation",
-                         "availability", "ore"]
+                         "availability", "ore",
+                         "source"]
         process_view_df = self._get_view_df(start_time, end_time,
                                             order_ids_list, product_ids_list, process_ids_list, resource_ids_list,
                                             view, all, kpi_requested)
@@ -479,6 +482,15 @@ class SingleScenarioHandler:
             kpi_ore = self.ore.get_ore(kpi_quality_df, kpi_performance_df, kpi_availability)
             kpi_ore_df = kpi_ore.to_frame("ORE")
             view_kpis.append(kpi_ore_df)
+
+        if "source" in kpi_requested:
+            kpi_source_df = self.get_source(start_time=start_time, end_time=end_time,
+                                         order_ids_list=order_ids_list, product_ids_list=product_ids_list,
+                                         process_ids_list=process_ids_list,
+                                         resource_ids_list=resource_ids_list,
+                                         event_type="ACTUAL", view=view, all=all)
+            view_kpis.append(kpi_source_df)
+
         view_df = pd.concat(view_kpis, axis=1)
 
         view_df = view_df.loc[:, ~view_df.columns.duplicated()]  # drop duplicated columns
@@ -635,6 +647,15 @@ class SingleScenarioHandler:
                                                   order_ids=order_ids_list, part_ids=product_ids_list,
                                                   process_ids=process_ids_list, resource_ids=resource_ids_list,
                                                   event_type=event_type, view=view, scenario=self.id, all=all)
+
+    def get_source(self, start_time, end_time,
+                   order_ids_list, product_ids_list, process_ids_list, resource_ids_list,
+                   event_type, view, all=False):
+        scenario = self.id
+        return self.kpi_administration.get_source(start_time=start_time, end_time=end_time,
+                                                  order_ids=order_ids_list, part_ids=product_ids_list,
+                                                  process_ids=process_ids_list, resource_ids=resource_ids_list,
+                                                  event_type=event_type, view=view, scenario=scenario, all=all)
 
     def get_lead_time_chart(self, start_time, end_time, order_ids_list, product_ids_list, process_ids_list,
                             resource_ids_list, bin_size, event_type, view):

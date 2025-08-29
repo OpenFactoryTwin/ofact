@@ -125,7 +125,8 @@ class OrdersResponse:
                   release_date: int = 0, completion_date: int = 0, planned_completion_date: int = 0,
                   order_status: str = "-", priority: int = 1,
                   delivery_reliability: str = "-", delivery_delay: int = 0, total_lead_time: int = 0,
-                  total_waiting_time: int = 0, current_stock: int = 0, quality: int = 0, performance: int = 0):
+                  total_waiting_time: int = 0, current_stock: int = 0, quality: int = 0, performance: int = 0,
+                  source: str = "-"):
         new = {"id": id_,
                "referenceValue": reference_value,
                "numberOfPiecesAbsolute": number_of_pieces_absolute,
@@ -143,7 +144,8 @@ class OrdersResponse:
                "totalWaitingTime": total_waiting_time,
                "currentStock": current_stock,
                "quality": quality,
-               "performance": performance}
+               "performance": performance,
+               "source": source}
 
         self.orders.append(new)
 
@@ -199,7 +201,8 @@ def get_orders_response(order_view):
                                total_lead_time=order_row["total_lead_time_wt"],
                                total_waiting_time=order_row["total_waiting_time"],
                                quality=order_row["Resulting Quality"],
-                               performance=order_row["performance"])
+                               performance=order_row["performance"],
+                               source=order_row["Source"])
         except:
             print(f"Datengrundlage für {reference_value} zu gering. "
                   f"Ggf. hilft die Erhöhung des Dateneinladezeitraums/Betrachtungszeitraums")
@@ -218,7 +221,7 @@ class OrdersSummaryResponse:
                            planned_completion_date: int = 0,
                            order_status: str = "-", priority: int = 1, delivery_reliability: str = "-",
                            delivery_delay: int = 0, total_lead_time: int = 0, total_waiting_time: int = 0,
-                           current_stock: int = 0, quality: int = 0, performance: int = 0):
+                           current_stock: int = 0, quality: int = 0, performance: int = 0, source: str = "-"):
         self.orders_summary = {"numberOfPiecesAbsolute": number_of_pieces_absolute,
                                "numberOfPiecesRelative": number_of_pieces_relative,
                                "customer": customer,
@@ -234,7 +237,8 @@ class OrdersSummaryResponse:
                                "totalWaitingTime": total_waiting_time,
                                "currentStock": current_stock,
                                "quality": quality,
-                               "performance": performance}
+                               "performance": performance,
+                               "source": source}
 
     def get_response_dict(self):
         return self.orders_summary
@@ -280,7 +284,8 @@ async def build_orders_summary_response(start_time: datetime, end_time: datetime
                                     total_lead_time=order_row["total_lead_time_wt"],
                                     total_waiting_time=order_row["total_waiting_time"],
                                     quality=order_row["Resulting Quality"],
-                                    performance=order_row["performance"])
+                                    performance=order_row["performance"],
+                                    source=order_row["Source"])
     except:
         print("Problem with order summary")
 
@@ -298,7 +303,7 @@ class ProductsResponse:
                     quantity_produced: int = 0, difference_percentage: int = 0, product_shares: int = 0,
                     delivery_reliability: str = "-", lead_time: int = 0, total_lead_time: int = 0,
                     waiting_time: int = 0, total_waiting_time: int = 0, current_stock: int = 0, quality: int = 0,
-                    performance: int = 0):
+                    performance: int = 0, source: str = "-"):
         new = {"id": id_,
                "referenceValue": reference_value,
                "targetQuantity": target_quantity,
@@ -312,7 +317,8 @@ class ProductsResponse:
                "totalWaitingTime": total_waiting_time,
                "currentStock": current_stock,
                "quality": quality,
-               "performance": performance}
+               "performance": performance,
+               "source": source}
         self.products.append(new)
 
     def get_response_dict(self):
@@ -354,7 +360,8 @@ def get_products_response(product_view):
                              total_waiting_time=product_row["total_waiting_time"],
                              quality=product_row['Resulting Quality'],
                              current_stock=product_row["Inventory"],
-                             performance=product_row["performance"])
+                             performance=product_row["performance"],
+                             source=product_row["Source"])
     return response
 
 
@@ -367,7 +374,7 @@ class ProductsSummaryResponse:
     def add_product_summary(self, target_quantity: int = 0, quantity_produced: int = 0, difference_percentage: int = 0,
                             product_shares: int = 0, delivery_reliability: str = "-", lead_time: int = 0,
                             total_lead_time: int = 0, waiting_time: int = 0, total_waiting_time: int = 0,
-                            current_stock: int = 0, quality: int = 0, performance: int = 0):
+                            current_stock: int = 0, quality: int = 0, performance: int = 0, source: str = "-"):
         self.products_summary = {"targetQuantity": target_quantity,
                                  "quantityProduced": quantity_produced,
                                  "differencePercentage": difference_percentage,
@@ -379,7 +386,8 @@ class ProductsSummaryResponse:
                                  "totalWaitingTime": total_waiting_time,
                                  "currentStock": current_stock,
                                  "quality": quality,
-                                 "performance": performance}
+                                 "performance": performance,
+                                 "source": source}
 
     def get_response_dict(self):
         return self.products_summary
@@ -414,7 +422,8 @@ async def build_products_summary_response(start_time: datetime, end_time: dateti
                                  total_waiting_time=product_row["total_waiting_time"],
                                  quality=product_row['Resulting Quality'],
                                  current_stock=product_row["Inventory"],
-                                 performance=product_row["performance"])
+                                 performance=product_row["performance"],
+                                 source=product_row["Source"])
 
     return response
 
@@ -430,7 +439,7 @@ class ProcessesResponse:
                     process_share: int = 0, delivery_reliability: str = "-", lead_time: int = 0,
                     waiting_time: int = 0, min_lead_time: int = 0, min_waiting_time: int = 0, max_lead_time: int = 0,
                     max_waiting_time: int = 0, var_lead_time: int = 0, var_waiting_time: int = 0, quality: int = 0,
-                    performance: int = 0):
+                    performance: int = 0, source: str = "-"):
         new = {"id": id_,
                "referenceValue": reference_value,
                "absoluteFrequency": absolute_frequency,
@@ -445,7 +454,8 @@ class ProcessesResponse:
                "varianceLeadTime": var_lead_time,
                "varianceWaitingTime": var_waiting_time,
                "quality": quality,
-               "performance": performance}
+               "performance": performance,
+               "source": source}
         self.processes.append(new)
 
     def get_response_dict(self):
@@ -487,7 +497,8 @@ def get_processes_response(process_view):
                              var_lead_time=process_row["var_lead_time_wt"],
                              var_waiting_time=process_row["var_waiting_time"],
                              quality=process_row["Resulting Quality"],
-                             performance=process_row["performance"])
+                             performance=process_row["performance"],
+                             source=process_row["Source"])
 
     return response
 
@@ -501,7 +512,7 @@ class ProcessesSummaryResponse:
                             delivery_reliability: str = "-", lead_time: int = 0, waiting_time: int = 0,
                             min_lead_time: int = 0, min_waiting_time: int = 0, max_lead_time: int = 0,
                             max_waiting_time: int = 0, var_lead_time: int = 0, var_waiting_time: int = 0,
-                            quality: int = 0, performance: int = 0):
+                            quality: int = 0, performance: int = 0, source: str = "-"):
         self.processes_summary = {"absoluteFrequency": absolute_frequency,
                                   "processShare": process_share,
                                   "deliveryReliability": delivery_reliability,
@@ -514,7 +525,8 @@ class ProcessesSummaryResponse:
                                   "varianceLeadTime": var_lead_time,
                                   "varianceWaitingTime": var_waiting_time,
                                   "quality": quality,
-                                  "performance": performance}
+                                  "performance": performance,
+                                  "source": source}
 
     def get_response_dict(self):
         return self.processes_summary
@@ -550,7 +562,8 @@ async def build_processes_summary_response(start_time: datetime, end_time: datet
                                  var_lead_time=process_row["var_lead_time_wt"],
                                  var_waiting_time=process_row["var_waiting_time"],
                                  quality=process_row["Resulting Quality"],
-                                 performance=process_row["performance"])
+                                 performance=process_row["performance"],
+                                 source=process_row["Source"])
 
     return response
 
@@ -565,7 +578,8 @@ class ResourcesResponse:
     def add_resource(self, id_: str = "-", reference_value: str = "-", process_frequency: int = 0,
                      resource_share: int = 0, delivery_reliability: str = "-", lead_time: int = 0,
                      waiting_time: int = 0, stock: int = 0, quality: int = 0, performance: int = 0,
-                     total_resource_utilisation: int = 0, total_resource_availability: int = 0, ore: int = 0):
+                     total_resource_utilisation: int = 0, total_resource_availability: int = 0, ore: int = 0,
+                     source: str = "-"):
         new = {"id": id_,
                "referenceValue": reference_value,
                "processFrequency": process_frequency,
@@ -578,7 +592,8 @@ class ResourcesResponse:
                "performance": performance,
                "totalResourceUtilisation": total_resource_utilisation,
                "totalResourceAvailability": total_resource_availability,
-               "kpiOre": ore}
+               "kpiOre": ore,
+               "source": source}
         self.resources.append(new)
 
     def get_response_dict(self):
@@ -625,7 +640,8 @@ def get_resources_response(resource_view_df):
                               quality=resource_row['Resulting Quality'],
                               performance=resource_row["performance"],
                               stock=resource_row["Inventory"],
-                              ore=resource_row["ORE"])
+                              ore=resource_row["ORE"],
+                              source=resource_row["Source"])
 
     return response
 
@@ -639,7 +655,8 @@ class ResourcesSummaryResponse:
     def add_resource_summary(self, process_frequency: int = 0, resource_share: int = 0,
                              delivery_reliability: str = "-", lead_time: int = 0, waiting_time: int = 0,
                              stock: int = 0, quality: int = 0, performance: int = 0,
-                             total_resource_utilisation: int = 0, total_resource_availability: int = 0, ore: int = 0):
+                             total_resource_utilisation: int = 0, total_resource_availability: int = 0, ore: int = 0,
+                             source: str = "-"):
         self.resources_summary = {"processFrequency": process_frequency,
                                   "resourceShare": resource_share,
                                   "deliveryReliability": delivery_reliability,
@@ -650,7 +667,8 @@ class ResourcesSummaryResponse:
                                   "performance": performance,
                                   "totalResourceUtilisation": total_resource_utilisation,
                                   "totalResourceAvailability": total_resource_availability,
-                                  "kpiOre": ore}
+                                  "kpiOre": ore,
+                                  "source": source}
 
     def get_response_dict(self):
         return self.resources_summary
@@ -687,6 +705,7 @@ async def build_resources_summary_response(start_time: datetime, end_time: datet
                                   quality=resource_row['Resulting Quality'],
                                   performance=resource_row["performance"],
                                   stock=resource_row["Inventory"],
-                                  ore=resource_row["ORE"])
+                                  ore=resource_row["ORE"],
+                                  source=resource_row["Source"])
 
     return response

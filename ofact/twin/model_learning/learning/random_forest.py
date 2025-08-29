@@ -146,3 +146,10 @@ class RandomForestRegression(BaseEnsembleModel):
             f"Use bootstrap: {self.use_bootstrap}"
         )
         return description
+
+    def get_init_parameters(self):
+        # ToDo: should be an abstract method
+        return {"input_size": self.input_size, "output_size": self.output_size,
+                "n_estimators": self.n_estimators, "max_depth": self.max_depth,
+                "min_samples_split": self.min_samples_split, "min_samples_leaf": self.min_samples_leaf,
+                "use_bootstrap": self.use_bootstrap, "model_path": self.model_path}

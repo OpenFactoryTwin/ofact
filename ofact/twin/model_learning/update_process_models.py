@@ -65,7 +65,7 @@ class ProcessModelUpdater(metaclass=ABCMeta):
     def _update_process_models(self, change_handler, re_trainable_process_time_controllers,
                                re_trainable_transition_controllers, re_trainable_transformation_controllers,
                                re_trainable_quality_controllers, re_trainable_resource_controllers):
-
+        # ToDo: update through the change handler?
         # maybe do it asynchronously
         if len(re_trainable_process_time_controllers) > 0:
             print("Update process time models")

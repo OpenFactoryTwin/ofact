@@ -413,9 +413,9 @@ class ResourceRequest(PlanningRequest):  # ToDo: cyclic behaviour not needed
             # print("Match: ", available_resources[0].external_identifications, order.external_identifications)
             if not available_resources_:
                 round_ = self.agent.agents.get_current_round()
-                # _inform_resource_not_available(order, available_resources, unrequested_available_resources,
-                #                                self.resources_requested_in_round, self.agent.resource_reservation,
-                #                                round_)
+                _inform_resource_not_available(order, available_resources, unrequested_available_resources,
+                                               self.resources_requested_in_round, self.agent.resource_reservation,
+                                               round_)
 
             if available_resources_:
                 if isinstance(available_resources_[0], PassiveMovingResource):
@@ -1046,7 +1046,6 @@ class ResourceRequest(PlanningRequest):  # ToDo: cyclic behaviour not needed
                 last_negotiation_object = negotiation_object
 
                 # determine the providers
-                process_execution.main_resource
                 if process_execution.main_resource is not None:
                     providers = [process_execution.main_resource]
                 else:

@@ -121,6 +121,10 @@ class NeuralNetwork(nn.Module):
         static_description = input_output_size + "\n" + layers + "\n" + batch_norm + "\n" + dropout
         return static_description
 
+    def get_init_parameters(self):
+        # ToDo: should be an abstract method
+        raise NotImplementedError
+
     def update_device(self, device="cpu"):
         if device != "cpu":
             device = "cuda" if torch.cuda.is_available() else "cpu"

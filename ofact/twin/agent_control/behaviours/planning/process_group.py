@@ -2,14 +2,12 @@
 The process_group request behaviour is used to create proposals for interconnected processes that should be executed in
 a chronological order.
 """
-
 # Imports Part 1: Standard Imports
 import itertools
 import time
 
 # Imports Part 2: PIP Imports
 import numpy as np
-
 # Imports Part 3: Project Imports
 from ofact.twin.agent_control.behaviours.negotiation.objects import ProcessCallForProposal, \
     ProcessExecutionsPathProposal, ProcessExecutionsVariantProposal
@@ -19,7 +17,8 @@ from ofact.twin.agent_control.behaviours.planning.tree.process_executions_compon
     ProcessExecutionsPath
 from ofact.twin.state_model.entities import NonStationaryResource
 
-
+from ofact.twin.utils import setup_dual_logger
+logging= setup_dual_logger()
 def get_process_group_information(process_executions, part_entity_type, amount):
     process_times = \
         [process_execution.get_max_process_time(  # loading processes have a distance of 0
@@ -205,6 +204,7 @@ def _get_possible_path_combinations(cfp_path_components, process_executions_path
 
     cfp_paths_connector_resources = {}
     connector_resource_cfp_path_components = {}
+
     for path_components in components_path:  # ToDo: cfp matching easier
         for path_component in path_components:
             resources = [process_executions_component.goal_item
@@ -251,6 +251,17 @@ def _get_possible_path_combinations(cfp_path_components, process_executions_path
         else:
             print("not_complete_resources", path)
             print("unused_process_executions_components needed")
+            components_path= list([l for l in components_path if l])
+            paths= [l for l in paths if l]
+            if len(components_path) == len(path): #'Red Cycling Products Front Tray silver'
+                print('process_group if case')
+                logging.debug(f'Order ID: {path[0][0].call_for_proposal.order.identification} process Group if case')
+                possible_paths_combinations += paths
+
+
+    for i in possible_paths_combinations:
+        if len(i) == 1:
+            print('1')
 
     return possible_paths_combinations, path_connectors, unused_process_executions_components
 
@@ -383,7 +394,8 @@ def _adapt_process_executions_variant(process_executions_path, possible_path_com
     for current_component in process_executions_path_variant.get_process_executions_components_lst():
         for components in possible_path_combination:
             if components[0].goal.identification == current_component.goal.identification:
-                process_executions_components.setdefault(components[0].goal, []).extend(components)
+                process_executions_components.setdefault(components[0].goal,
+                                                         []).extend(components)
 
             # maybe also done before - ensure the right sequence
 

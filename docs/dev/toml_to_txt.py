@@ -6,8 +6,8 @@ import toml
 from pathlib import Path
 
 # Load the pyproject.toml file
-pyproject_path = Path('../../../ofact/pyproject.toml')
-requirements_path = Path('../../../ofact/requirements.txt')
+pyproject_path = Path('../../pyproject.toml')
+requirements_path = Path('../../requirements.txt')
 
 # Read the pyproject.toml file
 pyproject_data = toml.load(pyproject_path)

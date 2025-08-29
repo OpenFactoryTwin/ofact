@@ -544,12 +544,17 @@ class HeuristicsSchedulingNode(SchedulingNode):
 
     def _get_participating_resources_combined(self):
         """Determine the resources participate in the scheduling object on a higher level in the tree"""
-        participating_resources = \
-            json.dumps(list(set(
-                [participating_resource
-                 for sub_node in self.get_sub_nodes()
-                 for participating_resource in json.loads(sub_node.branch_eval["participating_resources"][0])
-                 if sub_node.branch_eval["participating_resources"][0]])))
+
+        try:
+            participating_resources = \
+                json.dumps(list(set(
+                    [participating_resource
+                     for sub_node in self.get_sub_nodes()
+                     for participating_resource in json.loads(sub_node.branch_eval["participating_resources"][0])
+                     if sub_node.branch_eval["participating_resources"][0]])))
+        except:
+            raise Exception([sub_node.branch_eval["participating_resources"]
+                             for sub_node in self.get_sub_nodes()])
 
         return participating_resources
 
@@ -2386,7 +2391,8 @@ class HeuristicsSchedulingTree(SchedulingTree):
                          for resource in entities_to_schedule["Resource"]
                          if process_execution.process.check_ability_to_perform_process_as_main_resource(resource)][0]
                 except:
-                    raise Exception(process_execution.process.name, entities_to_schedule["Resource"])
+                    raise Exception(process_execution.process.name, entities_to_schedule["Resource"],
+                                    process_execution.order.external_identifications)
 
                 if "Part" in entities_to_schedule:
                     process_execution.parts_involved += [(entity,)

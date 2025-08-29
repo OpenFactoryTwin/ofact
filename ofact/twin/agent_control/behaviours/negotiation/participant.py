@@ -24,11 +24,13 @@ from ofact.twin.agent_control.behaviours.planning.tree.process_executions_compon
 from ofact.twin.agent_control.helpers.communication_objects import CoordinationCO, ListCO, ObjectCO
 from ofact.twin.agent_control.helpers.debug_str import get_debug_str
 
+from ofact.twin.utils import setup_dual_logger
+logging=setup_dual_logger()
 if TYPE_CHECKING:
     pass
 
 # Module-Specific Constants
-logger = logging.getLogger("CNETParticipant")
+#logger = logging.getLogger("CNETParticipant")
 
 
 def _get_proposals_to_schedule(requests):
@@ -361,13 +363,6 @@ class ParticipantBehaviour(DigitalTwinCyclicBehaviour):
 
         # print(get_debug_str(self.agent.name, self.__class__.__name__) + f" Successful: ", successful)
 
-        request_dict = await self._process_request_results(successful, request_dict, process_executions_components)
-
-        if request_dict["negotiation_object"].reference_cfp is None:
-            first_order_cfp = True
-        else:
-            first_order_cfp = False  # determines if the agent is responsible for first_order_cfps
-
         if proposals_to_reject:
             # print("Proposals to reject: ", [p.identification for p in proposals_to_reject])
             proposal_to_reject_new = []
@@ -385,6 +380,13 @@ class ParticipantBehaviour(DigitalTwinCyclicBehaviour):
                 proposals_batch_new = []
             await self._send_refinement_updates(proposals_to_reject_lowest_level, [])  # ToDo: not really decentral
             await self._handle_rejected_proposals(proposals_to_reject)
+
+        request_dict = await self._process_request_results(successful, request_dict, process_executions_components)
+
+        if request_dict["negotiation_object"].reference_cfp is None:
+            first_order_cfp = True
+        else:
+            first_order_cfp = False  # determines if the agent is responsible for first_order_cfps
 
         # print(get_debug_str(self.agent.name, self.__class__.__name__) +
         #       f" Delete requests_to_process: {request_dict['negotiation_object'].identification}")
@@ -566,7 +568,10 @@ class ParticipantBehaviour(DigitalTwinCyclicBehaviour):
         """React on an accepted proposal"""
         # print(get_debug_str(self.agent.name, self.__class__.__name__) +
         #       f" React on acceptance {[proposal.identification for proposal in accepted_proposals]}")
-
+        for proposal in accepted_proposals:
+            logging.debug(
+                f'Order ID:{proposal.call_for_proposal.order.identification}, {proposal.identification} start react_on_accepted_proposal',
+                extra={"obj_id": self.agent.name})
         # proposals in the last instance (first call for proposal)
         proposals_process_executions_creation = [accepted_proposal
                                                  for accepted_proposal in accepted_proposals
@@ -575,9 +580,14 @@ class ParticipantBehaviour(DigitalTwinCyclicBehaviour):
         if proposals_process_executions_creation:
             # process_executions are based on the process_executions_components
             await self._send_process_executions(proposals_process_executions_creation)
-
+        logging.debug(
+            f'Order ID:{proposal.call_for_proposal.order.identification}, {proposal.identification} await 1 react_on_accepted_proposal',
+            extra={"obj_id": self.agent.name})
         # Choose the best fitting time_slot
         await self.accept_sub_proposals(accepted_proposals)
+        logging.debug(
+            f'Order ID:{proposal.call_for_proposal.order.identification}, {proposal.identification} await 2 react_on_accepted_proposal',
+            extra={"obj_id": self.agent.name})
 
         # record the time_slot into the resource calendars
         new_accepted_proposals = [(sender, accepted_proposal)
@@ -588,9 +598,15 @@ class ParticipantBehaviour(DigitalTwinCyclicBehaviour):
             if self.round_finished is not None:
                 if not self.round_finished.is_set():
                     # print(self.agent.name, "A", [a.identification for a in accepted_proposals], self.round_finished)
-                    await self.process_executions_on_hold_handling.request_process_executions_available()
-                    # print(self.agent.name, "B", [a.identification for a in accepted_proposals], self.round_finished)
+                    logging.debug(
+                        f'Order ID:{proposal.call_for_proposal.order.identification}, {proposal.identification}  in new accepted_proposal react_on_accepted_proposal',
+                        extra={"obj_id": self.agent.name})
 
+                    await self.process_executions_on_hold_handling.request_process_executions_available(order_id=proposal.call_for_proposal.order.identification)
+                    # print(self.agent.name, "B", [a.identification for a in accepted_proposals], self.round_finished)
+                    logging.debug(
+                        f'Order ID:{proposal.call_for_proposal.order.identification}, {proposal.identification}  out new accepted_proposal react_on_accepted_proposal',
+                        extra={"obj_id": self.agent.name})
         # proposals_to_schedule = self.accepted_proposals.copy()
         # should be handled based on the process_executions_occur
         self.remove_open_proposals(accepted_proposals, end=True)
@@ -600,12 +616,15 @@ class ParticipantBehaviour(DigitalTwinCyclicBehaviour):
             # print(proposal.identification, "accepted")
             if proposal.identification in self.proposals_to_accept:
                 del self.proposals_to_accept[proposal.identification]
-
+        logging.debug(
+            f'Order ID:{proposal.call_for_proposal.order.identification}, {proposal.identification} Round finished could set',
+            extra={"obj_id": self.agent.name})
         if not self.proposals_to_accept:
             if self.round_finished is not None:
                 if not self.round_finished.is_set() and self.finishing_opened.is_set():
                     # print(self.agent.name, "Set result acc")
                     self.round_finished.set()
+                    logging.debug(f'Order ID:{proposal.call_for_proposal.order.identification}, {proposal.identification} Round finished is set', extra={"obj_id": self.agent.name})
 
         # print(self.agent.name, "Wait on acceptance:", [(proposal.cfp_path, proposal.status)
         #                                                for id, proposal in self.proposals_to_accept.items()])
@@ -628,14 +647,17 @@ class ParticipantBehaviour(DigitalTwinCyclicBehaviour):
         await self.connection_behaviour.accept_proposals_provider(supporter_proposals)
 
     def _handle_reservations(self, proposals_to_schedule):
-
+        logging.debug(f'handle_reservations 1', extra={"obj_id": self.agent.name})
         resources_time_slots = self._get_resources_time_slots(proposals_to_schedule)
+        logging.debug(f'handle_reservations 2', extra={"obj_id": self.agent.name})
         parts_time_slots = [(accepted_proposal.goal_item, provider,
                              accepted_proposal.call_for_proposal.issue_id,
                              accepted_proposal.get_final_time_slot())
                             for provider, accepted_proposal in proposals_to_schedule
                             if isinstance(accepted_proposal.call_for_proposal, PartCallForProposal)]
+        logging.debug(f'handle_reservations 3', extra={"obj_id": self.agent.name})
         self.agent.reserve_time_slots(resources_time_slots)
+        logging.debug(f'handle_reservations 4', extra={"obj_id": self.agent.name})
         self.agent.reserve_parts(parts_time_slots)
 
     def _get_resources_time_slots(self, new_accepted_proposals):
@@ -703,20 +725,35 @@ class ParticipantBehaviour(DigitalTwinCyclicBehaviour):
             # print(self.agent.name, "Set result nor")
             if self.round_finished is not None:
                 self.round_finished.set()
+                # logging.debug(
+                #     f'Order ID:{proposals_to_update[0].call_for_proposal.order.identification}:
+                #     Round finished is set for return',
+                #     extra={"obj_id": self.agent.name})
             return
 
         self.finishing_opened.set()
         # print(self.agent.name, "I")  # interim
+
         try:
-            await asyncio.wait_for(self.round_finished.wait(), timeout=20)
+            logging.debug('start waiting', extra={"obj_id": self.agent.name})
+            await asyncio.wait_for(self.round_finished.wait(), timeout=30)
         except TimeoutError:
+            print('wait for timeout')
+            logging.debug(f'Order ID:{proposals_to_update[0].call_for_proposal.order.identification} await timeout',extra={"obj_id": self.agent.name})
             print(self.agent.name, "TimeoutError",
                   len(self.proposals_to_accept),
-                  len(self.requests_shelved))
+                  len(self.requests_shelved)) #Agent model sheet: process : material_part_unloading_gear_shift_brakes_etn :function call war 2x gleich, aber nicht die lösung
             print(list(self.proposals_to_accept.keys()))
-
+            for i, pta in self.proposals_to_accept.items():
+                print(pta.call_for_proposal.client_object.process.name) #VAP:brake disc rim brakes standard is True,
+            self.proposals_evaluated = {}
+            self.round_finished.set()
+            return
         self.proposals_evaluated = {}
         self.finishing_opened.clear()
+        logging.debug(f'Order ID:{proposals_to_update[0].call_for_proposal.order.identification} finished negotiation round',
+                      extra={"obj_id": self.agent.name})
+
         # print(get_debug_str(self.agent.name, self.__class__.__name__) + f" Finished negotiation round")
 
     async def get_round_finished_status(self):
@@ -1198,6 +1235,7 @@ class ParticipantBehaviour(DigitalTwinCyclicBehaviour):
         rejected_proposals_lst, self.rejected_proposals = self.rejected_proposals.copy(), []
 
         accepted_proposals = {}
+        proposal=None
         for requester_agent_jid, proposal in accepted_proposals_lst:
             if (isinstance(proposal.call_for_proposal, ResourceCallForProposal) or
                     isinstance(proposal.call_for_proposal, PartCallForProposal)):
@@ -1208,7 +1246,12 @@ class ParticipantBehaviour(DigitalTwinCyclicBehaviour):
                 accepted_process_executions = proposal.get_participating_process_executions(type_="ACCEPTED")
                 accepted_proposals.setdefault(provider_agent_name,
                                               []).extend(accepted_process_executions)
+        if proposal is not None:
+            order_id = proposal.call_for_proposal.order.identification
+        else:
+            order_id = 0
 
+        logging.debug(f'Order ID {order_id} get_result 0.1', extra={"obj_id": self.agent.name})
         # accepted_process_executions = [elem for lst in list(accepted_proposals.values()) for elem in lst]
 
         # print(self.agent.name, "Accepted",
@@ -1216,6 +1259,7 @@ class ParticipantBehaviour(DigitalTwinCyclicBehaviour):
         #        for process_execution in accepted_process_executions])
 
         self._handle_reservations(accepted_proposals_lst)
+        logging.debug(f'Order ID {order_id} get_result 0.2', extra={"obj_id": self.agent.name})
 
         rejected_proposals = {}
         for requester_agent_jid, proposal in rejected_proposals_lst:
@@ -1231,10 +1275,14 @@ class ParticipantBehaviour(DigitalTwinCyclicBehaviour):
                      for process_execution in proposal.get_participating_process_executions(type_="REJECTED")]
                 rejected_proposals.setdefault(provider_agent_name,
                                               []).extend(rejected_process_executions)
+        logging.debug(f'Order ID {order_id} get_result 0.3', extra={"obj_id": self.agent.name})
 
         if not (accepted_proposals or rejected_proposals):
+            logging.debug(f'Order ID {order_id} get_result 0.4',
+                          extra={"obj_id": self.agent.name})
             return accepted_proposals, rejected_proposals
-        if not self.agent.new_process_executions_available.is_set():
-            self.agent.new_process_executions_available.set()
-
+        if self.agent.new_process_executions_available is not None:
+            if not self.agent.new_process_executions_available.is_set():
+                self.agent.new_process_executions_available.set()
+        logging.debug(f'Order ID {order_id} get_result 0.5', extra={"obj_id": self.agent.name})
         return accepted_proposals, rejected_proposals

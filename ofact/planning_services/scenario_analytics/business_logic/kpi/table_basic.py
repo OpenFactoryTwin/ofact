@@ -793,10 +793,6 @@ class KPIAdministration:
         else:
             return amount_s
 
-
-        if not (view == "PROCESS" or view == "RESOURCE"):
-            return amount_s
-
         # mask = self.analytics_data_base.digital_twin_df[column].isin(id_list)
         object_dfs = self.analytics_data_base.digital_twin_df[['Process Execution ID', column]]
         # object_dfs = object_dfs.loc[mask]
@@ -1016,3 +1012,81 @@ class KPIAdministration:
         order_progress_status.loc[finished_orders] = "FINISHED"
 
         return order_progress_status
+
+    def get_source(self, start_time, end_time, order_ids, part_ids, process_ids, resource_ids, event_type, view, scenario, all=False):
+        """
+        Determine the source of the event.
+
+        Parameters
+        ----------
+        start_time: Start time passed from frontend
+        end_time: End time passed from frontend
+        order_ids: calculated possible Customer ID
+        part_ids: calculated possible Product ID
+        process_ids: calculated possible Process ID
+        resource_ids: calculated possible Resource ID
+        event_type: the event type
+        view: view passed from frontend
+        scenario:
+        all: True or False; True calculated for headline, False: calculate for every (.. view)
+
+        Returns
+        -------
+        A Series (View(Order ID.....); source)
+        """
+        digital_twin_df = self.analytics_data_base.digital_twin_df
+
+        # filter all currently relevant data sources
+        relevant_process_execution_ids = \
+            self.get_relevant_process_execution_ids(start_time, end_time,
+                                                    order_ids, part_ids, process_ids, resource_ids,
+                                                    event_type, scenario)
+        digital_twin_df = digital_twin_df.loc[digital_twin_df["Process Execution ID"].isin(relevant_process_execution_ids)]
+
+        # consider the view
+        if view == "ORDER":
+            view_column_name = type(self).view_id_match["ORDER"]
+            order_mask = digital_twin_df[view_column_name].isin(order_ids)
+            view_df = digital_twin_df.loc[order_mask, [view_column_name, "Source"]]
+
+        elif view == "PRODUCT":
+            view_column_name = type(self).view_id_match["PRODUCT"]
+            product_mask = digital_twin_df[view_column_name].isin(part_ids)
+            view_df = digital_twin_df.loc[product_mask, [view_column_name, "Source"]]
+
+        elif view == "PROCESS":
+            view_column_name = type(self).view_id_match["PROCESS"]
+            process_mask = digital_twin_df[view_column_name].isin(process_ids)
+            view_df = digital_twin_df.loc[process_mask, [view_column_name, "Source"]]
+
+        elif view == "RESOURCE":
+            view_column_name = type(self).view_id_match["RESOURCE"]
+            resource_mask = digital_twin_df[view_column_name].isin(resource_ids)
+            view_df = digital_twin_df.loc[resource_mask, [view_column_name, "Source"]]
+
+        else:
+            raise NotImplementedError
+
+        src = view_df["Source"].astype(str)
+        # simulation beats real world and nan remains
+        mapped = src.map(lambda x: 1 if "SIMULATION" in x else (0 if "REAL_WORLD" in x else np.nan))
+        max_per_view_object = mapped.groupby(view_df[view_column_name]).max()
+
+        # reset the 0/1 to REAL_WORLD/SIMULATION
+        max_labels = max_per_view_object.map({1: "SIMULATION", 0: "REAL_WORLD"})  # NaN remains NaN
+        view_df.loc[:, "Source"] = view_df[view_column_name].map(max_labels)
+
+        source_df = view_df[[view_column_name, "Source"]]
+        source_df = source_df.loc[source_df[view_column_name].drop_duplicates(keep="first").index]
+        source_df.set_index(view_column_name, inplace=True)
+
+        if view == "ORDER":
+            source_df = source_df.reindex(order_ids)
+        elif view == "PRODUCT":
+            source_df = source_df.reindex(part_ids)
+        elif view == "PROCESS":
+            source_df = source_df.reindex(process_ids)
+        elif view == "RESOURCE":
+            source_df = source_df.reindex(resource_ids)
+
+        return source_df

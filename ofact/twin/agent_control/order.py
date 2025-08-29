@@ -12,7 +12,7 @@ import asyncio
 from copy import copy
 from datetime import timedelta
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 # Imports Part 2: PIP Imports
 # Imports Part 3: Project Imports
@@ -34,6 +34,8 @@ if TYPE_CHECKING:
     from ofact.twin.state_model.processes import ValueAddedProcess, ProcessExecution, Process
     from ofact.twin.state_model.sales import Order
     from ofact.twin.agent_control.organization import Agents
+
+    from ofact.twin.state_model.basic_elements import SourceApplicationTypes
 
 
 class OrderPoolDigitalTwinAgent(DigitalTwinAgent):
@@ -114,7 +116,7 @@ class OrderDigitalTwinAgent(DigitalTwinAgent):
                  ip_address_xmpp_server: str,
                  address_book: dict, process_provider: dict, entity_provider: dict[EntityType: list[Resource]],
                  transport_provider: list, processes: dict, value_added_processes: list[ValueAddedProcess],
-                 state_model: StateModel):
+                 state_model: StateModel, source_application: Optional[SourceApplicationTypes] = None):
         super().__init__(name=name, organization=organization, change_handler=change_handler,
                          password_xmpp_server=password_xmpp_server, ip_address_xmpp_server=ip_address_xmpp_server)
         self.address_book: dict[object, str] = address_book
@@ -133,7 +135,7 @@ class OrderDigitalTwinAgent(DigitalTwinAgent):
                                                 self.processes["loading_processes"]
         self.routing_service = RoutingService(resource_types, possible_transport_transfer_processes)
 
-        self.source_application = "Test phase"  # ToDo: instantiation
+        self.source_application = source_application  # ToDo: instantiation
         self.planning_time_horizont = "planning_time_horizont"  # ToDo: instantiation - period
         self.negotiation_time_limit_period: int = 200  # ToDo: instantiation  # period
 
@@ -174,6 +176,9 @@ class OrderDigitalTwinAgent(DigitalTwinAgent):
                                                              negotiation_time_limit=self.negotiation_time_limit_period)
         self.change_occurred = (0, None)
         self.EnvInterface = OrderEnvInterfaceBehaviour()
+
+    def set_source_application(self, source_application):
+        self.source_application = source_application
 
     def copy(self):
         agent_copy = super(OrderDigitalTwinAgent, self).copy()

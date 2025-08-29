@@ -596,8 +596,10 @@ class DTModelDataset(Dataset, metaclass=ABCMeta):
         sample_meta_information_vector = sample_meta_information_vector[mask]
 
         feature_batch = pd.DataFrame(samples_matrix,
-                                     columns=columns)  # ToDo column names
+                                     columns=sorted(columns))
         feature_batch = feature_batch.infer_objects()  # specify data_types
+        target_column = feature_batch.pop(self._sample_extraction.get_target_column_name())
+        feature_batch[self._sample_extraction.get_target_column_name()] = target_column
 
         return sample_meta_information_vector, feature_batch
 

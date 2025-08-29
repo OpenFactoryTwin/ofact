@@ -21,7 +21,7 @@ If no schedule is provided, a resource is always available.
 
 # Imports 1: Standard Imports
 from datetime import datetime, date, time, timedelta
-from typing import TYPE_CHECKING, Dict, Union
+from typing import TYPE_CHECKING, Dict, Union, Optional
 
 # Imports 1: PIP Imports
 import pandas as pd
@@ -48,7 +48,7 @@ def minute_interval(start, end):  # not used until now
     return delta
 
 
-def get_schedules_resource(resource_scheduling_path: str):
+def get_schedules_resource(resource_scheduling_path: str, start_time: Optional[datetime] = None):
     """
     Retrieves the schedules resource from the specified worker planning file.
     :param resource_scheduling_path: The path to the worker planning file.
@@ -66,14 +66,14 @@ def get_schedules_resource(resource_scheduling_path: str):
             resource_available_times_week = []
             for weekday in weekdays:
                 weekday_schedule = schedule_sheets[weekday]
-                resource_available_times = _get_single_resource_schedule(weekday_schedule)
+                resource_available_times = _get_single_resource_schedule(weekday_schedule, start_time)
                 resource_available_times_week.append(resource_available_times)
             resource_available_times_list = resource_available_times_week
 
         case "Single":
             general_schedule_sheet = pd.read_excel(resource_scheduling_path,
                                                    sheet_name="General")
-            resource_available_times = _get_single_resource_schedule(general_schedule_sheet)
+            resource_available_times = _get_single_resource_schedule(general_schedule_sheet, start_time)
             resource_available_times_list = [resource_available_times]
 
         case _:
@@ -141,10 +141,10 @@ def _get_full_time_equivalents_day_resources(schedule_df: pd.DataFrame):
     return times_df
 
 
-def _get_single_resource_schedule(schedule_df: pd.DataFrame):
+def _get_single_resource_schedule(schedule_df: pd.DataFrame, start_time):
     columns = schedule_df.columns.to_list()
 
-    columns_datetime = [_get_column_name(column_name)
+    columns_datetime = [_get_column_name(column_name, start_time)
                         for column_name in columns]
     schedule_df.columns = columns_datetime
 
@@ -170,7 +170,7 @@ def _get_single_resource_schedule(schedule_df: pd.DataFrame):
     resource_available_times = {}
     for worker_name, resource_schedule in schedule_df.groupby(by=resource_name):
         schedule_extract = resource_schedule[schedule_columns]
-        schedule_mask = ((schedule_extract == "x") | (schedule_extract == "X")).any().to_numpy()
+        schedule_mask = ((schedule_extract == "x") | (schedule_extract == "X") | (schedule_extract == 1)).any().to_numpy()
         start_time_df = schedule_extract.iloc[:, schedule_mask]
         start_times = list(start_time_df.columns)
 
@@ -180,16 +180,24 @@ def _get_single_resource_schedule(schedule_df: pd.DataFrame):
     return resource_available_times
 
 
-def _get_column_name(column_name):
+def _get_column_name(column_name, start_time):
     if isinstance(column_name, time):
-        return datetime.combine(date.today(), column_name)
+        if start_time:
+            date_ = start_time.date()
+        else:
+            date_ = date.today()
+        return datetime.combine(date_, column_name)
     try:
         column_name_converted = datetime.strptime(column_name.lstrip("0"), "%H:%M").time()
     except:
         return column_name
 
     if isinstance(column_name_converted, time):
-        return datetime.combine(date.today(), column_name_converted)
+        if start_time:
+            date_ = start_time.date()
+        else:
+            date_ = date.today()
+        return datetime.combine(date_, column_name_converted)
     else:
         return column_name
 
