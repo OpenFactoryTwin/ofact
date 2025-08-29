@@ -151,7 +151,7 @@ def main(start_time_simulation: datetime,
         return state_model
 
     # 3) run your simulation
-    simulation_period = timedelta(hours=8, minutes=30)
+    simulation_period = timedelta(hours=9, minutes=30)
     agents_file_name = "factory_agents.xlsx"
     simulation_starter = SimulationStarterBicycleWorld(
         project_path=PROJECT_PATH,
