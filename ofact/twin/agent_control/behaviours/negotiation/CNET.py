@@ -119,16 +119,16 @@ class CNETNegotiationBehaviour(DigitalTwinCyclicBehaviour, metaclass=ABCMeta):
         if not call_for_proposal_identifications:
             return []
         # print(get_debug_str("CNET", "") + f" Wait on: {call_for_proposal_identifications} {behaviour_name}")
-        print(f'call fpr proposal identifications {call_for_proposal_identifications}')
+
         callbacks_to_await = [self.response_subscriptions_callback[call_for_proposal_id]
                               for call_for_proposal_id in call_for_proposal_identifications]
-        print(f' callbacks: {callbacks_to_await}')
+
         try:
             await asyncio.wait(callbacks_to_await, timeout=20)
         except asyncio.TimeoutError:
             print('CNET Timeout error')
         proposals = []
-        print(f'proposals: {self.proposals}')
+
         for call_for_proposal_identification in call_for_proposal_identifications:
             if call_for_proposal_identification in self.proposals:  # if proposals available
                 proposals += self.proposals[call_for_proposal_identification]
@@ -136,7 +136,7 @@ class CNETNegotiationBehaviour(DigitalTwinCyclicBehaviour, metaclass=ABCMeta):
 
             del self.response_subscriptions_providers[call_for_proposal_identification]
             del self.response_subscriptions_callback[call_for_proposal_identification]
-        print(f'len proposals: {len(proposals)}')
+
         return proposals
 
     def store_proposal(self, proposals: list[Proposal], provider):

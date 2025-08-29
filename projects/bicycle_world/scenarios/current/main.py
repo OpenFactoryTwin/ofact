@@ -38,6 +38,55 @@ def create_state_model(state_model_file_name, order_amount):
     state_model = deserialize_state_model(state_model_file_path, persistence_format=file_type,
                                           state_model_generation_settings=state_model_generation_settings,
                                           deserialization_required=deserialization_required)
+    orders = state_model.get_orders()
+    order_date_list = [
+        datetime(2025, 9, 1, 11, 0, 0),
+        datetime(2025, 9, 1, 11, 0, 0),
+        datetime(2025, 9, 1, 11, 0, 0),
+        datetime(2025, 9, 1, 11, 0, 0),
+        datetime(2025, 9, 1, 12, 0, 0),
+        datetime(2025, 9, 1, 12, 0, 0),
+        datetime(2025, 9, 1, 13, 0, 0),
+        datetime(2025, 9, 1, 13, 0, 0),
+        datetime(2025, 9, 1, 13, 0, 0),
+        datetime(2025, 9, 1, 13, 0, 0),
+        datetime(2025, 9, 1, 15, 0, 0),
+        datetime(2025, 9, 1, 15, 0, 0),
+        datetime(2025, 9, 1, 15, 0, 0),
+        datetime(2025, 9, 1, 15, 0, 0),
+        datetime(2025, 9, 1, 15, 0, 0),
+        datetime(2025, 9, 1, 17, 0, 0),
+        datetime(2025, 9, 1, 17, 0, 0),
+        datetime(2025, 9, 1, 17, 0, 0),
+        datetime(2025, 9, 1, 17, 0, 0),
+        datetime(2025, 9, 1, 17, 0, 0),
+    ]
+    delivery_date_list = [
+        datetime(2025, 9, 2, 11, 0, 0),
+        datetime(2025, 9, 2, 11, 0, 0),
+        datetime(2025, 9, 2, 11, 0, 0),
+        datetime(2025, 9, 2, 11, 0, 0),
+        datetime(2025, 9, 2, 12, 0, 0),
+        datetime(2025, 9, 2, 12, 0, 0),
+        datetime(2025, 9, 2, 13, 0, 0),
+        datetime(2025, 9, 2, 13, 0, 0),
+        datetime(2025, 9, 2, 13, 0, 0),
+        datetime(2025, 9, 2, 13, 0, 0),
+        datetime(2025, 9, 2, 15, 0, 0),
+        datetime(2025, 9, 2, 15, 0, 0),
+        datetime(2025, 9, 2, 15, 0, 0),
+        datetime(2025, 9, 2, 15, 0, 0),
+        datetime(2025, 9, 2, 15, 0, 0),
+        datetime(2025, 9, 2, 17, 0, 0),
+        datetime(2025, 9, 2, 17, 0, 0),
+        datetime(2025, 9, 2, 17, 0, 0),
+        datetime(2025, 9, 2, 17, 0, 0),
+        datetime(2025, 9, 2, 17, 0, 0),
+    ]
+    for i, order in enumerate(orders):
+        order.order_date = order_date_list[i]
+        order.delivery_date_planned = delivery_date_list[i]
+
     return state_model
 
 
@@ -89,32 +138,6 @@ def main(start_time_simulation: datetime,
     order_amount = 20
     state_model = create_state_model("bicycle_factory", order_amount)
 
-    orders = state_model.get_orders()
-    dt2 = start_time_simulation
-    date_list = [
-        datetime(2025, 7, 4, 11, 0, 0).replace(year=dt2.year, month=dt2.month, day=dt2.day),
-        datetime(2025, 7, 4, 11, 0, 0).replace(year=dt2.year, month=dt2.month, day=dt2.day),
-        datetime(2025, 7, 4, 11, 0, 0).replace(year=dt2.year, month=dt2.month, day=dt2.day),
-        datetime(2025, 7, 4, 11, 0, 0).replace(year=dt2.year, month=dt2.month, day=dt2.day),
-        datetime(2025, 7, 4, 12, 0, 0).replace(year=dt2.year, month=dt2.month, day=dt2.day),
-        datetime(2025, 7, 4, 12, 0, 0).replace(year=dt2.year, month=dt2.month, day=dt2.day),
-        datetime(2025, 7, 4, 13, 0, 0).replace(year=dt2.year, month=dt2.month, day=dt2.day),
-        datetime(2025, 7, 4, 13, 0, 0).replace(year=dt2.year, month=dt2.month, day=dt2.day),
-        datetime(2025, 7, 4, 13, 0, 0).replace(year=dt2.year, month=dt2.month, day=dt2.day),
-        datetime(2025, 7, 4, 13, 0, 0).replace(year=dt2.year, month=dt2.month, day=dt2.day),
-        datetime(2025, 7, 4, 15, 0, 0).replace(year=dt2.year, month=dt2.month, day=dt2.day),
-        datetime(2025, 7, 4, 15, 0, 0).replace(year=dt2.year, month=dt2.month, day=dt2.day),
-        datetime(2025, 7, 4, 15, 0, 0).replace(year=dt2.year, month=dt2.month, day=dt2.day),
-        datetime(2025, 7, 4, 15, 0, 0).replace(year=dt2.year, month=dt2.month, day=dt2.day),
-        datetime(2025, 7, 4, 15, 0, 0).replace(year=dt2.year, month=dt2.month, day=dt2.day),
-        datetime(2025, 7, 4, 17, 0, 0).replace(year=dt2.year, month=dt2.month, day=dt2.day),
-        datetime(2025, 7, 4, 17, 0, 0).replace(year=dt2.year, month=dt2.month, day=dt2.day),
-        datetime(2025, 7, 4, 17, 0, 0).replace(year=dt2.year, month=dt2.month, day=dt2.day),
-        datetime(2025, 7, 4, 17, 0, 0).replace(year=dt2.year, month=dt2.month, day=dt2.day),
-        datetime(2025, 7, 4, 17, 0, 0).replace(year=dt2.year, month=dt2.month, day=dt2.day),
-    ]
-    for i, order in enumerate(orders):
-        order.delivery_date_planned = date_list[i]
     # state_model_file_name = "bicycle_factory.pkl"
     # state_model_file_path = get_state_model_file_path(project_path=PROJECT_PATH,
     #                                                   state_model_file_name=state_model_file_name,
@@ -128,7 +151,7 @@ def main(start_time_simulation: datetime,
         return state_model
 
     # 3) run your simulation
-    simulation_period = timedelta(hours=10)
+    simulation_period = timedelta(hours=8, minutes=30)
     agents_file_name = "factory_agents.xlsx"
     simulation_starter = SimulationStarterBicycleWorld(
         project_path=PROJECT_PATH,
