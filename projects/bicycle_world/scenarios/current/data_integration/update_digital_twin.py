@@ -4,17 +4,15 @@ Update the digital twin state model based on the ...
 """
 from __future__ import annotations
 
-import itertools
 # Imports Part 1: Standard Imports
 from datetime import datetime
 from pathlib import Path
-from xml.dom.minidom import Entity
 
 # Imports Part 2: PIP Imports
 # Imports Part 3: Project Imports
 from ofact.env.data_integration.pipeline import DataIntegrationPipeline
-from ofact.env.model_administration.helper import get_attr_value
-from ofact.env.model_administration.object_collection import ObjectsCollection
+from ofact.env.model_administration import get_attr_value
+from ofact.env.model_administration import ObjectsCollection
 from ofact.settings import ROOT_PATH
 from ofact.twin.change_handler.change_handler import ChangeHandlerPhysicalWorld
 
@@ -118,7 +116,7 @@ if __name__ == "__main__":
     from ofact.planning_services.model_generation.persistence import (
         deserialize_state_model, get_state_model_file_path, serialize_state_model)
     from ofact.twin.repository_services.deserialization.order_types import OrderType
-    from typing import TYPE_CHECKING, Optional
+    from typing import TYPE_CHECKING
     from ofact.twin.state_model.model import _transform_order_pool_list_to_np_array
 
     if TYPE_CHECKING:

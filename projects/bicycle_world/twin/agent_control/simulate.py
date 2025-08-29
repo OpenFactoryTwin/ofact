@@ -58,7 +58,7 @@ class SimulationStarterBicycleWorld(SimulationStarter):
         resource_schedule_path = Path(self.project_path +
                                       f'{self.path_to_models}/models/resource/{resource_schedule_file_name}')
         resources = digital_twin.get_all_resources()
-        resource_available_times = get_schedules_resource(resource_schedule_path)
+        resource_available_times = get_schedules_resource(resource_schedule_path, start_time_simulation)
         update_digital_twin_schedules(resources, resource_available_times,
                                       start_time_stamp=start_time_simulation)
         # resource_performances = get_resource_performance(resource_schedule_path,
