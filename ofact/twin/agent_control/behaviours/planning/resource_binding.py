@@ -34,8 +34,8 @@ class ResourceBindingBehaviour(DigitalTwinCyclicBehaviour):
         resource, binding_order = resource_binding
         if binding_order:
             self.agent.bind_resource(resource, binding_order)
-            print(f'\033[32mbinding: {resource.name} {binding_order.identification}\033[0m')
+            # print(f'\033[32mbinding: {resource.name} {binding_order.identification}\033[0m')
         elif binding_order is None:
             self.agent.unbind_resource(resource)
-            print(f'\033[34munbinding: {resource.name}\033[0m')
+            # print(f'\033[34munbinding: {resource.name}\033[0m')
 

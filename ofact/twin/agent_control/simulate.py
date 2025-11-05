@@ -8,7 +8,8 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING, Tuple, Union, Optional, Dict, Coroutine
-
+import loguru
+from pyjabber.server import Server
 import spade
 
 from ofact.planning_services.model_generation.persistence import serialize_state_model
@@ -38,11 +39,16 @@ def get_container_instance():
 
 def run_agent_simulation(main_func: Coroutine) -> None:  # pragma: no cover
     container = get_container_instance()
+    server = None
     try:
         res = {}
         async def wrapper():
             # await the real work…
             res["state_model"] = await main_func
+
+        loguru.logger.remove()  # Silent server
+        server_instance = Server()
+        server = container.loop.create_task(server_instance.start())
 
         container.run(wrapper())
         return res.get("state_model")
@@ -73,6 +79,9 @@ def run_agent_simulation(main_func: Coroutine) -> None:  # pragma: no cover
     # container.stop_agents()
     # if server:
     #     server.cancel()
+
+    server.cancel()
+    container.run(server)
 
     if sys.version_info >= (3, 7):  # pragma: no cover
         tasks = asyncio.all_tasks(loop=container.loop)  # pragma: no cover

@@ -527,9 +527,9 @@ class EventDiscreteSimulation(Environment):
                                          deviation_tolerance_time_delta: Optional[timedelta]):
         """Handle the actual process execution"""
 
-        print("Actual PE:",  # process_execution_actual.identification,
-              process_execution_actual.executed_start_time, process_execution_actual.executed_end_time,
-              process_execution_actual.get_name(), process_execution_actual.order.external_identifications)
+        # print("Actual PE:",  # process_execution_actual.identification,
+        #       process_execution_actual.executed_start_time, process_execution_actual.executed_end_time,
+        #       process_execution_actual.get_name(), process_execution_actual.order.external_identifications)
 
         process_execution_actual.execute()
         end_time_deviation_from_plan = process_execution_actual.get_end_time_deviation_from_plan()
@@ -540,8 +540,8 @@ class EventDiscreteSimulation(Environment):
                     negative_deviation_to_handle_within_simulation = True
             else:
                 pass  # ToDo: inform the agent who will maybe take another option
-        print("Process Name Execution:", process_execution_actual.process.name,
-              process_execution_actual.executed_start_time, process_execution_actual.executed_end_time)
+        # print("Process Name Execution:", process_execution_actual.process.name,
+        #       process_execution_actual.executed_start_time, process_execution_actual.executed_end_time)
         self._remove_process_execution_from_entity_event_queue(process_execution_actual, resources_from_plan=False)
         if not negative_deviation_to_handle_within_simulation:
             return process_execution_actual

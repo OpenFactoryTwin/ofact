@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 from abc import abstractmethod, ABCMeta
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Optional
 
 # Imports Part 2: PIP Imports
@@ -69,6 +69,7 @@ class OrderPool(DigitalTwinCyclicBehaviour):
         self.capacity_control_behaviour = NoCapacityControl()
         self.release_behaviour = UrgencyBasedRelease()
         self.sequence_creation_behaviour = DeliveryDateBasedSequenceCreation()
+        self.round_orders_released = {}
 
     def get_current_time(self):
         return self.agent.change_handler.get_current_time()
@@ -99,12 +100,23 @@ class OrderPool(DigitalTwinCyclicBehaviour):
             for order in orders_with_planned_release:
                 self._plan_order_release(order)
 
-        # query if an order exists
-        self.order_pool, new_order_or_earliest_order_date = (
-            self.release_behaviour.get_new_order(requester_name=requester_agent_name, order_pool=self.order_pool,
-                                                 current_time=self.get_current_time(), agent_name=self.agent.name,
-                                                 agents_organization=self.agent.agents,
-                                                 change_handler=self.agent.change_handler))
+        new_order = True
+        new_order_or_earliest_order_date = None
+        if self.agent.agents.current_round_id not in self.round_orders_released:
+            self.round_orders_released[self.agent.agents.current_round_id] = 1
+        elif self.round_orders_released[self.agent.agents.current_round_id] > 1:
+            new_order_or_earliest_order_date = self.get_current_time() + timedelta(seconds=1)
+            new_order = False
+        else:
+           self.round_orders_released[self.agent.agents.current_round_id] += 1
+
+        if new_order:
+            # query if an order exists
+            self.order_pool, new_order_or_earliest_order_date = (
+                self.release_behaviour.get_new_order(requester_name=requester_agent_name, order_pool=self.order_pool,
+                                                     current_time=self.get_current_time(), agent_name=self.agent.name,
+                                                     agents_organization=self.agent.agents,
+                                                     change_handler=self.agent.change_handler))
 
         if isinstance(new_order_or_earliest_order_date, Order):
             self._release_order(new_order_or_earliest_order_date)

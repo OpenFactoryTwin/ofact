@@ -22,10 +22,10 @@ Programmierkenntnisse erforderlich 🚫💻. Wir sind gespannt,
 
 ## Ablauf
 
-- **1. Vorstellung Industrie 4.0 Use Case**
-  - Bicycle Factory
-- **2. Einführung in das OFacT Tool**
+- **1. Einführung in das OFacT Tool**
   - Einführung
+- **2. Vorstellung Industrie 4.0 Use Case**
+  - Bicycle Factory
 - **3. Ermittelung von Schwachstellen und deren Optimierung**
   - Schwachstellen erkennen
 - **4. Einbindung in die Industrie**

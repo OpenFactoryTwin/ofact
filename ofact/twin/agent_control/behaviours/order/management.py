@@ -447,9 +447,9 @@ class OrderManagement(DigitalTwinCyclicBehaviour):
         self.logging.info(f'{self.agent.name} Organizing order', extra={"obj_id": self.agent.name})
         # set the next order
         await self._request_new_order()
-        print(f'{self.agent.name} Order request finished')
+        # print(f'{self.agent.name} Order request finished')
         order_or_datetime = await self._receive_new_order()
-        print(f'{self.agent.name} Order datetime {order_or_datetime}')
+        # print(f'{self.agent.name} Order datetime {order_or_datetime}')
         if isinstance(order_or_datetime, datetime):
             return order_or_datetime
 
@@ -1044,8 +1044,8 @@ class OrderManagement(DigitalTwinCyclicBehaviour):
                 value_added_processes=value_added_processes, last_process_execution=last_process_execution,
                 last_value_added_process_execution=old_value_added_process_execution,
                 support_entity_type=support_entity_type, main_part_entity_type=main_part_entity_type)
-
-        print(get_debug_str(self.agent.name, self.__class__.__name__) + f" VAP {vap_successful}")
+        if vap_successful:
+            print(get_debug_str(self.agent.name, self.__class__.__name__) + f" VAP {vap_successful}")
         if value_added_process_execution is not None:
             self.logging.info(
                 f'Order ID: {self.agent.current_order.identification}, VAP:{value_added_process_execution.process.name} is {vap_successful}, PE:{value_added_process_execution.identification} ',
@@ -1682,8 +1682,8 @@ class OrderManagement(DigitalTwinCyclicBehaviour):
         else:
             long_time_reservation = {}
             self.reset_current_resource_binding = True
-        print("Set Support", self.agent.current_order.identification, value_added_process.name,
-              support_entity_type.name if support_entity_type is not None else None)
+        # print("Set Support", self.agent.current_order.identification, value_added_process.name,
+        #       support_entity_type.name if support_entity_type is not None else None)
 
         if self.agent.current_order.products:
             available_parts = [part
