@@ -14,6 +14,7 @@
 
 import os
 import platform
+from pathlib import Path
 
 # Detect the current working directory
 path = os.getcwd()
@@ -22,7 +23,7 @@ path = os.getcwd()
 if platform.system() == "Windows":
     # Ensure ROOT_PATH is set to "D:\ofact-intern\ofact" for Windows
     if "ofact" in path:
-        ROOT_PATH = os.path.join(path.rsplit("ofact", 1)[0], "ofact", "ofact")
+        ROOT_PATH = os.path.join(str(Path(__file__).parent.parent.absolute()), "ofact")
     else:
         raise NotImplementedError(f"Entrance point unknown: {path}")
 else:
