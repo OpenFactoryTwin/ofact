@@ -91,7 +91,7 @@ of the model from the data of the real system.
 The OFacT framework consists of the following super components:
 - **Environment**: provides components to interact with all kinds of environments (real and virtual) and to integrate data
   - **Data Integration**: provides tools to integrate data into the digital twin including consistency checks and update
-  mechanisms with the use of machine learning technics for faster and more accurate digital twin model generation
+  mechanisms with the use of Machine Learning/ Artificial Intelligence technics for faster and more accurate digital twin model generation
   - **Work Instruction**: provides tools to pass work instructions (planned process executions) back to the physical 
   world (closed loop system)
   - **Simulation**: is a virtual environment, that mimics the behavior of the real world and can be used to evaluate
