@@ -201,7 +201,6 @@ Winter Simulation Conference (WSC), 2024
 21. ASIM-Fachtagung Simulation in Produktion und Logistik, 2025
 
 📖 **Full publication list**: See [PUBLICATIONS.md](PUBLICATIONS.md)  
-📚 **BibTeX citations**: [citations.bib](citations.bib)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
