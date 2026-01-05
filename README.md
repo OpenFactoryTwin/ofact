@@ -184,6 +184,29 @@ and analyzed (scenario analytics).
 
 ---
 
+## Publications
+
+Below you will find an excerpt from publications created as part of the OFacT working group:
+
+**[Integrating Scheduling of Logistic Support Processes in Agent-Based Industry 4.0 Assembly Simulation](https://doi.org/10.1109/WSC60868.2023.10408413)**  
+*Freiter, Schwede*
+Winter Simulation Conference (WSC), 2023
+
+**[Learning Simulation-Based Digital Twins for Discrete Material Flow Systems: A Review](https://doi.org/10.1109/WSC63780.2024.10838729)**  
+*Schwede, Fischer*
+Winter Simulation Conference (WSC), 2024
+
+**[Automated Adaptation of Digital Twins for Production Line Design by Adapting Existing Models Through LLM-Guided Expert Interviews](https://doi.org/10.25368/2025.247)**  
+*Schipper, Schwede*
+21. ASIM-Fachtagung Simulation in Produktion und Logistik, 2025
+
+📖 **Full publication list**: See [PUBLICATIONS.md](PUBLICATIONS.md)  
+📚 **BibTeX citations**: [citations.bib](citations.bib)
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
 ## Contributing
 
 Contributions to this project are greatly appreciated! 
