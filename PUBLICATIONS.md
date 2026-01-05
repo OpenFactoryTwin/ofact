@@ -18,7 +18,7 @@ This repository contains code and data related to the following publications:
 - **DOI**: [10.1109/WSC63780.2024.10838729](https://doi.org/10.1109/WSC63780.2024.10838729)
 - **Keywords**: Costs, Reviews, Terminology, Machine learning, Companies, Control systems, Digital twins, Planning, Fourth Industrial Revolution
 
-## 3. Additional Publication (2025)
+## 3. Automated Adaptation of Digital Twins for Production Line Design by Adapting Existing Models Through LLM-Guided Expert Interviews (2025)
 - **Authors**: Lennart Schipper, Christian Schwede
 - **Venue**: 21. ASIM-Fachtagung Simulation in Produktion und Logistik.
 - **Status**: Published
