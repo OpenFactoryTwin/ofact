@@ -569,7 +569,7 @@
   
 </li>
         
-          <li class="md-nav__item">
+     <li class="md-nav__item">
   <a href="#quick-start" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -579,36 +579,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#quick-start-with-docker-compose" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick Start with Docker-Compose
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#docker-compose-down" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        docker-compose down
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="docker-compose down">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
+
+<li class="md-nav__item">
   <a href="#tutorial" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1604,36 +1576,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#quick-start-with-docker-compose" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick Start with Docker-Compose
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#docker-compose-down" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        docker-compose down
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="docker-compose down">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
+
+<li class="md-nav__item">
   <a href="#tutorial" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1643,8 +1587,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+
+<li class="md-nav__item">
   <a href="#bicycle-world" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1652,11 +1596,6 @@
       
     </span>
   </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -1833,25 +1772,7 @@ file, located in the corresponding subfolders.</p>
 and therefore next to the agent control, one of the two core elements of the digital twin.
 The state model can be filled with two sample use cases that can be found in the <code>projects</code> folder:
 The models are provided in the <code>{project_name}/model/twin/</code> folder, modeled in Excel files.</p>
-<h3 id="quick-start-with-docker-compose">Quick Start with Docker-Compose</h3>
-<hr />
-<p><strong>1. Build &amp; Run Services</strong></p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>docker-compose<span class="w"> </span>up<span class="w"> </span>--build
-</span></code></pre></div>
-<p><strong>2. Access Services</strong></p>
-<ul>
-<li><strong>Jupyter:</strong> <a href="http://localhost:8888">http://localhost:8888</a></li>
-<li><strong>Voila:</strong> <a href="http://localhost:8866">http://localhost:8866</a></li>
-<li><strong>PyJabber (XMPP):</strong> Port <code>5222</code></li>
-</ul>
-<p><strong>3. Change Voila Notebook</strong>
-Edit the file path in <code>docker-compose.yml</code>:</p>
-<div class="language-yaml highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="no">sh -c &quot;voila path/to/your_notebook.ipynb ...&quot;</span>
-</span></code></pre></div>
-<p><strong>4. Stop Services</strong></p>
-<h2 id="docker-compose-down"><div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>docker-compose<span class="w"> </span>down
-</span></code></pre></div></h2>
+
 <h4 id="tutorial">Tutorial</h4>
 <p>The tutorial shows a small example shop floor of a board game factory 
 that contains a subset of the elements existing in the state model.
