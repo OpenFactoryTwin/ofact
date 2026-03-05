@@ -3,7 +3,7 @@
 
 <div align="center">
 
-   <img src="docs/assets/imgs/OFacT_Logo.png" width="1395" height="679" />
+   <img src="docs/assets/imgs/ofact-logo" width="1395" height="679" />
    <h3>Open Factory Twin</h3> 
    <h4>Open source Digital Twin Framework for Production and Logistics</h4>
 
