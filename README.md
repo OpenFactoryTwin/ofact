@@ -13,7 +13,7 @@
 
 <p align="center">
   <br />
-  <a href="https://www.isst.fraunhofer.de/de/abteilungen/industrial-manufacturing/technologien/OFacT.html"><strong>Explore the docs »</strong></a>
+  <a href="https://openfactorytwin.github.io/ofact/"><strong>Explore the docs »</strong></a>
   <br />
   <br />
   <a href="https://www.isst.fraunhofer.de/de/abteilungen/industrial-manufacturing/technologien/OFacT.html">View Demo</a>
