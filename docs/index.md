@@ -116,7 +116,7 @@ and therefore next to the agent control, one of the two core elements of the dig
 The state model can be filled with two sample use cases that can be found in the `projects` folder:
 The models are provided in the `{project_name}/model/twin/` folder, modeled in Excel files.
 
-```markdown
+```
 Coming soon..
 
 #### Tutorial
