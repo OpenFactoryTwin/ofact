@@ -116,35 +116,8 @@ and therefore next to the agent control, one of the two core elements of the dig
 The state model can be filled with two sample use cases that can be found in the `projects` folder:
 The models are provided in the `{project_name}/model/twin/` folder, modeled in Excel files.
 
-### Quick Start with Docker-Compose 
----
-
-**1. Build & Run Services**
-
-```bash
-docker-compose up --build
-```
-
-**2. Access Services**
-
-* **Jupyter:** [http://localhost:8888](http://localhost:8888)
-* **Voila:** [http://localhost:8866](http://localhost:8866)
-* **PyJabber (XMPP):** Port `5222`
-
-**3. Change Voila Notebook**
-Edit the file path in `docker-compose.yml`:
-
-```yaml
-command: >
-  sh -c "voila path/to/your_notebook.ipynb ..."
-```
-
-**4. Stop Services**
-
-```bash
-docker-compose down
-```
----
+```markdown
+Coming soon..
 
 #### Tutorial
 
