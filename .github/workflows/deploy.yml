@@ -1,0 +1,4 @@
+name: Deploy MkDocs to GitHub Pageson:push:branches: [ main ]
+  workflow_dispatch:permissions:contents: writejobs:deploy:runs-on: ubuntu-lateststeps:- uses: actions/checkout@v3- name: Setup Pythonuses: actions/setup-python@v4with:python-version: '3.x'- name: Install dependenciesrun: |
+          pip install mkdocs
+          pip install -r requirements.txt  # if you have one- name: Build MkDocs siterun: mkdocs build- name: Deploy to gh-pagesuses: peaceiris/actions-gh-pages@v3with:github_token: ${{ secrets.GITHUB_TOKEN }}publish_dir: ./site

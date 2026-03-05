@@ -1,0 +1,99 @@
+site_name: Open Factory Twin (OFacT) Documentation
+site_url: https://OpenFactoryTwin.github.io/ofact/
+theme:
+  name: material
+  custom_dir: docs/overrides
+  font:
+    text: Times New Roman
+    code: Red Hat Mono
+  logo: assets/imgs/ofact - logo.png
+  favicon: assets/favicon.ico
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.top
+    - content.code.copy
+    - navigation.tabs        # creates a tab bar
+    - navigation.tabs.sticky # tabs remain viewable during scroll
+    - navigation.sections    # shows sections in the sidebar
+    - navigation.expand      # Optional: expands sections automatically
+    - navigation.footer
+  palette:
+    # Dark Mode
+    - scheme: slate
+
+      toggle:
+        icon: material/weather-sunny
+        name: Dark mode
+      primary: teal
+      accent: orange
+
+    # Light Mode
+    - scheme: default
+
+      toggle:
+        icon: material/weather-night
+        name: Light mode
+      primary: green
+      accent: red
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - attr_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - pymdownx.details
+
+nav:
+  - Home: index.md
+  # - Getting started: getting-started.md
+  - Environment:
+    - Introduction: env/environment.md
+    - Real:
+      - Data Integration: env/data_integration.md
+      - Work Instruction: env/work_instruction.md
+    - Simulated:
+      - Simulation: env/simulation.md
+  - Digital Twin:
+    - Introduction: twin/digital_twin.md
+    - State Model: twin/state_model.md
+    - Agent Control: twin/agent_control.md
+    - Change Handler: twin/change_handler.md
+    - Repository Services: twin/repository_services.md
+  - Planning Services:
+    - Introduction: planning_services/planning_services.md
+    - Scenario Generation: planning_services/scenario_generation.md
+    - Scenario Analytics: planning_services/scenario_analytics.md
+    - Scenario Optimization: planning_services/scenario_optimization.md
+  - Projects:
+    - Introduction: projects/projects.md
+    - Bicycle Factory: projects/bicycle_factory.md
+    - Tutorial: projects/tutorial.md
+
+extra:
+  social:
+    - icon: simple/githubsponsors
+      link: https://www.isst.fraunhofer.de/en/departments/industrial-manufacturing/technologies/OFacT.html
+    - icon: simple/github
+      link: https://github.com/OpenFactoryTwin/ofact
+
+copyright: Copyright © 2025 
+  Fraunhofer Institute for Software and Systems Engineering (ISST) & 
+  University of Applied Sciences Bielefeld (HSBI).

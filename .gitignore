@@ -6,3 +6,5 @@ __pycache__/
 main.py
 helper.py
 .gitmodules
+# MkDocs build output
+site/
