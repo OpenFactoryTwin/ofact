@@ -1,8 +1,7 @@
 Twin
-<div align="center">
-  <img src="../assets/imgs/digital_twin_components.png" width="300" height="300" alt="Digital Twin Components" />
-  <h3>Agent Control and State Model</h3>
-</div>
+![Digital Twin Components](../assets/imgs/digital_twin_components.png)
+
+### Agent Control and State Model
 The digital twin core consists of state model and the agent control. While the state model contains the state of the factory (could also include the change history represented as executed processes (list of ProcessExecution(s))), the agent control represents the control rules/ policies of the system. Meaning the state model and the agent control builds the center part of the OFacT. Additionally, the digital twin core contains the change handler, the model learning and repository services. While the change handler serves as layer between the agent control/ data integration and the state model, the model learning provides basic functionalities for machine learning and the repository services provides the capability to persist the state model.
 
 The Digital Twin Core forms the central foundation of OFacT and consists of two primary components: - the State Model - and the Agent Control.
