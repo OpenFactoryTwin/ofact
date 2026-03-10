@@ -14,7 +14,7 @@ Additionally, the Digital Twin Core contains three essential supporting services
 The Change Handler serves as an intermediary layer between the Agent Control and data integration on one side and the State Model on the other, ensuring all state changes are validated and consistent. Model Learning provides basic functionalities for machine learning, enabling the system to learn from historical data. Repository Services provide the capability to persist the State Model, ensuring long-term data retention, versioning, and recoverability of the entire system state.
 
 <div align="center">
-  <img src="image.png" width="500" height="300" alt="Schematic Structure Twin" />
+  <img src="twin.png" width="500" height="300" alt="Schematic Structure Twin" />
   <h3>Schematic Structure Twin</h3>
 </div>
 State Model
