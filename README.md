@@ -3,7 +3,7 @@
 
 <div align="center">
 
-   <img src="docs/source/_static/ofact - logo.png" width="1395" height="679" />
+   <img src="docs/assets/imgs/ofact - logo.png" width="1395" height="679" />
    <h3>Open Factory Twin</h3> 
    <h4>Open source Digital Twin Framework for Production and Logistics</h4>
 
@@ -13,7 +13,7 @@
 
 <p align="center">
   <br />
-  <a href="https://www.isst.fraunhofer.de/de/abteilungen/industrial-manufacturing/technologien/OFacT.html"><strong>Explore the docs »</strong></a>
+  <a href="https://openfactorytwin.github.io/ofact/"><strong>Explore the docs »</strong></a>
   <br />
   <br />
   <a href="https://www.isst.fraunhofer.de/de/abteilungen/industrial-manufacturing/technologien/OFacT.html">View Demo</a>
@@ -224,7 +224,7 @@ Parts of the project are created within the scope of
 the [Center of Excellence Logistics and It](https://ce-logit.com/) - Nationales Leistungszentrum Logistik und IT.
 
 <div align="center">
-   <img src="docs/assets/imgs/leistungszentrum-600x200-1.png" width="600" height="200" />
+   <img src="docs/assets/imgs/leistungszentrum-600x200.png" width="600" height="200" />
 </div>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
