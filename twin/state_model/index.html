@@ -1,0 +1,2042 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://OpenFactoryTwin.github.io/ofact/twin/state_model/">
+      
+      
+        <link rel="prev" href="../digital_twin/">
+      
+      
+        <link rel="next" href="../agent_control/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
+    
+    
+      
+        <title>State Model - Open Factory Twin (OFacT) Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Times+New+Roman:300,300i,400,400i,700,700i%7CRed+Hat+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Times New Roman";--md-code-font:"Red Hat Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="orange">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#introduction" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Open Factory Twin (OFacT) Documentation" class="md-header__button md-logo" aria-label="Open Factory Twin (OFacT) Documentation" data-md-component="logo">
+      
+  <img src="../../assets/imgs/ofact - logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Open Factory Twin (OFacT) Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              State Model
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="orange"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="red"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../env/environment/" class="md-tabs__link">
+          
+  
+  
+  Environment
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../digital_twin/" class="md-tabs__link">
+          
+  
+  
+  Digital Twin
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../planning_services/planning_services/" class="md-tabs__link">
+          
+  
+  
+  Planning Services
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../projects/projects/" class="md-tabs__link">
+          
+  
+  
+  Projects
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Open Factory Twin (OFacT) Documentation" class="md-nav__button md-logo" aria-label="Open Factory Twin (OFacT) Documentation" data-md-component="logo">
+      
+  <img src="../../assets/imgs/ofact - logo.png" alt="logo">
+
+    </a>
+    Open Factory Twin (OFacT) Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Environment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../env/environment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Real
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Real
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../env/data_integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../env/work_instruction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Work Instruction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Simulated
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Simulated
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../env/simulation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Simulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Digital Twin
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Digital Twin
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../digital_twin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    State Model
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    State Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Introduction
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Introduction">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#entities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Entities
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sales" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sales
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#processes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Processes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Processes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#resource-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RESOURCE MODEL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transition-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TRANSITION MODEL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transformation-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TRANSFORMATION MODEL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#quality-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        QUALITY MODEL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#process-time-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PROCESS TIME MODEL
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#technical-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Technical Questions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Technical Questions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-are-the-resource-capabilities-modeled" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How are the resource capabilities modeled?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-is-the-bill-of-material-modeled" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How is the Bill of Material modeled?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-are-changes-tracked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How are changes tracked?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notice
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../agent_control/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Control
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../change_handler/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Change Handler
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../repository_services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Repository Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Planning Services
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Planning Services
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../planning_services/planning_services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../planning_services/scenario_generation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scenario Generation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../planning_services/scenario_analytics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scenario Analytics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../planning_services/scenario_optimization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scenario Optimization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projects
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Projects
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/projects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/bicycle_factory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bicycle Factory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projects/tutorial/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Introduction
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Introduction">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#entities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Entities
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sales" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sales
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#processes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Processes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Processes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#resource-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RESOURCE MODEL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transition-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TRANSITION MODEL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transformation-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TRANSFORMATION MODEL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#quality-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        QUALITY MODEL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#process-time-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PROCESS TIME MODEL
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#technical-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Technical Questions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Technical Questions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-are-the-resource-capabilities-modeled" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How are the resource capabilities modeled?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-is-the-bill-of-material-modeled" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How is the Bill of Material modeled?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-are-changes-tracked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How are changes tracked?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notice
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<div align="center">
+   <h1>State Model 🏭</h1>
+</div>
+
+<h2 id="introduction">Introduction</h2>
+<p>The state model describes a virtual "state" of the environment.
+The description contains immaterial objects (orders, processes, etc.) as well as material objects 
+that have a physical counterpart (machines, etc.) on the shop floor.</p>
+<p>If only the state is described, we call it "static" state model.
+In contrast, the "dynamic" state model extends the "static" one with the historical and future changes/ dynamics. 
+In general, it is the same object, but additionally holds the dynamics.
+This principle is comparable to the version control that stores the git commits, 
+where each node holds the state, but also the version history is accessible. 
+In contrast to git commits, also planned attribute changes in the future are storable.</p>
+<p>The process-oriented modeling approach suits especially for learning applications.</p>
+<h3 id="entities">Entities</h3>
+<p>The <strong><em>entities</em></strong> describe the physical objects on the shop floor. 
+Entities are of a predefined type and have a quality value between 0 (bad) and 1 (good). 
+Next to them, they can be situated in another resource.</p>
+<p>Entities are differentiated between <strong><em>resources</em></strong> and <strong><em>parts</em></strong>.</p>
+<p>The class structure is depicted in the following picture:</p>
+<div align="center">
+  <img src="../../assets/imgs/entities_classification.png" width="600" height="300" />
+  <h3>Entities classification</h3>
+</div>
+
+<p><em>Resources</em> are used to transform or change entities (including parts as well as resources).
+Next to the situation in another resource that has all entities, resources have a physical body 
+(with position, length and width). 
+Additionally, to handle chronological execution of the processes on the resources, 
+a process execution plan is used to plan the process executions.</p>
+<p><em>Stationary resources</em> are used for resources that have a fixed position on the shop floor, such as a workbench, 
+a machine or even obstacles. 
+Additionally to the resources, they have an efficiency distribution that 
+can influence the process lead time. The entry edge and exit edge can be used for the transport resources 
+as starting point, respectively as arrival point.
+If needed, they can be further detailed to storages, warehouses, workstations and conveyor belts.
+<em>Storages</em> are used to store/ hold other resources or parts (entities). Each storage can only hold entities 
+of the same entity type (respectively super entity type). Therefore, a storage can be used as storage for parts, 
+a loading station for AGVs, a break room for the workers, etc.
+Next to the storage, the <em>warehouse</em> is used to manage different storages. 
+Therefore, entities with different entity types can be stored in the warehouses, respectively the storages of them.
+Note, with the storage and warehouse elements, different elements from the logistics such as supermarkets, shelves, etc. 
+can be modelled in an abstract way. If you should use a storage or a warehouse depends only on the amount 
+of entity types to be stored.
+The <em>workstation</em> can equally to the warehouse also hold different entity types (buffer stations). 
+However, workstations have differed in their resource purpose, since they are used to process 
+parts or resources (entities), which is not the inherent aim of the warehouses.
+<em>Conveyor belts</em> are used are resources that can transport resources or parts from their start to their end. 
+At the start and at the end, a storage is situated. Since they have, only one start and one end, forks are modelled 
+by using more than one conveyor belt element, linked through their origin and destination storages.
+A conveyor belt has additionally to stationary resources, a flow direction, entities that are currently 
+on the conveyor belt (as sorted queue) restricted by a capacity and allowed entity types. 
+Additionally, as stated before, the conveyor belt is defined through an origin and a destination storage. 
+The conveyor length and the pitch are also specified and can be used for the process lead time determination.</p>
+<p>In contrast to stationary resources, <em>non-stationary resources</em> can move by their self on the shop floor 
+(active moving resources) or moved by other resources (passive moving resources). 
+Similar to the stationary resources, also the non-stationary resources have storage places that can be used, e.g., 
+to transport other entities. 
+Next to them, the orientation is used to manage the direction of the resource.
+<em>Active moving resources</em> could be automated guided vehicles (AGVs), workers, forklifts, etc. 
+<em>Passive moving resources</em> are resources that are transported by other resources, such as tools, boxes, pallets, etc. 
+They cannot move by their own.
+While the stationary resources use the efficiency to determine the performance of the resource, 
+the non-stationary resources use the speed. 
+Additionally, the energy is managed through the attribute’s energy capacity, energy level and energy consumption.</p>
+<p>In contrast, <em>part</em>s are consumed and can be further differentiated into two main groups. 
+First, the products that are delivered to the customer and are associated with an order. 
+Second, parts that are processed, e.g., as subpart.
+Parts can be a (sub-)part of another part or contain parts themselves. 
+These parts can be removable or not.</p>
+<h3 id="sales">Sales</h3>
+<p>In the <strong><em>sales</em></strong> area, the order object represents the core element. 
+An order object is associated with a product configured by the customer.</p>
+<div align="center">
+  <img src="../../assets/imgs/sales%20unit.png" width="600" height="400" />
+  <h3>Connection from the sales area to the shop floor</h3>
+</div>
+
+<p>The order contains a pool of features that are chosen by a customer. 
+Eventually, the feature pool specifies a product configuration that can be highly individual. 
+E.g., a bicycle that consists of a sport frame, a disc brake and other features. 
+If, for example, the disc brake is broken down further in a bill of materials, the feature can consist of several parts, 
+which are processed in one or more processes. The logic is taken from complex product configuration systems 
+as used in the automotive industry. The idea is that the feature pool of the (sales-) order is used as input 
+for the work order that define the processes need to be executed.</p>
+<h3 id="processes">Processes</h3>
+<p>In the work order, the features are mapped to value added processes. 
+Value added processes, in contrast to normal processes, are mapped to a feature and 
+have predecessor and successor (value added) processes.
+Through the predecessor and successor processes, a priority chart is defined for each order individually 
+based on the features chosen, respectively, the process associated with them. The priority chart describes the processes 
+as well as the possible sequences of the processes a product has to pass to be finished.</p>
+<p>Through <strong><em>processes</em></strong> that are executed, the participating entities (resources and parts) can change their state
+and eventually, the system state.
+How the system can be changed is described in <strong><em>process models</em></strong>. 
+The process models are namely, the resource, transition, transformation, quality, and time model.</p>
+<h4 id="resource-model">RESOURCE MODEL</h4>
+<p>The resource model includes a set of resource groups. 
+Each of them is a combination of different resources that are required to execute the process. </p>
+<blockquote>
+<p><strong>Example:</strong></p>
+<p>A picking process requires the resources' worker and picking station that builds a resource group. 
+A picking robot and the picking station can build an alternative resource group. 
+Both are able to execute the process, but only one of them is chosen for the actual process execution.</p>
+<p>Next to <em>'greater'</em> resources also tools can be part of a resource model.</p>
+</blockquote>
+<h4 id="transition-model">TRANSITION MODEL</h4>
+<p>The transition model outlines spatial position changes or resource assignments (e.g., from a box into the shelf).
+Therefore, it contains possible origins and destination. </p>
+<blockquote>
+<p><strong>Example:</strong></p>
+<p>A <em>transport transition</em> could be described through two picking stations, one as origin and the other as destination.</p>
+<p>A <em>resource assignment transition</em> could be described through a transport resource and a (stationary) storage, 
+also one as origin and the other as destination. 
+As example, a part can be stored in the transport resource, which was stored in the storage before.</p>
+<p>A special case of the <em>resource assignment transition</em> is the incoming goods transition (source behavior) 
+as well as the customer delivery (sink behavior). 
+In these cases, the origin or the destination remains empty.</p>
+</blockquote>
+<h4 id="transformation-model">TRANSFORMATION MODEL</h4>
+<p>The transformation model describes how entities are transformed within the process.
+To describe the transformation, a directed acyclic graph (DAG) is designed based on entity transformation nodes. 
+Since every entity transformation node contains parent and children’s nodes, 
+the relations within the graph are described decentralized. 
+The root nodes of the graph are stored in the transformation model
+Each entity transformation node contains mainly the type of the entity and 
+the amount needed that will be transformed in the children nodes.</p>
+<p>Hence, the entity types required for the transformation can be derived through iterating over the root nodes 
+of the transformation model. 
+Next to the entity types, the transformation type and the input output behavior of the entity transformation nodes
+describe how the entities are transformed.
+These are based on the manufacturing processes defined in DIN 8580:</p>
+<ul>
+<li>Primary Processing Operations</li>
+<li>Shaping Operations</li>
+<li>Property Operations</li>
+<li>Surface Operations</li>
+<li>Secondary Assembly Operations</li>
+<li>Permanent joining Operations</li>
+<li>Fastening Operations</li>
+</ul>
+<p>The input output behavior differentiates between:
+- <strong><em>EXIST</em></strong>: Part is neither created nor destroyed by the process it has to exist before and still exists at the end
+- <strong><em>CREATED</em></strong>: Part is created in the process
+- <strong><em>DESTROYED</em></strong>: Part is destroyed at the end of the process (e.g., scrap bad quality, parts with no further tracking)</p>
+<p>The transformation type differentiates between:
+- <strong><em>MAIN_ENTITY</em></strong>: Necessary to start the process if not created.
+Part leaves the process unchanged or extended
+- <strong><em>BLANK</em></strong>: Necessary to start the process if not created. 
+Part is transformed/ processed.
+The entity type is changed, but the attributes remain untouched (no further parts attached) (e.g., bending)
+- <strong><em>SUB_PART</em></strong>: Necessary to start the process if not created. 
+- Part is built into the main_entity and can be taken apart later (e.g., assembly, packing)
+- <strong><em>INGREDIENT</em></strong>: Necessary to start the process if not created. 
+Part ist transformed into or
+combined with the main entity. Cannot be removed later (e.g., surface coating)
+- <strong><em>DISASSEMBLE</em></strong>: SubParts can be disassembled in the children nodes.
+- <strong><em>SUPPORT</em></strong>: Necessary to marry (NonStationaryResource and Parts) or
+(NonStationaryResource and NonStationaryResource).
+The marriage is needed to create a (longer) connection, for example, for transport.
+E.g.: AGV and main_product (can be identified if the SUPPORT is also found in the successor processes) or
+Bin and screws.
+- <strong><em>UNSUPPORT</em></strong>: cancel/ undo the SUPPORT transformation.</p>
+<blockquote>
+<p><strong>Example:</strong></p>
+<p>In general, the root nodes are depicted in the first column (0) and the end nodes in the last column.
+In the transformation model only the root nodes are stored.</p>
+</blockquote>
+<div align="center">
+  <img src="../../assets/imgs/transformations%20legend.png" width="600" height="300" />
+  <h3>Legend</h3>
+
+
+  <img src="../../assets/imgs/transformations%20I.png" width="1000" height="600" />
+  <h3>Transformations I</h3>
+</div>
+
+<blockquote>
+<p><strong><em>(1) Part Assembly:</em></strong></p>
+<p>In the assembly, a subpart is added to the main entity. 
+E.g., the gears are appended to the bicycle frame but can be disassembled later if necessary.</p>
+<p><strong><em>(2) Part Disassembly:</em></strong></p>
+<p>In the disassembly, a subpart is removed from the main entity.
+E.g., the gears are removed from the bicycle frame (for example, because the bicycle has a defect).</p>
+<p><strong><em>(1) Equipment Assembly:</em></strong></p>
+<p>In the assembly, equipment is added to the main entity. 
+E.g., the drill bit is appended to the drill machine but can be disassembled later if necessary.</p>
+<p><strong><em>(2) Equipment Disassembly:</em></strong></p>
+<p>In the disassembly, equipment is removed from the main entity.
+E.g., the drill bit is removed from the drill machine (for example, because other equipment is required).</p>
+<p><strong><em>(5) Blank Processing:</em></strong></p>
+<p>A blank is processed to a main entity. 
+This means no additional materials are added to the entity, but the part properties change.
+E.g., a handlebar rod is bend to a handlebar.</p>
+<p><strong><em>(6) Ingredient processing:</em></strong></p>
+<p>An ingredient (part) is added to the main entity. 
+The ingredient cannot be removed.
+E.g., a coating is added to the main part. 
+</p>
+</blockquote>
+<div align="center">
+  <img src="../../assets/imgs/transformations%20II.png" width="400" height="400" />
+  <h3>Transformation II</h3>
+</div>
+
+<blockquote>
+<p><strong><em>(7) Support:</em></strong></p>
+<p>The support is a carrier resource. 
+Therefore, a part or a resource (main entity) is linked with its carrier resource.
+E.g., a part is stored in a box or a box is stored on an AGV.</p>
+<p><strong><em>(8) Unsupport:</em></strong></p>
+<p>The unsupport is used to undo the support action.
+E.g., a part is removed from a box, or a box is removed from an AGV it is situated in.</p>
+<p><strong><em>(9) Assembly with support:</em></strong></p>
+<p>In the assembly, a subpart is added to the main entity. 
+Additionally, to this transformation, the main part is supported before the assembly.
+Use Case: Required to describe the state that the carrier resource is used in the process.
+E.g., the AGV is required as a carrier within the assembly process and in combination with the bicycle.
+This means that it is not valid, that the bicycle frame is not on the AGV.</p>
+<blockquote>
+<p><strong><em>(10) Quality Inspection:</em></strong></p>
+</blockquote>
+<p>In the quality inspection, the quality of entity is checked that is associated with the entity transformation node.
+E.g., the quality of the bicycle frame is checked.</p>
+<p><strong><em>(9) (Incoming) goof supply:</em></strong></p>
+<p>To model a goof supply (from outside the considered environment, e.g., from a supplying company), 
+the io_behaviour CREATED is combined with the transformation_type MAIN_ENTITY.
+E.g., the gear is delivered from the gear supplying company and stored in the incoming storage.</p>
+<p><strong><em>(10) Customer delivery:</em></strong></p>
+<p>In contrast to the goof supply, the io_behaviour DESTROYED is combined with the transformation_type MAIN_ENTITY.
+Meaning, the entity cannot be used anymore in the digital twin state model.
+E.g., the bicycle frame is delivered to the customer and is removed from the outgoing storage.</p>
+</blockquote>
+<h4 id="quality-model">QUALITY MODEL</h4>
+<p>The quality model describes the behavior of the quality during PE.</p>
+<blockquote>
+<p><strong>Example:</strong></p>
+<p>In 30 % of the process executions, the process is not successful, leading to output entity(ies) with low quality.</p>
+</blockquote>
+<h4 id="process-time-model">PROCESS TIME MODEL</h4>
+<p>The process time model of the PE describes the process lead-time which varies from process to process. They define
+how much time a process needs to be executed.</p>
+<blockquote>
+<p><strong>Example:</strong></p>
+<p>A process takes 60 seconds to finish the execution.</p>
+</blockquote>
+<p>All dynamics of the system are capsuled in <strong><em>process executions (PE)</em></strong>. 
+The PEs can have two states: planned describing the future of the production system and executed describing the past. 
+Within the process, the possibilities and restrictions of its execution are defined to
+ensure that the progress of the digital twin is consistent with the possible real behavior. </p>
+<h3 id="technical-questions">Technical Questions</h3>
+<h4 id="how-are-the-resource-capabilities-modeled">How are the resource capabilities modeled?</h4>
+<p>In general, a resource has capabilities that enable the resource to execute processes.
+The state model takes up this idea from the other direction. 
+This means that the process has a resource model that contains different resource groups.
+Each resource group contains a combination of resource types (entity types) 
+that are able to execute the process with each other.</p>
+<p>The advantage of this approach:
+- resource groups are defined (not only one resource is required for a process execution)
+- learning of the resource model is easier since most datasets are log files that allow "easy" 
+  derivation of process executions.
+  Since the resource model is, as all models, a model of the process, the learning follows a standard way.</p>
+<h4 id="how-is-the-bill-of-material-modeled">How is the Bill of Material modeled?</h4>
+<p>In general, the state model has either a class for Bill of Material (BOM) nor any attribute contains the BOM explicitly.
+Nevertheless, the BOM is derivable from the execution of all value_added_processes of an order 
+by considering the transformation.
+Additionally, since parts have a kind of BOM inside them, the final product holds the BOM, if completed.
+In addition, a virtual simulation of the value added processes provides the possibility to derive the BOM.</p>
+<h4 id="how-are-changes-tracked">How are changes tracked?</h4>
+<ul>
+<li>Process Executions</li>
+<li>stored centrally in the state model</li>
+<li>
+<p>describes a batch of DT Object attribute changes</p>
+</li>
+<li>
+<p>Dynamic Attributes</p>
+</li>
+<li>stored decentralized at each DT object</li>
+<li>
+<p>describes a DT Object attribute changes history</p>
+</li>
+<li>
+<p>Digital Twin State Model</p>
+<ul>
+<li>provides a central access point to all DT objects</li>
+<li>provides general high-level requests such as "How many orders are currently in progress?"</li>
+</ul>
+</li>
+</ul>
+<h2 id="notice">Notice</h2>
+<p>This work is licensed under the <a href="https://creativecommons.org/licenses/by/4.0/legalcode">CC-BY-4.0</a>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../digital_twin/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Introduction">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Introduction
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../agent_control/" class="md-footer__link md-footer__link--next" aria-label="Next: Agent Control">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Agent Control
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright © 2025 Fraunhofer Institute for Software and Systems Engineering (ISST) & University of Applied Sciences Bielefeld (HSBI).
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://www.isst.fraunhofer.de/en/departments/industrial-manufacturing/technologies/OFacT.html" target="_blank" rel="noopener" title="www.isst.fraunhofer.de" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17.625 1.499c-2.32 0-4.354 1.203-5.625 3.03-1.271-1.827-3.305-3.03-5.625-3.03C3.129 1.499 0 4.253 0 8.249c0 4.275 3.068 7.847 5.828 10.227a33 33 0 0 0 5.616 3.876l.028.017.008.003-.001.003c.163.085.342.126.521.125.179.001.358-.041.521-.125l-.001-.003.008-.003.028-.017a33 33 0 0 0 5.616-3.876C20.932 16.096 24 12.524 24 8.249c0-3.996-3.129-6.75-6.375-6.75m-.919 15.275a30.8 30.8 0 0 1-4.703 3.316l-.004-.002-.004.002a31 31 0 0 1-4.703-3.316c-2.677-2.307-5.047-5.298-5.047-8.523 0-2.754 2.121-4.5 4.125-4.5 2.06 0 3.914 1.479 4.544 3.684.143.495.596.797 1.086.796.49.001.943-.302 1.085-.796.63-2.205 2.484-3.684 4.544-3.684 2.004 0 4.125 1.746 4.125 4.5 0 3.225-2.37 6.216-5.048 8.523"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/OpenFactoryTwin/ofact" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.top", "content.code.copy", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.footer"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
