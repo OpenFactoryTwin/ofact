@@ -221,7 +221,8 @@ This work is licensed under the Apache 2.0 license.
 See `LICENSE` file for more information.
 
 Parts of the project are created within the scope of
-the [Center of Excellence Logistics and It](https://ce-logit.com/) - Nationales Leistungszentrum Logistik und IT.
+the [Center of Excellence Logistics and It](https://ce-logit.com/) - Nationales Leistungszentrum Logistik und IT and 
+the Fraunhofer Cluster of Excellence Cognitive Internet Technologies.
 
 <div align="center">
    <img src="docs/assets/imgs/leistungszentrum-600x200.png" width="600" height="200" />
@@ -237,10 +238,11 @@ the [Center of Excellence Logistics and It](https://ce-logit.com/) - Nationales 
 - Jan Cirullies ([FH Dortmund](https://www.fh-dortmund.de/index.php?loc=en) | [Fraunhofer ISST](https://www.isst.fraunhofer.de/en.html))
 - Adrian Freiter ([Fraunhofer ISST](https://www.isst.fraunhofer.de/en.html))
 
-- Roman Sliwinski ([HSBI](https://www.hsbi.de/en))
-- Jannik Hartog ([Fraunhofer ISST](https://www.isst.fraunhofer.de/en.html))
+## Alumni
 
-- Niklas Müller ([Fraunhofer ISST](https://www.isst.fraunhofer.de/en.html))
+- Roman Sliwinski ([HSBI](https://www.hsbi.de/en))
+- Jannik Hartog
+- Niklas Müller
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
